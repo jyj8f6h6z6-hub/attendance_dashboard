@@ -1,0 +1,373 @@
+/* =========================================
+   兩張分析圖
+========================================= */
+
+.age-analysis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.age-analysis-grid > * {
+  min-width: 0;
+}
+
+.age-panel {
+  min-height: 360px;
+}
+
+.age-description {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.age-total {
+  flex: 0 0 auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+
+/* =========================================
+   長條圖
+========================================= */
+
+.age-bars {
+  display: grid;
+  gap: 14px;
+  margin-top: 20px;
+}
+
+.age-row {
+  display: grid;
+  grid-template-columns:
+    54px
+    minmax(160px, 1fr)
+    96px;
+
+  gap: 10px;
+  align-items: center;
+}
+
+.age-label {
+  font-size: 14px;
+  font-weight: 750;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.age-track {
+  position: relative;
+  height: 22px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1f3;
+}
+
+
+/* =========================================
+   堆疊長條
+========================================= */
+
+.age-stack {
+  height: 100%;
+  display: flex;
+  overflow: hidden;
+  border-radius: 999px;
+  transition: width .3s ease;
+}
+
+.age-district-segment {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: default;
+
+  transition:
+    opacity .15s ease,
+    filter .15s ease;
+}
+
+.age-district-segment:hover {
+  filter: brightness(.96);
+}
+
+.age-district-segment span {
+  color: #263238;
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+
+/* =========================================
+   大區馬卡龍配色
+
+   一大區：粉紅
+   二大區：薄荷綠
+   三大區：奶油黃
+========================================= */
+
+.district-color-1 {
+  background: #f3b6c3;
+}
+
+.district-color-2 {
+  background: #abd8d2;
+}
+
+.district-color-3 {
+  background: #efd69a;
+}
+
+/* 預留未來其他大區 */
+
+.district-color-4 {
+  background: #c8bee3;
+}
+
+.district-color-5 {
+  background: #bdd8b7;
+}
+
+.district-color-6 {
+  background: #e6c1aa;
+}
+
+
+/* =========================================
+   群組右側總人數
+========================================= */
+
+.age-number {
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 3px;
+  white-space: nowrap;
+}
+
+.age-number strong {
+  font-size: 16px;
+  color: var(--text);
+}
+
+.age-number span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.age-number small {
+  margin-left: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+
+/* =========================================
+   大區圖例
+========================================= */
+
+.district-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 26px;
+
+  margin-top: 20px;
+  padding-top: 16px;
+
+  border-top: 1px solid var(--line);
+}
+
+.district-legend-item {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+
+  white-space: nowrap;
+
+  color: var(--text);
+}
+
+.district-dot {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border-radius: 999px;
+  flex: 0 0 auto;
+}
+
+
+/* 大區名稱 */
+
+.district-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: #52616a;
+}
+
+
+/* 人數 */
+
+.district-legend-item strong {
+  margin-left: 3px;
+
+  font-size: 17px;
+  font-weight: 850;
+
+  color: var(--text);
+}
+
+
+/* 「人」 */
+
+.district-unit {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+
+/* 百分比 */
+
+.district-legend-item small {
+  margin-left: 2px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  color: var(--muted);
+}
+
+
+/* =========================================
+   學生占比
+========================================= */
+
+.student-share {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+
+  margin-top: 18px;
+  padding-top: 16px;
+
+  border-top: 1px solid var(--line);
+
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.student-share strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+
+/* =========================================
+   未知群組
+========================================= */
+
+.age-warning {
+  margin-top: 16px;
+  padding: 10px 12px;
+  border-radius: 9px;
+
+  background: #fff5d9;
+  color: #765f28;
+
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.age-warning.hidden {
+  display: none;
+}
+
+
+/* =========================================
+   無資料
+========================================= */
+
+.age-empty {
+  padding: 30px 10px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+
+/* =========================================
+   平板
+========================================= */
+
+@media (max-width: 1050px) {
+
+  .age-analysis-grid {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+/* =========================================
+   手機
+========================================= */
+
+@media (max-width: 680px) {
+
+  .age-row {
+    grid-template-columns:
+      48px
+      minmax(90px, 1fr)
+      78px;
+
+    gap: 7px;
+  }
+
+  .age-label {
+    font-size: 13px;
+  }
+
+  .age-number strong {
+    font-size: 14px;
+  }
+
+  .age-number small {
+    display: none;
+  }
+
+  .age-district-segment span {
+    font-size: 10px;
+  }
+
+  .district-legend {
+    gap: 10px 16px;
+  }
+
+  .district-name {
+    font-size: 13px;
+  }
+
+  .district-legend-item strong {
+    font-size: 15px;
+  }
+
+  .district-legend-item small {
+    font-size: 12px;
+  }
+
+  .student-share {
+    display: grid;
+    gap: 8px;
+  }
+
+}

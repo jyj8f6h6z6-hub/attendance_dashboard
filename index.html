@@ -1,0 +1,1153 @@
+<!doctype html>
+<html lang="zh-Hant">
+
+<head>
+
+  <meta charset="utf-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  />
+
+  <meta
+    name="description"
+    content="主日聚會情況分析工具：Excel 僅於瀏覽器本機讀取，不上傳伺服器。"
+  />
+
+  <title>
+    主日聚會情況分析
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="style.css"
+  />
+
+  <link
+    rel="stylesheet"
+    href="age-analysis.css"
+  />
+
+</head>
+
+
+<body>
+
+
+  <!-- =========================
+       頁首
+  ========================== -->
+
+  <header class="topbar">
+
+    <div>
+
+      <p class="eyebrow">
+        LOCAL EXCEL DASHBOARD
+      </p>
+
+      <h1>
+        主日聚會情況分析
+      </h1>
+
+      <p class="subtitle">
+        匯入當次 Excel，在瀏覽器本機完成分析；重新整理或清除後即移除資料。
+      </p>
+
+    </div>
+
+
+    <button
+      id="clearBtn"
+      class="btn ghost"
+      type="button"
+      disabled
+    >
+      清除本次資料
+    </button>
+
+  </header>
+
+
+
+  <main>
+
+
+    <!-- =========================
+         匯入 Excel
+    ========================== -->
+
+    <section
+      class="panel upload-panel"
+      id="uploadPanel"
+    >
+
+      <div class="upload-copy">
+
+        <h2>
+          匯入 Excel
+        </h2>
+
+        <p>
+          支援你目前系統匯出的
+          <strong>.xls</strong>，
+          也支援 .xlsx。
+          網頁只讀取你當次選擇的檔案。
+        </p>
+
+        <p class="privacy">
+          <span aria-hidden="true">
+            🔒
+          </span>
+
+          本工具不使用 localStorage / IndexedDB，也沒有資料上傳程式。
+        </p>
+
+      </div>
+
+
+      <label
+        class="file-button"
+        for="fileInput"
+      >
+        選擇 Excel
+      </label>
+
+
+      <input
+        id="fileInput"
+        type="file"
+        accept=".xls,.xlsx,.xlsm,.csv"
+        hidden
+      />
+
+
+      <p
+        class="file-name"
+        id="fileName"
+      >
+        尚未選擇檔案
+      </p>
+
+
+      <p
+        class="error"
+        id="errorMessage"
+        role="alert"
+      ></p>
+
+    </section>
+
+
+
+    <!-- =========================
+         Dashboard
+    ========================== -->
+
+    <section
+      id="dashboard"
+      class="dashboard hidden"
+    >
+
+
+      <!-- =========================
+           基本資料
+      ========================== -->
+
+      <section class="panel info-strip">
+
+        <div>
+          <span>檔案</span>
+          <strong id="infoFile">—</strong>
+        </div>
+
+        <div>
+          <span>資料期間</span>
+          <strong id="infoPeriod">—</strong>
+        </div>
+
+        <div>
+          <span>週次</span>
+          <strong id="infoWeeks">—</strong>
+        </div>
+
+        <div>
+          <span>人數</span>
+          <strong id="infoPeople">—</strong>
+        </div>
+
+      </section>
+
+
+
+      <!-- =========================
+           分析規則
+      ========================== -->
+
+      <section class="panel rules-panel">
+
+        <div class="rules-copy">
+
+          <p class="eyebrow">
+            分析規則
+          </p>
+
+          <h2>
+            目前聚會狀況
+          </h2>
+
+          <p id="ruleText">
+            以匯入資料中最新的主日為基準，累計最近 6／8／10／12／16 週。
+          </p>
+
+        </div>
+
+
+        <div class="period-controls">
+
+          <label class="field compact">
+
+            <span>
+              觀察週數
+            </span>
+
+            <select id="windowSelect">
+
+              <option value="6">
+                最近 6 週
+              </option>
+
+              <option value="8">
+                最近 8 週
+              </option>
+
+              <option value="10">
+                最近 10 週
+              </option>
+
+              <option
+                value="12"
+                selected
+              >
+                最近 12 週
+              </option>
+
+              <option value="16">
+                最近 16 週
+              </option>
+
+            </select>
+
+          </label>
+
+        </div>
+
+
+        <div class="rule-legend">
+
+          <span>
+
+            <i class="dot weekly"></i>
+
+            <strong>
+              週週聚會
+            </strong>
+
+            ：近 12 週每週都有聚會
+
+          </span>
+
+
+          <span>
+
+            <i class="dot regular"></i>
+
+            <strong>
+              常聚會
+            </strong>
+
+            ：平均至少每 3 週一次
+
+          </span>
+
+
+          <span>
+
+            <i class="dot occasional"></i>
+
+            <strong>
+              偶聚會
+            </strong>
+
+            ：平均至少每 4 週一次
+
+          </span>
+
+
+          <span>
+
+            <i class="dot sporadic"></i>
+
+            <strong>
+              零星聚會
+            </strong>
+
+            ：最近 8 週內仍有出現
+
+          </span>
+
+
+          <span>
+
+            <i class="dot inactive"></i>
+
+            <strong>
+              近期未聚會
+            </strong>
+
+            ：超過 8 週未聚會
+
+          </span>
+
+        </div>
+
+      </section>
+
+
+
+      <!-- =========================
+           摘要卡片
+      ========================== -->
+
+      <section
+        class="cards"
+        id="summaryCards"
+      ></section>
+
+
+
+      <!-- =========================
+           整體分析
+      ========================== -->
+
+      <section class="grid two-col">
+
+
+        <article class="panel">
+
+          <div class="section-head">
+
+            <div>
+
+              <p class="eyebrow">
+                DISTRIBUTION
+              </p>
+
+              <h2>
+                整體聚會情況
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="overallBar"
+            class="overall-bar"
+            aria-label="整體聚會情況比例"
+          ></div>
+
+
+          <div
+            id="overallLegend"
+            class="overall-legend"
+          ></div>
+
+        </article>
+
+
+
+        <article class="panel">
+
+          <div class="section-head">
+
+            <div>
+
+              <p class="eyebrow">
+                BY DISTRICT
+              </p>
+
+              <h2>
+                大區比較
+              </h2>
+
+            </div>
+
+          </div>
+
+
+          <div class="table-wrap">
+
+            <table id="districtTable">
+
+              <thead>
+
+                <tr>
+
+                  <th>大區</th>
+
+                  <th>總人數</th>
+
+                  <th>初信</th>
+
+                  <th>日期不明</th>
+
+                  <th>週週聚會</th>
+
+                  <th>常聚會</th>
+
+                  <th>偶聚會</th>
+
+                  <th>零星</th>
+
+                  <th>近期未聚會</th>
+
+                  <th>穩定聚會率</th>
+
+                </tr>
+
+              </thead>
+
+
+              <tbody></tbody>
+
+            </table>
+
+          </div>
+
+        </article>
+
+
+      </section>
+
+
+
+      <!-- =====================================================
+           分析篩選
+           現在移到群組分析圖上方
+      ====================================================== -->
+
+      <section class="panel">
+
+
+        <div class="section-head filters-head">
+
+
+          <div>
+
+            <p class="eyebrow">
+              FILTER
+            </p>
+
+            <h2>
+              分析篩選
+            </h2>
+
+          </div>
+
+
+
+          <div class="filters">
+
+
+            <!-- 搜尋姓名 -->
+
+            <label class="field">
+
+              <span>
+                搜尋姓名
+              </span>
+
+              <input
+                id="searchInput"
+                type="search"
+                placeholder="輸入姓名"
+              />
+
+            </label>
+
+
+
+            <!-- 大區 -->
+
+            <label class="field">
+
+              <span>
+                大區
+              </span>
+
+              <select id="districtFilter">
+
+                <option value="">
+                  全部
+                </option>
+
+              </select>
+
+            </label>
+
+
+
+            <!-- 小區 -->
+
+            <label class="field">
+
+              <span>
+                小區
+              </span>
+
+              <select id="smallDistrictFilter">
+
+                <option value="">
+                  全部
+                </option>
+
+              </select>
+
+            </label>
+
+
+
+            <!-- 羣組 -->
+
+            <div class="field group-field">
+
+              <span>
+                羣組
+              </span>
+
+
+              <details
+                class="multi-select"
+                id="groupMultiSelect"
+              >
+
+
+                <summary id="groupFilterSummary">
+                  全部
+                </summary>
+
+
+                <div class="multi-panel">
+
+
+                  <div class="group-presets">
+
+
+                    <button
+                      type="button"
+                      class="preset-btn"
+                      data-group-preset="all"
+                    >
+                      全部
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="preset-btn"
+                      data-group-preset="college-youth"
+                    >
+                      大專＋青職
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="preset-btn"
+                      data-group-preset="teen"
+                    >
+                      青少年
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="preset-btn"
+                      data-group-preset="student"
+                    >
+                      學生專項
+                    </button>
+
+
+                    <button
+                      type="button"
+                      class="preset-btn"
+                      data-group-preset="child"
+                    >
+                      兒童
+                    </button>
+
+
+                  </div>
+
+
+
+                  <div
+                    class="group-options"
+                    id="groupFilterOptions"
+                  ></div>
+
+
+
+                  <div class="multi-actions">
+
+
+                    <button
+                      type="button"
+                      id="clearGroupFilter"
+                      class="link-btn"
+                    >
+                      清除選擇
+                    </button>
+
+
+                    <button
+                      type="button"
+                      id="closeGroupFilter"
+                      class="primary-small"
+                    >
+                      完成
+                    </button>
+
+
+                  </div>
+
+
+                </div>
+
+
+              </details>
+
+
+            </div>
+
+
+
+            <!-- 聚會情況 -->
+
+            <div class="field status-field">
+
+              <span>
+                聚會情況
+              </span>
+
+
+              <details
+                class="multi-select"
+                id="statusMultiSelect"
+              >
+
+
+                <summary id="statusFilterSummary">
+                  全部
+                </summary>
+
+
+                <div class="multi-panel status-panel">
+
+
+                  <div
+                    class="group-options single-col"
+                    id="statusFilterOptions"
+                  ></div>
+
+
+
+                  <div class="multi-actions">
+
+
+                    <button
+                      type="button"
+                      id="clearStatusFilter"
+                      class="link-btn"
+                    >
+                      清除選擇
+                    </button>
+
+
+                    <button
+                      type="button"
+                      id="closeStatusFilter"
+                      class="primary-small"
+                    >
+                      完成
+                    </button>
+
+
+                  </div>
+
+
+                </div>
+
+
+              </details>
+
+
+            </div>
+
+
+
+            <!-- 排除：總聚會最多 -->
+
+            <label class="field exclusion-filter">
+
+              <span>
+                排除：總聚會最多
+              </span>
+
+              <select id="totalAttendanceFilter">
+
+                <option value="">
+                  不設定
+                </option>
+
+                <option value="0">
+                  0 次
+                </option>
+
+                <option value="1">
+                  1 次
+                </option>
+
+                <option value="2">
+                  2 次
+                </option>
+
+                <option value="3">
+                  3 次
+                </option>
+
+                <option value="4">
+                  4 次
+                </option>
+
+                <option value="5">
+                  5 次
+                </option>
+
+                <option value="6">
+                  6 次
+                </option>
+
+                <option value="7">
+                  7 次
+                </option>
+
+                <option value="8">
+                  8 次
+                </option>
+
+                <option value="9">
+                  9 次
+                </option>
+
+                <option value="10">
+                  10 次
+                </option>
+
+              </select>
+
+            </label>
+
+
+
+            <!-- 排除：未聚會達 -->
+
+            <label class="field exclusion-filter">
+
+              <span>
+                排除：未聚會達
+              </span>
+
+              <select id="absenceWeeksFilter">
+
+                <option value="">
+                  不設定
+                </option>
+
+                <option value="52">
+                  1 年（52週）
+                </option>
+
+                <option value="78">
+                  1 年半（78週）
+                </option>
+
+                <option value="104">
+                  2 年（104週）
+                </option>
+
+                <option value="130">
+                  2 年半（130週）
+                </option>
+
+                <option value="156">
+                  3 年（156週）
+                </option>
+
+                <option value="182">
+                  3 年半（182週）
+                </option>
+
+                <option value="208">
+                  4 年（208週）
+                </option>
+
+                <option value="234">
+                  4 年半（234週）
+                </option>
+
+                <option value="260">
+                  5 年（260週）
+                </option>
+
+              </select>
+
+            </label>
+
+
+
+            <!-- 初信 -->
+
+            <label class="field">
+
+              <span>
+                初信
+              </span>
+
+              <select id="newBelieverFilter">
+
+                <option value="">
+                  全部
+                </option>
+
+                <option value="yes">
+                  初信
+                </option>
+
+                <option value="no">
+                  非初信
+                </option>
+
+                <option value="unknown">
+                  日期不明
+                </option>
+
+              </select>
+
+            </label>
+
+
+          </div>
+
+
+        </div>
+
+
+
+        <!-- 排除說明 -->
+
+        <div class="exclusion-note">
+
+          排除條件可單獨使用。
+
+          只設定「未聚會達」時，
+          會排除超過該期間未聚會的人；
+
+          只設定「總聚會最多」時，
+          會排除總出席次數低於或等於設定值的人；
+
+          兩項都有設定時，
+          則只排除同時符合兩項的人。
+
+        </div>
+
+
+
+        <!-- 篩選結果 -->
+
+        <div
+          class="result-count"
+          id="resultCount"
+        ></div>
+
+
+      </section>
+
+
+
+      <!-- =====================================================
+           穩定聚會分析
+      ====================================================== -->
+
+      <section class="age-analysis-grid">
+
+
+        <!-- 左：穩定聚會者群組分析 -->
+
+        <article class="panel age-panel">
+
+
+          <div class="section-head">
+
+
+            <div>
+
+              <p class="eyebrow">
+                AGE DISTRIBUTION
+              </p>
+
+              <h2>
+                穩定聚會者群組分析
+              </h2>
+
+              <p class="age-description">
+                統計對象：週週聚會＋常聚會
+              </p>
+
+            </div>
+
+
+            <div
+              class="age-total"
+              id="ageTotal"
+            >
+              —
+            </div>
+
+
+          </div>
+
+
+
+          <div
+            id="ageDistribution"
+            class="age-bars"
+          ></div>
+
+
+
+          <div
+            id="ageUnknown"
+            class="age-warning hidden"
+          ></div>
+
+
+        </article>
+
+
+
+        <!-- 右：穩定聚會學生分布 -->
+
+        <article class="panel age-panel">
+
+
+          <div class="section-head">
+
+
+            <div>
+
+              <p class="eyebrow">
+                STUDENT AGE
+              </p>
+
+              <h2>
+                穩定聚會學生分布
+              </h2>
+
+              <p class="age-description">
+                統計對象：穩定聚會者中的國中、高中、大學
+              </p>
+
+            </div>
+
+
+            <div
+              class="age-total"
+              id="studentAgeTotal"
+            >
+              —
+            </div>
+
+
+          </div>
+
+
+
+          <div
+            id="studentAgeDistribution"
+            class="age-bars"
+          ></div>
+
+
+
+          <div
+            id="studentShare"
+            class="student-share"
+          ></div>
+
+
+        </article>
+
+
+      </section>
+
+
+
+      <!-- =====================================================
+           人員明細
+           這裡現在只留下表格
+      ====================================================== -->
+
+      <section class="panel">
+
+
+        <div class="section-head">
+
+
+          <div>
+
+            <p class="eyebrow">
+              PEOPLE
+            </p>
+
+            <h2>
+              人員明細
+            </h2>
+
+          </div>
+
+
+        </div>
+
+
+
+        <div class="table-wrap people-table-wrap">
+
+
+          <table id="peopleTable">
+
+
+            <thead>
+
+
+              <tr>
+
+                <th>
+                  大區
+                </th>
+
+                <th>
+                  小區
+                </th>
+
+                <th>
+                  姓名
+                </th>
+
+                <th>
+                  羣組
+                </th>
+
+                <th>
+                  受浸日期
+                </th>
+
+                <th>
+                  初信
+                </th>
+
+                <th>
+                  聚會情況
+                </th>
+
+                <th>
+                  最近一次聚會日期
+                </th>
+
+                <th>
+                  近期出席
+                </th>
+
+                <th>
+                  近期出席率
+                </th>
+
+                <th>
+                  全部出席
+                </th>
+
+              </tr>
+
+
+            </thead>
+
+
+
+            <tbody></tbody>
+
+
+          </table>
+
+
+        </div>
+
+
+      </section>
+
+
+    </section>
+
+
+  </main>
+
+
+
+  <!-- =========================
+       Footer
+  ========================== -->
+
+  <footer>
+
+    <p>
+
+      資料僅存在本頁記憶體中。
+
+      關閉、重新整理或按「清除本次資料」後，
+      本次匯入內容不會由本工具保存。
+
+    </p>
+
+  </footer>
+
+
+
+  <!-- =========================
+       JavaScript
+  ========================== -->
+
+  <script
+    src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
+  ></script>
+
+  <script src="script.js"></script>
+
+  <script src="age-analysis.js"></script>
+
+
+</body>
+
+</html>
