@@ -38,6 +38,9 @@
     indexes: {},
     recentCols: [],
 
+    baptismFileName: '',
+    baptismByName: new Map(),
+
     selectedGroups: new Set(),
     selectedStatuses: new Set(),
 
@@ -65,6 +68,8 @@
   const els = {
     fileInput: $('fileInput'),
     fileName: $('fileName'),
+    baptismFileInput: $('baptismFileInput'),
+    baptismFileName: $('baptismFileName'),
     error: $('errorMessage'),
     dashboard: $('dashboard'),
     clearBtn: $('clearBtn'),
@@ -273,6 +278,67 @@
   }
 
 
+  function baptismValueToDate(value) {
+
+    if (
+      typeof value === 'string'
+    ) {
+
+      const s =
+        value.trim();
+
+
+      const m =
+        s.match(
+          /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/
+        );
+
+
+      if (m) {
+
+        const year = Number(m[1]);
+        const month = Number(m[2]);
+        const day = Number(m[3]);
+
+
+        if (
+          month < 1 ||
+          month > 12 ||
+          day < 1 ||
+          day > 31
+        ) {
+          return null;
+        }
+
+
+        const d =
+          new Date(
+            year,
+            month - 1,
+            day
+          );
+
+
+        if (
+          d.getFullYear() !== year ||
+          d.getMonth() !== month - 1 ||
+          d.getDate() !== day
+        ) {
+          return null;
+        }
+
+
+        return d;
+      }
+    }
+
+
+    return excelDateToDate(
+      value
+    );
+  }
+
+
   function isAttendance(value) {
 
     if (
@@ -347,9 +413,19 @@
     }
 
 
+    /*
+     * 新版點名系統固定讀取「出席」工作表；
+     * 舊版 export.xlsx 沒有此工作表時，維持讀第一張工作表。
+     */
+    const attendanceSheetName =
+      workbook.SheetNames.includes('出席')
+        ? '出席'
+        : workbook.SheetNames[0];
+
+
     const sheet =
       workbook.Sheets[
-        workbook.SheetNames[0]
+        attendanceSheetName
       ];
 
 
@@ -368,7 +444,7 @@
       rows.length < 2
     ) {
       throw new Error(
-        '工作表沒有足夠資料。'
+        '出席工作表沒有足夠資料。'
       );
     }
 
@@ -382,30 +458,47 @@
       );
 
 
-    const required = [
-      '大區',
-      '小區',
-      '姓名',
-      '羣組'
-    ];
+    const findHeaderIndex =
+      names =>
+        names
+          .map(
+            name =>
+              header.indexOf(name)
+          )
+          .find(
+            i => i >= 0
+          ) ?? -1;
 
 
-    const idx =
-      Object.fromEntries(
-        required.map(
-          name => [
-            name,
-            header.indexOf(name)
-          ]
-        )
-      );
+    const indexes = {
+      district:
+        findHeaderIndex(['大區']),
+      smallDistrict:
+        findHeaderIndex(['小區']),
+      name:
+        findHeaderIndex(['姓名']),
+      group:
+        findHeaderIndex(['羣組', '群組'])
+    };
 
 
-    const missing =
-      required.filter(
-        name =>
-          idx[name] < 0
-      );
+    const missing = [];
+
+    if (indexes.district < 0) {
+      missing.push('大區');
+    }
+
+    if (indexes.smallDistrict < 0) {
+      missing.push('小區');
+    }
+
+    if (indexes.name < 0) {
+      missing.push('姓名');
+    }
+
+    if (indexes.group < 0) {
+      missing.push('羣組／群組');
+    }
 
 
     if (
@@ -417,23 +510,12 @@
     }
 
 
-    const baptismNames = [
-      '受浸日期',
-      '受浸日',
-      '受浸'
-    ];
-
-
     const baptismIndex =
-      baptismNames
-        .map(
-          n =>
-            header.indexOf(n)
-        )
-        .find(
-          i =>
-            i >= 0
-        ) ?? -1;
+      findHeaderIndex([
+        '受浸日期',
+        '受浸日',
+        '受浸'
+      ]);
 
 
     const today =
@@ -498,15 +580,16 @@
 
 
     state.indexes = {
-      ...idx,
+      ...indexes,
       baptism:
         baptismIndex
     };
 
 
     /*
-     * 匯入新檔案時，
+     * 匯入新點名報表時，
      * 清除上一份圖表點擊與人員明細區域篩選狀態。
+     * 已匯入的受浸報表保留，可直接重新配對。
      */
     state.selectedPeopleDistricts =
       new Set();
@@ -525,11 +608,168 @@
 
 
     if (
-      baptismIndex < 0
+      baptismIndex < 0 &&
+      !state.baptismByName.size
     ) {
 
       els.error.textContent =
-        '提醒：這份 Excel 找不到「受浸日期」欄位，因此目前無法判斷初信；其他聚會分析不受影響。';
+        '提醒：點名報表沒有受浸日期，請再匯入受浸報表以顯示受浸日並判斷初信。';
+    }
+  }
+
+
+  function analyzeBaptismWorkbook(
+    arrayBuffer,
+    fileName
+  ) {
+
+    const workbook =
+      XLSX.read(
+        arrayBuffer,
+        {
+          type: 'array',
+          cellDates: false,
+          raw: true
+        }
+      );
+
+
+    const baptismSheetName =
+      workbook.SheetNames.find(
+        name =>
+          String(name).trim() ===
+          '受浸名單'
+      );
+
+
+    if (!baptismSheetName) {
+      throw new Error(
+        '受浸報表找不到第 5 個工作表「受浸名單」。'
+      );
+    }
+
+
+    const rows =
+      XLSX.utils.sheet_to_json(
+        workbook.Sheets[
+          baptismSheetName
+        ],
+        {
+          header: 1,
+          raw: true,
+          defval: ''
+        }
+      );
+
+
+    if (
+      rows.length < 2
+    ) {
+      throw new Error(
+        '「受浸名單」工作表沒有足夠資料。'
+      );
+    }
+
+
+    const header =
+      rows[0].map(
+        v =>
+          String(
+            v ?? ''
+          ).trim()
+      );
+
+
+    const nameIndex =
+      header.indexOf('姓名');
+
+
+    const baptismIndex =
+      ['受浸日', '受浸日期', '受浸']
+        .map(
+          name =>
+            header.indexOf(name)
+        )
+        .find(
+          i => i >= 0
+        ) ?? -1;
+
+
+    if (
+      nameIndex < 0 ||
+      baptismIndex < 0
+    ) {
+      throw new Error(
+        '「受浸名單」缺少「姓名」或「受浸日」欄位。'
+      );
+    }
+
+
+    const baptismByName =
+      new Map();
+
+
+    rows
+      .slice(1)
+      .forEach(
+        row => {
+
+          const name =
+            String(
+              row[nameIndex] ?? ''
+            ).trim();
+
+
+          const baptismDate =
+            baptismValueToDate(
+              row[baptismIndex]
+            );
+
+
+          if (
+            !name ||
+            !baptismDate
+          ) {
+            return;
+          }
+
+
+          /*
+           * 同姓名若在受浸名單出現多筆，採較新的受浸日。
+           * 一般情況不會影響單一姓名資料。
+           */
+          const existing =
+            baptismByName.get(name);
+
+
+          if (
+            !existing ||
+            baptismDate > existing
+          ) {
+            baptismByName.set(
+              name,
+              baptismDate
+            );
+          }
+        }
+      );
+
+
+    state.baptismFileName =
+      fileName;
+
+    state.baptismByName =
+      baptismByName;
+
+
+    els.baptismFileName.textContent =
+      `${fileName}｜${baptismByName.size} 人有受浸日期`;
+
+
+    if (
+      state.rows.length
+    ) {
+      recalculate();
     }
   }
 
@@ -645,7 +885,7 @@
             const name =
               String(
                 row[
-                  indexes['姓名']
+                  indexes.name
                 ] ?? ''
               ).trim();
 
@@ -730,7 +970,11 @@
                       indexes.baptism
                     ]
                   )
-                : null;
+                : (
+                    state.baptismByName.get(
+                      name
+                    ) || null
+                  );
 
 
             const weeksSinceBaptism =
@@ -772,14 +1016,14 @@
               district:
                 String(
                   row[
-                    indexes['大區']
+                    indexes.district
                   ] ?? ''
                 ).trim(),
 
               smallDistrict:
                 String(
                   row[
-                    indexes['小區']
+                    indexes.smallDistrict
                   ] ?? ''
                 ).trim(),
 
@@ -788,7 +1032,7 @@
               group:
                 String(
                   row[
-                    indexes['羣組']
+                    indexes.group
                   ] ?? ''
                 ).trim(),
 
@@ -2593,7 +2837,7 @@
   }
 
 
-  async function onFile(file) {
+  async function onAttendanceFile(file) {
 
     els.error.textContent =
       '';
@@ -2642,6 +2886,50 @@
   }
 
 
+  async function onBaptismFile(file) {
+
+    els.error.textContent =
+      '';
+
+
+    els.baptismFileName.textContent =
+      file.name;
+
+
+    try {
+
+      if (
+        !globalThis.XLSX
+      ) {
+
+        throw new Error(
+          'Excel 解析元件尚未載入。請確認網路連線，或依 README 將 SheetJS 改為本機 vendor。'
+        );
+      }
+
+
+      const buffer =
+        await file.arrayBuffer();
+
+
+      analyzeBaptismWorkbook(
+        buffer,
+        file.name
+      );
+
+
+    } catch (err) {
+
+      console.error(err);
+
+
+      els.error.textContent =
+        err?.message ||
+        '無法讀取這份受浸報表。';
+    }
+  }
+
+
   function clearData() {
 
     state.fileName = '';
@@ -2653,6 +2941,11 @@
     state.people = [];
 
     state.recentCols = [];
+
+    state.baptismFileName = '';
+
+    state.baptismByName =
+      new Map();
 
     state.windowWeeks = 12;
 
@@ -2686,8 +2979,16 @@
       '';
 
 
+    els.baptismFileInput.value =
+      '';
+
+
     els.fileName.textContent =
-      '尚未選擇檔案';
+      '尚未選擇點名報表';
+
+
+    els.baptismFileName.textContent =
+      '尚未選擇受浸報表';
 
 
     els.error.textContent =
@@ -2751,7 +3052,23 @@
 
       if (file) {
 
-        onFile(file);
+        onAttendanceFile(file);
+      }
+    }
+  );
+
+
+  els.baptismFileInput.addEventListener(
+    'change',
+    e => {
+
+      const file =
+        e.target.files?.[0];
+
+
+      if (file) {
+
+        onBaptismFile(file);
       }
     }
   );

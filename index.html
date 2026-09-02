@@ -52,7 +52,7 @@
       </h1>
 
       <p class="subtitle">
-        匯入當次 Excel，在瀏覽器本機完成分析；重新整理或清除後即移除資料。
+        匯入當次點名報表與受浸報表，在瀏覽器本機完成分析；重新整理或清除後即移除資料。
       </p>
 
     </div>
@@ -75,7 +75,7 @@
 
 
     <!-- =========================
-         匯入 Excel
+         匯入點名報表 / 受浸報表
     ========================== -->
 
     <section
@@ -86,13 +86,14 @@
       <div class="upload-copy">
 
         <h2>
-          匯入 Excel
+          匯入點名報表／受浸報表
         </h2>
 
         <p>
-          支援你目前系統匯出的
-          <strong>.xls</strong>，
-          也支援 .xlsx。
+          先匯入點名系統匯出的
+          <strong>點名報表</strong>；
+          如需顯示受浸日期與判斷初信，再匯入
+          <strong>受浸報表</strong>。
           網頁只讀取你當次選擇的檔案。
         </p>
 
@@ -107,28 +108,60 @@
       </div>
 
 
-      <label
-        class="file-button"
-        for="fileInput"
-      >
-        選擇 Excel
-      </label>
+      <div class="upload-actions">
+
+        <div class="upload-item">
+          <div class="upload-item-title">點名報表</div>
+
+          <label
+            class="file-button"
+            for="fileInput"
+          >
+            匯入點名報表
+          </label>
+
+          <input
+            id="fileInput"
+            type="file"
+            accept=".xls,.xlsx,.xlsm,.csv"
+            hidden
+          />
+
+          <p
+            class="file-name"
+            id="fileName"
+          >
+            尚未選擇點名報表
+          </p>
+        </div>
 
 
-      <input
-        id="fileInput"
-        type="file"
-        accept=".xls,.xlsx,.xlsm,.csv"
-        hidden
-      />
+        <div class="upload-item">
+          <div class="upload-item-title">受浸報表</div>
 
+          <label
+            class="file-button secondary"
+            for="baptismFileInput"
+          >
+            匯入受浸報表
+          </label>
 
-      <p
-        class="file-name"
-        id="fileName"
-      >
-        尚未選擇檔案
-      </p>
+          <input
+            id="baptismFileInput"
+            type="file"
+            accept=".xls,.xlsx,.xlsm"
+            hidden
+          />
+
+          <p
+            class="file-name"
+            id="baptismFileName"
+          >
+            尚未選擇受浸報表
+          </p>
+        </div>
+
+      </div>
 
 
       <p
