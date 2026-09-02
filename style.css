@@ -503,8 +503,8 @@ select:focus-visible,
 }
 
 /* ========================================
-   手機版：人員明細只凍結「小區」
-   大區與姓名會跟著表格左右捲動。
+   手機版：人員明細只凍結「姓名」
+   大區與小區會跟著表格左右捲動。
 ======================================== */
 @media (max-width: 680px) {
 
@@ -527,28 +527,30 @@ select:focus-visible,
     z-index: 1;
   }
 
-  /* 第2欄：只凍結小區，左右捲動時固定在畫面最左側 */
-  #peopleTable th:nth-child(2),
+  /* 第2欄：小區不做左右凍結 */
   #peopleTable td:nth-child(2) {
-    position: sticky;
-    left: 0;
+    position: static;
     width: 58px;
     min-width: 58px;
     max-width: 58px;
-    background: #fff;
-    z-index: 3;
-    box-shadow: 5px 0 7px -6px rgba(0, 0, 0, .35);
   }
 
   #peopleTable th:nth-child(2) {
+    position: sticky;
     top: 0;
+    left: auto;
+    width: 58px;
+    min-width: 58px;
+    max-width: 58px;
     background: #f7f9fa;
-    z-index: 5;
+    z-index: 1;
   }
 
-  /* 第3欄：姓名不做左右凍結；欄寬約三個中文字，超過就換行 */
+  /* 第3欄：只凍結姓名；約三個中文字寬，超過就換行 */
   #peopleTable th:nth-child(3),
   #peopleTable td:nth-child(3) {
+    position: sticky;
+    left: 0;
     width: calc(3em + 24px);
     min-width: calc(3em + 24px);
     max-width: calc(3em + 24px);
@@ -556,22 +558,19 @@ select:focus-visible,
     overflow-wrap: anywhere;
     word-break: break-all;
     line-height: 1.45;
-  }
-
-  #peopleTable td:nth-child(3) {
-    position: static;
+    background: #fff;
+    z-index: 3;
+    box-shadow: 5px 0 7px -6px rgba(0, 0, 0, .35);
   }
 
   #peopleTable th:nth-child(3) {
-    position: sticky;
     top: 0;
-    left: auto;
     background: #f7f9fa;
-    z-index: 1;
+    z-index: 5;
   }
 
-  /* 避免 hover 改掉固定小區欄的背景 */
-  #peopleTable tbody tr:hover td:nth-child(2) {
+  /* 避免 hover 改掉固定姓名欄的背景 */
+  #peopleTable tbody tr:hover td:nth-child(3) {
     background: #fafcfc;
   }
 }

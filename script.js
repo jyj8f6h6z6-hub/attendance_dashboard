@@ -2101,7 +2101,6 @@
                   />
                   <span>
                     ${escapeHtml(item.smallDistrict)}
-                    <em>${escapeHtml(item.district)}</em>
                   </span>
                   <small>${item.count} 人</small>
                 </label>
