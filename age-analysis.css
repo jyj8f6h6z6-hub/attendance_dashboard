@@ -671,3 +671,147 @@ button.age-label.is-selected {
   }
 
 }
+
+/* =========================================
+   人員明細：大區 / 小區複選篩選
+========================================= */
+
+#peoplePanel > .section-head {
+  align-items: flex-start;
+}
+
+.people-area-filters {
+  flex: 1 1 420px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+
+.people-area-multi {
+  flex: 0 1 190px;
+  min-width: 150px;
+}
+
+.people-area-multi > summary {
+  max-width: none;
+  width: 100%;
+  font-size: 13px;
+}
+
+.people-area-panel {
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  width: 280px;
+}
+
+.people-filter-caption {
+  padding: 1px 2px 8px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  border-bottom: 1px solid #edf1f3;
+}
+
+.people-area-options {
+  max-height: 260px;
+}
+
+.people-area-option {
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.people-area-option span {
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.people-area-option span em {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.people-area-option small {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.people-filter-empty {
+  padding: 12px 4px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+.people-area-clear {
+  appearance: none;
+  min-height: 38px;
+  border: 1px solid rgba(49, 91, 102, .18);
+  border-radius: 999px;
+  padding: 7px 12px;
+  background: #fff;
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.people-area-clear:hover {
+  background: var(--accent-soft);
+}
+
+.people-area-clear.hidden {
+  display: none;
+}
+
+@media (max-width: 1050px) {
+
+  #peoplePanel > .section-head {
+    flex-wrap: wrap;
+  }
+
+  .people-area-filters {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+
+  .people-area-panel {
+    left: 0;
+    transform: none;
+  }
+}
+
+@media (max-width: 680px) {
+
+  .people-area-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .people-area-multi,
+  .people-area-clear {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .people-area-panel {
+    width: min(88vw, 310px);
+  }
+}
+

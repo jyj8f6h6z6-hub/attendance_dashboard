@@ -503,13 +503,33 @@ select:focus-visible,
 }
 
 /* ========================================
-   手機版：人員明細凍結「大區 / 小區 / 姓名」
+   手機版：人員明細只凍結「小區」
+   大區與姓名會跟著表格左右捲動。
 ======================================== */
 @media (max-width: 680px) {
 
-  /* 第1欄：大區 */
-  #peopleTable th:nth-child(1),
+  /* 第1欄：大區不做左右凍結；表頭仍維持上下凍結 */
   #peopleTable td:nth-child(1) {
+    position: static;
+    width: 58px;
+    min-width: 58px;
+    max-width: 58px;
+  }
+
+  #peopleTable th:nth-child(1) {
+    position: sticky;
+    top: 0;
+    left: auto;
+    width: 58px;
+    min-width: 58px;
+    max-width: 58px;
+    background: #f7f9fa;
+    z-index: 1;
+  }
+
+  /* 第2欄：只凍結小區，左右捲動時固定在畫面最左側 */
+  #peopleTable th:nth-child(2),
+  #peopleTable td:nth-child(2) {
     position: sticky;
     left: 0;
     width: 58px;
@@ -517,43 +537,41 @@ select:focus-visible,
     max-width: 58px;
     background: #fff;
     z-index: 3;
-  }
-
-  /* 第2欄：小區 */
-  #peopleTable th:nth-child(2),
-  #peopleTable td:nth-child(2) {
-    position: sticky;
-    left: 58px;
-    width: 58px;
-    min-width: 58px;
-    max-width: 58px;
-    background: #fff;
-    z-index: 3;
-  }
-
-  /* 第3欄：姓名 */
-  #peopleTable th:nth-child(3),
-  #peopleTable td:nth-child(3) {
-    position: sticky;
-    left: 116px;
-    width: 125px;
-    min-width: 125px;
-    max-width: 125px;
-    background: #fff;
-    z-index: 3;
-
-    /* 右側陰影，讓凍結區域更容易辨識 */
     box-shadow: 5px 0 7px -6px rgba(0, 0, 0, .35);
   }
 
-  /* 表頭必須蓋在資料列上方 */
-  #peopleTable th:nth-child(-n+3) {
+  #peopleTable th:nth-child(2) {
+    top: 0;
     background: #f7f9fa;
     z-index: 5;
   }
 
-  /* 避免滑鼠/觸控 hover 改掉固定欄背景 */
-  #peopleTable tbody tr:hover td:nth-child(-n+3) {
+  /* 第3欄：姓名不做左右凍結；欄寬約三個中文字，超過就換行 */
+  #peopleTable th:nth-child(3),
+  #peopleTable td:nth-child(3) {
+    width: calc(3em + 24px);
+    min-width: calc(3em + 24px);
+    max-width: calc(3em + 24px);
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+    line-height: 1.45;
+  }
+
+  #peopleTable td:nth-child(3) {
+    position: static;
+  }
+
+  #peopleTable th:nth-child(3) {
+    position: sticky;
+    top: 0;
+    left: auto;
+    background: #f7f9fa;
+    z-index: 1;
+  }
+
+  /* 避免 hover 改掉固定小區欄的背景 */
+  #peopleTable tbody tr:hover td:nth-child(2) {
     background: #fafcfc;
   }
 }

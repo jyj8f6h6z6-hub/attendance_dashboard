@@ -989,6 +989,111 @@
 
 
 
+          <!-- 人員明細：大區 / 小區複選篩選 -->
+
+          <div
+            class="people-area-filters"
+            id="peopleAreaFilters"
+          >
+
+            <details
+              class="multi-select people-area-multi"
+              id="peopleDistrictMultiSelect"
+            >
+
+              <summary id="peopleDistrictSummary">
+                大區：全部
+              </summary>
+
+              <div class="multi-panel people-area-panel">
+
+                <div class="people-filter-caption">
+                  只列出目前名單中有人的大區，可複選
+                </div>
+
+                <div
+                  class="group-options single-col people-area-options"
+                  id="peopleDistrictOptions"
+                ></div>
+
+                <div class="multi-actions">
+                  <button
+                    type="button"
+                    id="clearPeopleDistrictFilter"
+                    class="link-btn"
+                  >
+                    清除大區
+                  </button>
+
+                  <button
+                    type="button"
+                    id="closePeopleDistrictFilter"
+                    class="primary-small"
+                  >
+                    完成
+                  </button>
+                </div>
+
+              </div>
+
+            </details>
+
+
+            <details
+              class="multi-select people-area-multi hidden"
+              id="peopleSmallDistrictMultiSelect"
+            >
+
+              <summary id="peopleSmallDistrictSummary">
+                小區：全部
+              </summary>
+
+              <div class="multi-panel people-area-panel">
+
+                <div class="people-filter-caption">
+                  顯示已選大區所屬的小區，可再複選
+                </div>
+
+                <div
+                  class="group-options single-col people-area-options"
+                  id="peopleSmallDistrictOptions"
+                ></div>
+
+                <div class="multi-actions">
+                  <button
+                    type="button"
+                    id="clearPeopleSmallDistrictFilter"
+                    class="link-btn"
+                  >
+                    清除小區
+                  </button>
+
+                  <button
+                    type="button"
+                    id="closePeopleSmallDistrictFilter"
+                    class="primary-small"
+                  >
+                    完成
+                  </button>
+                </div>
+
+              </div>
+
+            </details>
+
+
+            <button
+              type="button"
+              id="clearPeopleAreaFilter"
+              class="people-area-clear hidden"
+            >
+              清除名單篩選
+            </button>
+
+          </div>
+
+
+
           <!-- 圖表連動篩選提示 -->
 
           <div

@@ -42,6 +42,13 @@
     selectedStatuses: new Set(),
 
     /*
+     * 人員明細區域複選篩選
+     * 只影響人員明細，不影響四張分析圖。
+     */
+    selectedPeopleDistricts: new Set(),
+    selectedPeopleSmallDistricts: new Set(),
+
+    /*
      * 圖表點擊連動
      */
     chartType: '',
@@ -130,6 +137,39 @@
       document.querySelector(
         '#peopleTable tbody'
       ),
+
+    peopleDistrictMultiSelect:
+      $('peopleDistrictMultiSelect'),
+
+    peopleDistrictSummary:
+      $('peopleDistrictSummary'),
+
+    peopleDistrictOptions:
+      $('peopleDistrictOptions'),
+
+    clearPeopleDistrictFilter:
+      $('clearPeopleDistrictFilter'),
+
+    closePeopleDistrictFilter:
+      $('closePeopleDistrictFilter'),
+
+    peopleSmallDistrictMultiSelect:
+      $('peopleSmallDistrictMultiSelect'),
+
+    peopleSmallDistrictSummary:
+      $('peopleSmallDistrictSummary'),
+
+    peopleSmallDistrictOptions:
+      $('peopleSmallDistrictOptions'),
+
+    clearPeopleSmallDistrictFilter:
+      $('clearPeopleSmallDistrictFilter'),
+
+    closePeopleSmallDistrictFilter:
+      $('closePeopleSmallDistrictFilter'),
+
+    clearPeopleAreaFilter:
+      $('clearPeopleAreaFilter'),
 
     chartFilterIndicator:
       $('chartFilterIndicator'),
@@ -466,8 +506,14 @@
 
     /*
      * 匯入新檔案時，
-     * 清除上一份圖表點擊狀態。
+     * 清除上一份圖表點擊與人員明細區域篩選狀態。
      */
+    state.selectedPeopleDistricts =
+      new Set();
+
+    state.selectedPeopleSmallDistricts =
+      new Set();
+
     state.chartType = '';
     state.chartGroup = '';
     state.chartDistrict = '';
@@ -1847,6 +1893,298 @@
   }
 
 
+  function peopleSmallDistrictKey(
+    person
+  ) {
+
+    return `${person.district}::${person.smallDistrict}`;
+  }
+
+
+  function sortZh(values) {
+
+    return [...values].sort(
+      (a, b) =>
+        a.localeCompare(
+          b,
+          'zh-Hant',
+          {
+            numeric: true
+          }
+        )
+    );
+  }
+
+
+  function updatePeopleAreaFilterUI(
+    candidates
+  ) {
+
+    if (
+      !els.peopleDistrictOptions ||
+      !els.peopleDistrictSummary ||
+      !els.peopleSmallDistrictOptions ||
+      !els.peopleSmallDistrictSummary
+    ) {
+      return;
+    }
+
+
+    const availableDistricts =
+      new Set(
+        candidates
+          .map(p => p.district)
+          .filter(Boolean)
+      );
+
+
+    state.selectedPeopleDistricts =
+      new Set(
+        [...state.selectedPeopleDistricts]
+          .filter(
+            district =>
+              availableDistricts.has(district)
+          )
+      );
+
+
+    const districtList =
+      sortZh(availableDistricts);
+
+
+    els.peopleDistrictOptions.innerHTML =
+      districtList.length
+        ? districtList
+            .map(
+              district => {
+
+                const count =
+                  candidates.filter(
+                    p => p.district === district
+                  ).length;
+
+                return `
+                  <label class="group-option people-area-option">
+                    <input
+                      type="checkbox"
+                      value="${escapeAttr(district)}"
+                      data-people-district="${escapeAttr(district)}"
+                      ${state.selectedPeopleDistricts.has(district) ? 'checked' : ''}
+                    />
+                    <span>${escapeHtml(district)}</span>
+                    <small>${count} 人</small>
+                  </label>
+                `;
+              }
+            )
+            .join('')
+        : '<div class="people-filter-empty">目前沒有可選大區</div>';
+
+
+    const selectedDistricts =
+      sortZh(state.selectedPeopleDistricts);
+
+
+    els.peopleDistrictSummary.textContent =
+      !selectedDistricts.length
+        ? '大區：全部'
+        : selectedDistricts.length === 1
+          ? `大區：${selectedDistricts[0]}`
+          : `大區：已選 ${selectedDistricts.length} 項`;
+
+
+    const smallCandidates =
+      selectedDistricts.length
+        ? candidates.filter(
+            p =>
+              state.selectedPeopleDistricts.has(
+                p.district
+              )
+          )
+        : [];
+
+
+    const availableSmallMap =
+      new Map();
+
+
+    smallCandidates.forEach(
+      p => {
+
+        if (!p.smallDistrict) {
+          return;
+        }
+
+        const key =
+          peopleSmallDistrictKey(p);
+
+        if (!availableSmallMap.has(key)) {
+          availableSmallMap.set(
+            key,
+            {
+              key,
+              district: p.district,
+              smallDistrict: p.smallDistrict,
+              count: 0
+            }
+          );
+        }
+
+        availableSmallMap.get(key).count++;
+      }
+    );
+
+
+    state.selectedPeopleSmallDistricts =
+      new Set(
+        [...state.selectedPeopleSmallDistricts]
+          .filter(
+            key =>
+              availableSmallMap.has(key)
+          )
+      );
+
+
+    const smallList =
+      [...availableSmallMap.values()]
+        .sort(
+          (a, b) => {
+
+            const districtCompare =
+              a.district.localeCompare(
+                b.district,
+                'zh-Hant',
+                { numeric: true }
+              );
+
+            if (districtCompare) {
+              return districtCompare;
+            }
+
+            return a.smallDistrict.localeCompare(
+              b.smallDistrict,
+              'zh-Hant',
+              { numeric: true }
+            );
+          }
+        );
+
+
+    if (
+      els.peopleSmallDistrictMultiSelect
+    ) {
+
+      els.peopleSmallDistrictMultiSelect
+        .classList
+        .toggle(
+          'hidden',
+          !selectedDistricts.length
+        );
+
+      if (!selectedDistricts.length) {
+        els.peopleSmallDistrictMultiSelect.open = false;
+      }
+    }
+
+
+    els.peopleSmallDistrictOptions.innerHTML =
+      smallList.length
+        ? smallList
+            .map(
+              item => `
+                <label class="group-option people-area-option">
+                  <input
+                    type="checkbox"
+                    value="${escapeAttr(item.key)}"
+                    data-people-small-district="${escapeAttr(item.key)}"
+                    ${state.selectedPeopleSmallDistricts.has(item.key) ? 'checked' : ''}
+                  />
+                  <span>
+                    ${escapeHtml(item.smallDistrict)}
+                    <em>${escapeHtml(item.district)}</em>
+                  </span>
+                  <small>${item.count} 人</small>
+                </label>
+              `
+            )
+            .join('')
+        : '<div class="people-filter-empty">所選大區目前沒有小區資料</div>';
+
+
+    const selectedSmallCount =
+      state.selectedPeopleSmallDistricts.size;
+
+
+    els.peopleSmallDistrictSummary.textContent =
+      !selectedSmallCount
+        ? '小區：全部'
+        : selectedSmallCount === 1
+          ? `小區：${(
+              availableSmallMap.get(
+                [...state.selectedPeopleSmallDistricts][0]
+              )?.smallDistrict || ''
+            )}`
+          : `小區：已選 ${selectedSmallCount} 項`;
+
+
+    const localActive =
+      Boolean(
+        state.selectedPeopleDistricts.size ||
+        state.selectedPeopleSmallDistricts.size
+      );
+
+
+    if (els.clearPeopleAreaFilter) {
+      els.clearPeopleAreaFilter
+        .classList
+        .toggle(
+          'hidden',
+          !localActive
+        );
+    }
+  }
+
+
+  function clearPeopleAreaFilters() {
+
+    state.selectedPeopleDistricts =
+      new Set();
+
+    state.selectedPeopleSmallDistricts =
+      new Set();
+
+    renderPeople();
+  }
+
+
+  function getPeopleAreaFilteredPeople(
+    candidates
+  ) {
+
+    return candidates.filter(
+      person => {
+
+        const matchesDistrict =
+          !state.selectedPeopleDistricts.size ||
+          state.selectedPeopleDistricts.has(
+            person.district
+          );
+
+        const matchesSmallDistrict =
+          !state.selectedPeopleSmallDistricts.size ||
+          state.selectedPeopleSmallDistricts.has(
+            peopleSmallDistrictKey(person)
+          );
+
+        return (
+          matchesDistrict &&
+          matchesSmallDistrict
+        );
+      }
+    );
+  }
+
+
   function renderPeople() {
 
     const base =
@@ -1861,7 +2199,7 @@
     const chartDistrict =
       state.chartDistrict;
 
-    const visible =
+    const chartVisible =
       base.people.filter(
         p =>
           matchesChartGroup(p, chartGroup) &&
@@ -1872,6 +2210,28 @@
           matchesChartTypeStatus(p, chartType)
       );
 
+
+    /*
+     * 名單區的大區 / 小區複選，
+     * 只以目前已列出的 chartVisible 為選項來源。
+     */
+    updatePeopleAreaFilterUI(
+      chartVisible
+    );
+
+
+    const visible =
+      getPeopleAreaFilteredPeople(
+        chartVisible
+      );
+
+
+    const peopleAreaActive =
+      Boolean(
+        state.selectedPeopleDistricts.size ||
+        state.selectedPeopleSmallDistricts.size
+      );
+
     const chartActive =
       Boolean(
         chartType ||
@@ -1879,9 +2239,24 @@
         chartDistrict
       );
 
-    if (chartActive) {
+    if (chartActive || peopleAreaActive) {
+
+      const sourceCount =
+        chartVisible.length;
+
+      const labels = [];
+
+      if (chartActive) {
+        labels.push('圖表篩選');
+      }
+
+      if (peopleAreaActive) {
+        labels.push('大區／小區篩選');
+      }
+
       els.resultCount.textContent =
-        `目前圖表篩選：${visible.length} 人`;
+        `目前${labels.join('＋')}：${visible.length} / ${sourceCount} 人`;
+
     } else if (base.exclusionActive) {
       els.resultCount.innerHTML = `
         顯示
@@ -2133,7 +2508,9 @@
 
     [
       els.groupMultiSelect,
-      els.statusMultiSelect
+      els.statusMultiSelect,
+      els.peopleDistrictMultiSelect,
+      els.peopleSmallDistrictMultiSelect
     ].forEach(
       details => {
 
@@ -2286,6 +2663,13 @@
 
 
     state.selectedStatuses =
+      new Set();
+
+
+    state.selectedPeopleDistricts =
+      new Set();
+
+    state.selectedPeopleSmallDistricts =
       new Set();
 
 
@@ -2671,15 +3055,214 @@
         );
 
 
+      const insidePeopleDistrict =
+        els.peopleDistrictMultiSelect &&
+        els.peopleDistrictMultiSelect.contains(
+          e.target
+        );
+
+
+      const insidePeopleSmallDistrict =
+        els.peopleSmallDistrictMultiSelect &&
+        els.peopleSmallDistrictMultiSelect.contains(
+          e.target
+        );
+
+
       if (
         !insideGroup &&
-        !insideStatus
+        !insideStatus &&
+        !insidePeopleDistrict &&
+        !insidePeopleSmallDistrict
       ) {
 
         closeMultiSelects();
       }
     }
   );
+
+
+  /*
+   * ========================================
+   * 人員明細：大區 / 小區複選
+   * ========================================
+   */
+
+  if (els.peopleDistrictOptions) {
+
+    els.peopleDistrictOptions.addEventListener(
+      'change',
+      e => {
+
+        const input =
+          e.target.closest(
+            'input[data-people-district]'
+          );
+
+        if (!input) {
+          return;
+        }
+
+        const district =
+          input.dataset.peopleDistrict || '';
+
+        if (input.checked) {
+          state.selectedPeopleDistricts.add(
+            district
+          );
+        } else {
+          state.selectedPeopleDistricts.delete(
+            district
+          );
+        }
+
+        /*
+         * 大區變更後，小區可選範圍會一起更新；
+         * 不屬於已選大區的小區會自動移除。
+         */
+        renderPeople();
+
+        if (
+          state.selectedPeopleDistricts.size &&
+          els.peopleSmallDistrictMultiSelect
+        ) {
+          els.peopleSmallDistrictMultiSelect
+            .classList
+            .remove('hidden');
+        }
+      }
+    );
+  }
+
+
+  if (els.peopleSmallDistrictOptions) {
+
+    els.peopleSmallDistrictOptions.addEventListener(
+      'change',
+      e => {
+
+        const input =
+          e.target.closest(
+            'input[data-people-small-district]'
+          );
+
+        if (!input) {
+          return;
+        }
+
+        const key =
+          input.dataset.peopleSmallDistrict || '';
+
+        if (input.checked) {
+          state.selectedPeopleSmallDistricts.add(
+            key
+          );
+        } else {
+          state.selectedPeopleSmallDistricts.delete(
+            key
+          );
+        }
+
+        renderPeople();
+      }
+    );
+  }
+
+
+  if (els.clearPeopleDistrictFilter) {
+
+    els.clearPeopleDistrictFilter.addEventListener(
+      'click',
+      () => {
+
+        state.selectedPeopleDistricts =
+          new Set();
+
+        state.selectedPeopleSmallDistricts =
+          new Set();
+
+        renderPeople();
+      }
+    );
+  }
+
+
+  if (els.clearPeopleSmallDistrictFilter) {
+
+    els.clearPeopleSmallDistrictFilter.addEventListener(
+      'click',
+      () => {
+
+        state.selectedPeopleSmallDistricts =
+          new Set();
+
+        renderPeople();
+      }
+    );
+  }
+
+
+  if (els.clearPeopleAreaFilter) {
+
+    els.clearPeopleAreaFilter.addEventListener(
+      'click',
+      clearPeopleAreaFilters
+    );
+  }
+
+
+  if (els.closePeopleDistrictFilter) {
+
+    els.closePeopleDistrictFilter.addEventListener(
+      'click',
+      () => {
+        els.peopleDistrictMultiSelect.open = false;
+      }
+    );
+  }
+
+
+  if (els.closePeopleSmallDistrictFilter) {
+
+    els.closePeopleSmallDistrictFilter.addEventListener(
+      'click',
+      () => {
+        els.peopleSmallDistrictMultiSelect.open = false;
+      }
+    );
+  }
+
+
+  if (els.peopleDistrictMultiSelect) {
+
+    els.peopleDistrictMultiSelect.addEventListener(
+      'toggle',
+      () => {
+
+        if (els.peopleDistrictMultiSelect.open) {
+          closeMultiSelects(
+            els.peopleDistrictMultiSelect
+          );
+        }
+      }
+    );
+  }
+
+
+  if (els.peopleSmallDistrictMultiSelect) {
+
+    els.peopleSmallDistrictMultiSelect.addEventListener(
+      'toggle',
+      () => {
+
+        if (els.peopleSmallDistrictMultiSelect.open) {
+          closeMultiSelects(
+            els.peopleSmallDistrictMultiSelect
+          );
+        }
+      }
+    );
+  }
 
 
   /*
