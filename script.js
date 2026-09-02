@@ -25,7 +25,9 @@
     [STATUS.INACTIVE]: 'inactive'
   };
 
-  const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
+  const MS_WEEK =
+    7 * 24 * 60 * 60 * 1000;
+
 
   const state = {
     fileName: '',
@@ -35,11 +37,22 @@
     windowWeeks: 12,
     indexes: {},
     recentCols: [],
+
     selectedGroups: new Set(),
-    selectedStatuses: new Set()
+    selectedStatuses: new Set(),
+
+    /*
+     * 圖表點擊連動
+     */
+    chartGroup: '',
+    chartDistrict: ''
   };
 
-  const $ = id => document.getElementById(id);
+
+  const $ =
+    id =>
+      document.getElementById(id);
+
 
   const els = {
     fileInput: $('fileInput'),
@@ -60,45 +73,97 @@
     overallBar: $('overallBar'),
     overallLegend: $('overallLegend'),
 
-    districtBody: document.querySelector('#districtTable tbody'),
+    districtBody:
+      document.querySelector(
+        '#districtTable tbody'
+      ),
 
     searchInput: $('searchInput'),
     districtFilter: $('districtFilter'),
-    smallDistrictFilter: $('smallDistrictFilter'),
+    smallDistrictFilter:
+      $('smallDistrictFilter'),
 
-    // 排除條件
-    totalAttendanceFilter: $('totalAttendanceFilter'),
-    absenceWeeksFilter: $('absenceWeeksFilter'),
+    totalAttendanceFilter:
+      $('totalAttendanceFilter'),
 
-    newBelieverFilter: $('newBelieverFilter'),
+    absenceWeeksFilter:
+      $('absenceWeeksFilter'),
 
-    groupMultiSelect: $('groupMultiSelect'),
-    groupFilterSummary: $('groupFilterSummary'),
-    groupFilterOptions: $('groupFilterOptions'),
-    clearGroupFilter: $('clearGroupFilter'),
-    closeGroupFilter: $('closeGroupFilter'),
+    newBelieverFilter:
+      $('newBelieverFilter'),
 
-    statusMultiSelect: $('statusMultiSelect'),
-    statusFilterSummary: $('statusFilterSummary'),
-    statusFilterOptions: $('statusFilterOptions'),
-    clearStatusFilter: $('clearStatusFilter'),
-    closeStatusFilter: $('closeStatusFilter'),
+    groupMultiSelect:
+      $('groupMultiSelect'),
 
-    resultCount: $('resultCount'),
-    peopleBody: document.querySelector('#peopleTable tbody')
+    groupFilterSummary:
+      $('groupFilterSummary'),
+
+    groupFilterOptions:
+      $('groupFilterOptions'),
+
+    clearGroupFilter:
+      $('clearGroupFilter'),
+
+    closeGroupFilter:
+      $('closeGroupFilter'),
+
+    statusMultiSelect:
+      $('statusMultiSelect'),
+
+    statusFilterSummary:
+      $('statusFilterSummary'),
+
+    statusFilterOptions:
+      $('statusFilterOptions'),
+
+    clearStatusFilter:
+      $('clearStatusFilter'),
+
+    closeStatusFilter:
+      $('closeStatusFilter'),
+
+    resultCount:
+      $('resultCount'),
+
+    peopleBody:
+      document.querySelector(
+        '#peopleTable tbody'
+      ),
+
+    chartFilterIndicator:
+      $('chartFilterIndicator'),
+
+    chartFilterText:
+      $('chartFilterText'),
+
+    clearChartFilter:
+      $('clearChartFilter'),
+
+    peoplePanel:
+      $('peoplePanel')
   };
 
 
   function excelDateToDate(value) {
+
     if (
       value instanceof Date &&
-      !Number.isNaN(value.getTime())
+      !Number.isNaN(
+        value.getTime()
+      )
     ) {
       return startOfDay(value);
     }
 
-    if (typeof value === 'number') {
-      const parts = XLSX.SSF.parse_date_code(value);
+
+    if (
+      typeof value === 'number'
+    ) {
+
+      const parts =
+        XLSX.SSF.parse_date_code(
+          value
+        );
 
       if (!parts) {
         return null;
@@ -111,16 +176,23 @@
       );
     }
 
-    if (typeof value === 'string') {
-      const s = value.trim();
+
+    if (
+      typeof value === 'string'
+    ) {
+
+      const s =
+        value.trim();
 
       if (!s) {
         return null;
       }
 
-      let m = s.match(
-        /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/
-      );
+
+      let m =
+        s.match(
+          /^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/
+        );
 
       if (m) {
         return new Date(
@@ -130,9 +202,11 @@
         );
       }
 
-      m = s.match(
-        /^(\d{4})[-\/.](\d{1,2})$/
-      );
+
+      m =
+        s.match(
+          /^(\d{4})[-\/.](\d{1,2})$/
+        );
 
       if (m) {
         return new Date(
@@ -143,11 +217,13 @@
       }
     }
 
+
     return null;
   }
 
 
   function startOfDay(d) {
+
     return new Date(
       d.getFullYear(),
       d.getMonth(),
@@ -157,18 +233,29 @@
 
 
   function isAttendance(value) {
-    if (typeof value === 'number') {
+
+    if (
+      typeof value === 'number'
+    ) {
       return value > 0;
     }
 
-    if (typeof value === 'boolean') {
+
+    if (
+      typeof value === 'boolean'
+    ) {
       return value;
     }
 
-    if (typeof value === 'string') {
-      const s = value
-        .trim()
-        .toLowerCase();
+
+    if (
+      typeof value === 'string'
+    ) {
+
+      const s =
+        value
+          .trim()
+          .toLowerCase();
 
       return [
         '1',
@@ -181,50 +268,78 @@
       ].includes(s);
     }
 
+
     return false;
   }
 
 
   function fmtDate(d) {
+
     return d
       ? `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
       : '—';
   }
 
 
-  function analyzeWorkbook(arrayBuffer, fileName) {
-    const workbook = XLSX.read(
-      arrayBuffer,
-      {
-        type: 'array',
-        cellDates: false,
-        raw: true
-      }
-    );
+  function analyzeWorkbook(
+    arrayBuffer,
+    fileName
+  ) {
 
-    if (!workbook.SheetNames.length) {
-      throw new Error('找不到工作表。');
+    const workbook =
+      XLSX.read(
+        arrayBuffer,
+        {
+          type: 'array',
+          cellDates: false,
+          raw: true
+        }
+      );
+
+
+    if (
+      !workbook.SheetNames.length
+    ) {
+      throw new Error(
+        '找不到工作表。'
+      );
     }
+
 
     const sheet =
-      workbook.Sheets[workbook.SheetNames[0]];
+      workbook.Sheets[
+        workbook.SheetNames[0]
+      ];
 
-    const rows = XLSX.utils.sheet_to_json(
-      sheet,
-      {
-        header: 1,
-        raw: true,
-        defval: ''
-      }
-    );
 
-    if (rows.length < 2) {
-      throw new Error('工作表沒有足夠資料。');
+    const rows =
+      XLSX.utils.sheet_to_json(
+        sheet,
+        {
+          header: 1,
+          raw: true,
+          defval: ''
+        }
+      );
+
+
+    if (
+      rows.length < 2
+    ) {
+      throw new Error(
+        '工作表沒有足夠資料。'
+      );
     }
 
-    const header = rows[0].map(
-      v => String(v ?? '').trim()
-    );
+
+    const header =
+      rows[0].map(
+        v =>
+          String(
+            v ?? ''
+          ).trim()
+      );
+
 
     const required = [
       '大區',
@@ -233,24 +348,33 @@
       '羣組'
     ];
 
-    const idx = Object.fromEntries(
-      required.map(
-        name => [
-          name,
-          header.indexOf(name)
-        ]
-      )
-    );
 
-    const missing = required.filter(
-      name => idx[name] < 0
-    );
+    const idx =
+      Object.fromEntries(
+        required.map(
+          name => [
+            name,
+            header.indexOf(name)
+          ]
+        )
+      );
 
-    if (missing.length) {
+
+    const missing =
+      required.filter(
+        name =>
+          idx[name] < 0
+      );
+
+
+    if (
+      missing.length
+    ) {
       throw new Error(
         `缺少必要欄位：${missing.join('、')}`
       );
     }
+
 
     const baptismNames = [
       '受浸日期',
@@ -258,12 +382,22 @@
       '受浸'
     ];
 
+
     const baptismIndex =
       baptismNames
-        .map(n => header.indexOf(n))
-        .find(i => i >= 0) ?? -1;
+        .map(
+          n =>
+            header.indexOf(n)
+        )
+        .find(
+          i =>
+            i >= 0
+        ) ?? -1;
 
-    const today = new Date();
+
+    const today =
+      new Date();
+
 
     today.setHours(
       23,
@@ -272,13 +406,22 @@
       999
     );
 
+
     const dateColumns = [];
+
 
     rows[0].forEach(
       (value, col) => {
-        const d = excelDateToDate(value);
 
-        if (d && d <= today) {
+        const d =
+          excelDateToDate(
+            value
+          );
+
+        if (
+          d &&
+          d <= today
+        ) {
           dateColumns.push({
             col,
             date: d
@@ -287,28 +430,56 @@
       }
     );
 
+
     dateColumns.sort(
-      (a, b) => a.date - b.date
+      (a, b) =>
+        a.date - b.date
     );
 
-    if (!dateColumns.length) {
+
+    if (
+      !dateColumns.length
+    ) {
       throw new Error(
         '找不到可辨識的聚會日期欄位。'
       );
     }
 
-    state.fileName = fileName;
-    state.rows = rows;
-    state.dateColumns = dateColumns;
+
+    state.fileName =
+      fileName;
+
+    state.rows =
+      rows;
+
+    state.dateColumns =
+      dateColumns;
+
 
     state.indexes = {
       ...idx,
-      baptism: baptismIndex
+      baptism:
+        baptismIndex
     };
+
+
+    /*
+     * 匯入新檔案時，
+     * 清除上一份圖表點擊狀態。
+     */
+    state.chartGroup = '';
+    state.chartDistrict = '';
+
+    updateChartFilterUI();
+
 
     recalculate();
 
-    if (baptismIndex < 0) {
+
+    if (
+      baptismIndex < 0
+    ) {
+
       els.error.textContent =
         '提醒：這份 Excel 找不到「受浸日期」欄位，因此目前無法判斷初信；其他聚會分析不受影響。';
     }
@@ -322,6 +493,7 @@
     weekly12Weeks,
     weeksSinceLastAttendance
   }) {
+
     if (
       !totalWeeks ||
       weeksSinceLastAttendance === null ||
@@ -330,51 +502,75 @@
       return STATUS.INACTIVE;
     }
 
+
     if (
       weekly12Weeks >= 12 &&
-      weekly12Attendance === weekly12Weeks
+      weekly12Attendance ===
+        weekly12Weeks
     ) {
       return STATUS.WEEKLY;
     }
 
+
     const regularNeeded =
-      Math.ceil(totalWeeks / 3);
+      Math.ceil(
+        totalWeeks / 3
+      );
+
 
     if (
-      attended >= regularNeeded &&
+      attended >=
+        regularNeeded &&
       weeksSinceLastAttendance <= 3
     ) {
       return STATUS.REGULAR;
     }
 
+
     const occasionalNeeded =
-      Math.ceil(totalWeeks / 4);
+      Math.ceil(
+        totalWeeks / 4
+      );
+
 
     if (
-      attended >= occasionalNeeded &&
+      attended >=
+        occasionalNeeded &&
       weeksSinceLastAttendance <= 4
     ) {
       return STATUS.OCCASIONAL;
     }
+
 
     return STATUS.SPORADIC;
   }
 
 
   function recalculate() {
-    if (!state.rows.length) {
+
+    if (
+      !state.rows.length
+    ) {
       return;
     }
 
+
     state.windowWeeks =
-      Number(els.windowSelect.value || 12);
+      Number(
+        els.windowSelect.value ||
+        12
+      );
+
 
     const recentCols =
       state.dateColumns.slice(
         -state.windowWeeks
       );
 
-    state.recentCols = recentCols;
+
+    state.recentCols =
+      recentCols;
+
 
     const referenceDate =
       recentCols.length
@@ -383,183 +579,230 @@
           ].date
         : null;
 
-    const { indexes } = state;
+
+    const { indexes } =
+      state;
+
 
     const weekly12Cols =
       state.dateColumns.slice(-12);
 
+
     state.people =
       state.rows
         .slice(1)
-        .map((row, i) => {
-          const name =
-            String(
-              row[indexes['姓名']] ?? ''
-            ).trim();
+        .map(
+          (row, i) => {
 
-          if (!name) {
-            return null;
-          }
+            const name =
+              String(
+                row[
+                  indexes['姓名']
+                ] ?? ''
+              ).trim();
 
-          const recentAttendance =
-            recentCols.reduce(
-              (sum, x) =>
-                sum +
-                (
-                  isAttendance(row[x.col])
-                    ? 1
-                    : 0
-                ),
-              0
-            );
 
-          const weekly12Attendance =
-            weekly12Cols.reduce(
-              (sum, x) =>
-                sum +
-                (
-                  isAttendance(row[x.col])
-                    ? 1
-                    : 0
-                ),
-              0
-            );
+            if (!name) {
+              return null;
+            }
 
-          const attendedDates =
-            state.dateColumns
-              .filter(
-                x =>
-                  isAttendance(
-                    row[x.col]
+
+            const recentAttendance =
+              recentCols.reduce(
+                (sum, x) =>
+                  sum +
+                  (
+                    isAttendance(
+                      row[x.col]
+                    )
+                      ? 1
+                      : 0
+                  ),
+                0
+              );
+
+
+            const weekly12Attendance =
+              weekly12Cols.reduce(
+                (sum, x) =>
+                  sum +
+                  (
+                    isAttendance(
+                      row[x.col]
+                    )
+                      ? 1
+                      : 0
+                  ),
+                0
+              );
+
+
+            const attendedDates =
+              state.dateColumns
+                .filter(
+                  x =>
+                    isAttendance(
+                      row[x.col]
+                    )
+                )
+                .map(
+                  x => x.date
+                );
+
+
+            const lastAttendanceDate =
+              attendedDates.length
+                ? attendedDates[
+                    attendedDates.length - 1
+                  ]
+                : null;
+
+
+            const weeksSinceLastAttendance =
+              lastAttendanceDate &&
+              referenceDate
+                ? Math.floor(
+                    (
+                      referenceDate -
+                      lastAttendanceDate
+                    ) /
+                    MS_WEEK
                   )
-              )
-              .map(x => x.date);
+                : null;
 
-          const lastAttendanceDate =
-            attendedDates.length
-              ? attendedDates[
-                  attendedDates.length - 1
-                ]
-              : null;
 
-          const weeksSinceLastAttendance =
-            lastAttendanceDate &&
-            referenceDate
-              ? Math.floor(
-                  (
-                    referenceDate -
-                    lastAttendanceDate
-                  ) /
-                  MS_WEEK
+            const totalAttendance =
+              attendedDates.length;
+
+
+            const baptismDate =
+              indexes.baptism >= 0
+                ? excelDateToDate(
+                    row[
+                      indexes.baptism
+                    ]
+                  )
+                : null;
+
+
+            const weeksSinceBaptism =
+              baptismDate &&
+              referenceDate
+                ? Math.floor(
+                    (
+                      referenceDate -
+                      baptismDate
+                    ) /
+                    MS_WEEK
+                  )
+                : null;
+
+
+            let newBelieverStatus =
+              'unknown';
+
+
+            if (
+              weeksSinceBaptism !== null
+            ) {
+
+              newBelieverStatus =
+                (
+                  weeksSinceBaptism >= 0 &&
+                  weeksSinceBaptism <= 104
                 )
-              : null;
+                  ? 'yes'
+                  : 'no';
+            }
 
-          const totalAttendance =
-            attendedDates.length;
 
-          const baptismDate =
-            indexes.baptism >= 0
-              ? excelDateToDate(
-                  row[indexes.baptism]
-                )
-              : null;
+            return {
 
-          const weeksSinceBaptism =
-            baptismDate &&
-            referenceDate
-              ? Math.floor(
-                  (
-                    referenceDate -
-                    baptismDate
-                  ) /
-                  MS_WEEK
-                )
-              : null;
+              rowNumber:
+                i + 2,
 
-          let newBelieverStatus =
-            'unknown';
+              district:
+                String(
+                  row[
+                    indexes['大區']
+                  ] ?? ''
+                ).trim(),
 
-          if (
-            weeksSinceBaptism !== null
-          ) {
-            newBelieverStatus =
-              (
-                weeksSinceBaptism >= 0 &&
-                weeksSinceBaptism <= 104
-              )
-                ? 'yes'
-                : 'no';
+              smallDistrict:
+                String(
+                  row[
+                    indexes['小區']
+                  ] ?? ''
+                ).trim(),
+
+              name,
+
+              group:
+                String(
+                  row[
+                    indexes['羣組']
+                  ] ?? ''
+                ).trim(),
+
+              baptismDate,
+
+              newBelieverStatus,
+
+              isNewBeliever:
+                newBelieverStatus ===
+                'yes',
+
+              recentAttendance,
+
+              recentWeeks:
+                recentCols.length,
+
+              recentRate:
+                recentCols.length
+                  ? recentAttendance /
+                    recentCols.length
+                  : 0,
+
+              totalAttendance,
+
+              lastAttendanceDate,
+
+              weeksSinceLastAttendance,
+
+              weekly12Attendance,
+
+              weekly12Weeks:
+                weekly12Cols.length,
+
+              status:
+                classify({
+                  attended:
+                    recentAttendance,
+
+                  totalWeeks:
+                    recentCols.length,
+
+                  weekly12Attendance,
+
+                  weekly12Weeks:
+                    weekly12Cols.length,
+
+                  weeksSinceLastAttendance
+                })
+            };
           }
-
-          return {
-            rowNumber: i + 2,
-
-            district:
-              String(
-                row[indexes['大區']] ?? ''
-              ).trim(),
-
-            smallDistrict:
-              String(
-                row[indexes['小區']] ?? ''
-              ).trim(),
-
-            name,
-
-            group:
-              String(
-                row[indexes['羣組']] ?? ''
-              ).trim(),
-
-            baptismDate,
-            newBelieverStatus,
-
-            isNewBeliever:
-              newBelieverStatus === 'yes',
-
-            recentAttendance,
-
-            recentWeeks:
-              recentCols.length,
-
-            recentRate:
-              recentCols.length
-                ? recentAttendance /
-                  recentCols.length
-                : 0,
-
-            totalAttendance,
-            lastAttendanceDate,
-            weeksSinceLastAttendance,
-            weekly12Attendance,
-
-            weekly12Weeks:
-              weekly12Cols.length,
-
-            status:
-              classify({
-                attended:
-                  recentAttendance,
-
-                totalWeeks:
-                  recentCols.length,
-
-                weekly12Attendance,
-
-                weekly12Weeks:
-                  weekly12Cols.length,
-
-                weeksSinceLastAttendance
-              })
-          };
-        })
+        )
         .filter(Boolean);
+
 
     renderAll();
   }
 
 
-  function countStatuses(people) {
+  function countStatuses(
+    people
+  ) {
+
     const counts =
       Object.fromEntries(
         STATUS_ORDER.map(
@@ -567,47 +810,65 @@
         )
       );
 
+
     people.forEach(
       p => {
         counts[p.status]++;
       }
     );
 
+
     return counts;
   }
 
 
   function renderAll() {
+
     renderInfo();
+
     renderRuleText();
+
     renderSummary();
+
     renderOverall();
+
     renderDistricts();
+
     buildFilters();
+
     renderPeople();
+
+    updateChartFilterUI();
+
 
     els.dashboard.classList.remove(
       'hidden'
     );
 
-    els.clearBtn.disabled = false;
+
+    els.clearBtn.disabled =
+      false;
   }
 
 
   function renderInfo() {
+
     const allDates =
       state.dateColumns;
 
     const recent =
       state.recentCols;
 
+
     const latestDate =
       allDates[
         allDates.length - 1
       ].date;
 
+
     els.infoFile.textContent =
       state.fileName;
+
 
     els.infoPeriod.textContent =
       `${fmtDate(
@@ -616,10 +877,12 @@
         latestDate
       )}`;
 
+
     els.infoWeeks.textContent =
       `${allDates.length} 週｜目前分析：截至 ${fmtDate(
         latestDate
       )} 最近 ${recent.length} 週`;
+
 
     els.infoPeople.textContent =
       `${state.people.length} 人`;
@@ -627,8 +890,10 @@
 
 
   function renderRuleText() {
+
     const actual =
       state.recentCols.length;
+
 
     const latestDate =
       state.dateColumns.length
@@ -637,19 +902,23 @@
           ].date
         : null;
 
+
     const earliestRecent =
       actual
         ? state.recentCols[0].date
         : null;
 
+
     const periodText =
-      actual < state.windowWeeks
+      actual <
+      state.windowWeeks
         ? `檔案目前只有 ${actual} 個有效週次`
         : `${fmtDate(
             earliestRecent
           )} – ${fmtDate(
             latestDate
           )}`;
+
 
     els.ruleText.textContent =
       `以匯入資料中最新主日 ${fmtDate(
@@ -659,17 +928,24 @@
 
 
   function renderSummary() {
+
     const counts =
-      countStatuses(state.people);
+      countStatuses(
+        state.people
+      );
+
 
     const total =
       state.people.length || 1;
 
+
     const newBelievers =
       state.people.filter(
         p =>
-          p.newBelieverStatus === 'yes'
+          p.newBelieverStatus ===
+          'yes'
       ).length;
+
 
     const unknownBaptism =
       state.people.filter(
@@ -678,7 +954,9 @@
           'unknown'
       ).length;
 
+
     const cards = [
+
       [
         '總人數',
         state.people.length,
@@ -718,11 +996,17 @@
       )
     ];
 
+
     els.summaryCards.innerHTML =
       cards
         .map(
-          ([label, value, note]) => `
+          ([
+            label,
+            value,
+            note
+          ]) => `
             <div class="card">
+
               <span class="label">
                 ${escapeHtml(label)}
               </span>
@@ -734,6 +1018,7 @@
               <span class="note">
                 ${escapeHtml(note)}
               </span>
+
             </div>
           `
         )
@@ -742,61 +1027,78 @@
 
 
   function renderOverall() {
+
     const counts =
-      countStatuses(state.people);
+      countStatuses(
+        state.people
+      );
+
 
     const total =
       state.people.length || 1;
 
+
     els.overallBar.innerHTML =
       STATUS_ORDER
-        .map(s => {
-          const pct =
-            counts[s] /
-            total *
-            100;
+        .map(
+          s => {
 
-          return `
-            <div
-              class="seg-${STATUS_CLASS[s]}"
-              style="width:${pct}%"
-              title="${escapeAttr(
-                `${s} ${counts[s]} 人 (${pct.toFixed(1)}%)`
-              )}"
-            ></div>
-          `;
-        })
+            const pct =
+              counts[s] /
+              total *
+              100;
+
+
+            return `
+              <div
+                class="seg-${STATUS_CLASS[s]}"
+                style="width:${pct}%"
+                title="${escapeAttr(
+                  `${s} ${counts[s]} 人 (${pct.toFixed(1)}%)`
+                )}"
+              ></div>
+            `;
+          }
+        )
         .join('');
+
 
     els.overallLegend.innerHTML =
       STATUS_ORDER
-        .map(s => {
-          const pct =
-            counts[s] /
-            total *
-            100;
+        .map(
+          s => {
 
-          return `
-            <div class="legend-item">
-              <span>
-                <i class="dot ${STATUS_CLASS[s]}"></i>
-                ${escapeHtml(s)}
-              </span>
+            const pct =
+              counts[s] /
+              total *
+              100;
 
-              <strong>
-                ${counts[s]}
-                <small>
-                  ${pct.toFixed(1)}%
-                </small>
-              </strong>
-            </div>
-          `;
-        })
+
+            return `
+              <div class="legend-item">
+
+                <span>
+                  <i class="dot ${STATUS_CLASS[s]}"></i>
+                  ${escapeHtml(s)}
+                </span>
+
+                <strong>
+                  ${counts[s]}
+                  <small>
+                    ${pct.toFixed(1)}%
+                  </small>
+                </strong>
+
+              </div>
+            `;
+          }
+        )
         .join('');
   }
 
 
   function renderDistricts() {
+
     const groups =
       groupBy(
         state.people,
@@ -804,6 +1106,7 @@
           p.district ||
           '未分類'
       );
+
 
     els.districtBody.innerHTML =
       [...groups.entries()]
@@ -815,9 +1118,16 @@
             )
         )
         .map(
-          ([district, people]) => {
+          ([
+            district,
+            people
+          ]) => {
+
             const c =
-              countStatuses(people);
+              countStatuses(
+                people
+              );
+
 
             const stableRate =
               people.length
@@ -829,12 +1139,14 @@
                   100
                 : 0;
 
+
             const nb =
               people.filter(
                 p =>
                   p.newBelieverStatus ===
                   'yes'
               ).length;
+
 
             const unknown =
               people.filter(
@@ -843,8 +1155,10 @@
                   'unknown'
               ).length;
 
+
             return `
               <tr>
+
                 <td>
                   <strong>
                     ${escapeHtml(district)}
@@ -860,6 +1174,7 @@
                 <td>${c[STATUS.SPORADIC]}</td>
                 <td>${c[STATUS.INACTIVE]}</td>
                 <td>${stableRate.toFixed(1)}%</td>
+
               </tr>
             `;
           }
@@ -869,6 +1184,7 @@
 
 
   function buildFilters() {
+
     preserveOptions(
       els.districtFilter,
       unique(
@@ -878,45 +1194,57 @@
       )
     );
 
+
     updateSmallDistrictOptions();
+
     buildGroupOptions();
+
     buildStatusOptions();
   }
 
 
   function availableGroups() {
+
     return unique(
       state.people
-        .map(p => p.group)
-        .filter(Boolean)
-    ).sort(
-      (a, b) =>
-        a.localeCompare(
-          b,
-          'zh-Hant'
+        .map(
+          p => p.group
         )
-    );
+        .filter(Boolean)
+    )
+      .sort(
+        (a, b) =>
+          a.localeCompare(
+            b,
+            'zh-Hant'
+          )
+      );
   }
 
 
   function buildGroupOptions() {
+
     const groups =
       availableGroups();
 
+
     state.selectedGroups =
       new Set(
-        [...state.selectedGroups]
-          .filter(
-            g =>
-              groups.includes(g)
-          )
+        [
+          ...state.selectedGroups
+        ].filter(
+          g =>
+            groups.includes(g)
+        )
       );
+
 
     els.groupFilterOptions.innerHTML =
       groups
         .map(
           g => `
             <label class="group-option">
+
               <input
                 type="checkbox"
                 value="${escapeAttr(g)}"
@@ -930,39 +1258,57 @@
               <span>
                 ${escapeHtml(g)}
               </span>
+
             </label>
           `
         )
         .join('');
+
 
     updateGroupSummary();
   }
 
 
   function updateGroupSummary() {
-    const selected =
-      [...state.selectedGroups];
 
-    if (!selected.length) {
+    const selected =
+      [
+        ...state.selectedGroups
+      ];
+
+
+    if (
+      !selected.length
+    ) {
+
       els.groupFilterSummary.textContent =
         '全部';
+
     } else if (
       selected.length <= 2
     ) {
+
       els.groupFilterSummary.textContent =
         selected.join('＋');
+
     } else {
+
       els.groupFilterSummary.textContent =
         `已選 ${selected.length} 組`;
     }
   }
 
 
-  function setSelectedGroups(groups) {
+  function setSelectedGroups(
+    groups
+  ) {
+
     const available =
       availableGroups();
 
+
     const aliases = {
+
       college: [
         '大專',
         '大學'
@@ -985,6 +1331,7 @@
       ]
     };
 
+
     const resolve =
       key =>
         aliases[key]
@@ -993,30 +1340,44 @@
               available.includes(x)
           );
 
+
     let wanted = [];
 
-    if (groups === 'all') {
+
+    if (
+      groups === 'all'
+    ) {
       wanted = [];
     }
+
 
     if (
       groups ===
       'college-youth'
     ) {
+
       wanted = [
         ...resolve('college'),
         ...resolve('youth')
       ];
     }
 
-    if (groups === 'teen') {
+
+    if (
+      groups === 'teen'
+    ) {
+
       wanted = [
         ...resolve('junior'),
         ...resolve('senior')
       ];
     }
 
-    if (groups === 'student') {
+
+    if (
+      groups === 'student'
+    ) {
+
       wanted = [
         ...resolve('college'),
         ...resolve('junior'),
@@ -1024,35 +1385,46 @@
       ];
     }
 
-    if (groups === 'child') {
+
+    if (
+      groups === 'child'
+    ) {
+
       wanted = [
         ...resolve('child')
       ];
     }
 
+
     state.selectedGroups =
       new Set(wanted);
 
+
     buildGroupOptions();
+
     renderPeople();
   }
 
 
   function buildStatusOptions() {
+
     state.selectedStatuses =
       new Set(
-        [...state.selectedStatuses]
-          .filter(
-            s =>
-              STATUS_ORDER.includes(s)
-          )
+        [
+          ...state.selectedStatuses
+        ].filter(
+          s =>
+            STATUS_ORDER.includes(s)
+        )
       );
+
 
     els.statusFilterOptions.innerHTML =
       STATUS_ORDER
         .map(
           status => `
             <label class="group-option">
+
               <input
                 type="checkbox"
                 value="${escapeAttr(status)}"
@@ -1067,49 +1439,67 @@
                 <i class="dot ${STATUS_CLASS[status]}"></i>
                 ${escapeHtml(status)}
               </span>
+
             </label>
           `
         )
         .join('');
+
 
     updateStatusSummary();
   }
 
 
   function updateStatusSummary() {
+
     const selected =
       STATUS_ORDER.filter(
         s =>
           state.selectedStatuses.has(s)
       );
 
-    if (!selected.length) {
+
+    if (
+      !selected.length
+    ) {
+
       els.statusFilterSummary.textContent =
         '全部';
+
     } else if (
       selected.length === 1
     ) {
+
       els.statusFilterSummary.textContent =
         selected[0];
+
     } else {
+
       els.statusFilterSummary.textContent =
         `已選 ${selected.length} 項`;
     }
   }
 
 
-  function setSelectedStatuses(statuses) {
+  function setSelectedStatuses(
+    statuses
+  ) {
+
     state.selectedStatuses =
       new Set(statuses);
 
+
     buildStatusOptions();
+
     renderPeople();
   }
 
 
   function updateSmallDistrictOptions() {
+
     const selectedDistrict =
       els.districtFilter.value;
+
 
     const peopleInDistrict =
       selectedDistrict
@@ -1120,11 +1510,13 @@
           )
         : state.people;
 
+
     preserveOptions(
       els.smallDistrictFilter,
       unique(
         peopleInDistrict.map(
-          p => p.smallDistrict
+          p =>
+            p.smallDistrict
         )
       )
     );
@@ -1135,11 +1527,14 @@
     select,
     values
   ) {
+
     const previous =
       select.value;
 
+
     select.innerHTML =
       '<option value="">全部</option>' +
+
       values
         .filter(Boolean)
         .sort(
@@ -1158,14 +1553,17 @@
         )
         .join('');
 
+
     if (
-      [...select.options]
-        .some(
-          o =>
-            o.value ===
-            previous
-        )
+      [
+        ...select.options
+      ].some(
+        o =>
+          o.value ===
+          previous
+      )
     ) {
+
       select.value =
         previous;
     }
@@ -1177,9 +1575,13 @@
   ======================================== */
 
   function getAvailableHistoryWeeks() {
-    if (!state.dateColumns.length) {
+
+    if (
+      !state.dateColumns.length
+    ) {
       return 0;
     }
+
 
     if (
       state.dateColumns.length === 1
@@ -1187,13 +1589,16 @@
       return 1;
     }
 
+
     const firstDate =
       state.dateColumns[0].date;
+
 
     const lastDate =
       state.dateColumns[
         state.dateColumns.length - 1
       ].date;
+
 
     return (
       Math.floor(
@@ -1213,11 +1618,14 @@
     absenceWeeks,
     availableHistoryWeeks
   ) {
+
     const hasTotalCondition =
       maxTotalAttendance !== null;
 
+
     const hasAbsenceCondition =
       absenceWeeks !== null;
+
 
     if (
       !hasTotalCondition &&
@@ -1227,7 +1635,6 @@
     }
 
 
-    /* 總聚會最多 */
     const matchesLowAttendance =
       hasTotalCondition
         ? person.totalAttendance <=
@@ -1235,25 +1642,25 @@
         : false;
 
 
-    /* 未聚會達 */
-    let matchesLongAbsence = false;
+    let matchesLongAbsence =
+      false;
 
-    if (hasAbsenceCondition) {
+
+    if (
+      hasAbsenceCondition
+    ) {
 
       if (
         person.weeksSinceLastAttendance !==
         null
       ) {
+
         matchesLongAbsence =
           person.weeksSinceLastAttendance >=
           absenceWeeks;
+
       } else {
 
-        /*
-         * 從來沒有聚會紀錄的人，
-         * 只有 Excel 涵蓋期間已足夠長，
-         * 才能判斷為符合。
-         */
         matchesLongAbsence =
           availableHistoryWeeks >=
           absenceWeeks;
@@ -1261,14 +1668,11 @@
     }
 
 
-    /*
-     * 兩項都有設定：
-     * 必須同時符合才排除
-     */
     if (
       hasTotalCondition &&
       hasAbsenceCondition
     ) {
+
       return (
         matchesLowAttendance &&
         matchesLongAbsence
@@ -1276,53 +1680,112 @@
     }
 
 
-    /*
-     * 只有總聚會次數
-     */
-    if (hasTotalCondition) {
+    if (
+      hasTotalCondition
+    ) {
+
       return matchesLowAttendance;
     }
 
 
-    /*
-     * 只有未聚會週數
-     */
     return matchesLongAbsence;
   }
 
 
+  /*
+   * ========================================
+   * 圖表群組判斷
+   * ========================================
+   */
+
+  function matchesChartGroup(
+    person,
+    chartGroup
+  ) {
+
+    if (
+      !chartGroup
+    ) {
+      return true;
+    }
+
+
+    /*
+     * 左圖的「青少年」
+     * 是合併群組。
+     */
+    if (
+      chartGroup ===
+      '青少年'
+    ) {
+
+      return [
+        '國中',
+        '高中',
+        '中學'
+      ].includes(
+        person.group
+      );
+    }
+
+
+    return (
+      person.group ===
+      chartGroup
+    );
+  }
+
+
+  /*
+   * ========================================
+   * 人員明細
+   * ========================================
+   */
+
   function renderPeople() {
+
     const q =
       els.searchInput
         .value
         .trim()
         .toLowerCase();
 
+
     const district =
       els.districtFilter.value;
+
 
     const small =
       els.smallDistrictFilter.value;
 
+
     const nb =
       els.newBelieverFilter.value;
 
+
     const selectedGroups =
       state.selectedGroups;
+
 
     const selectedStatuses =
       state.selectedStatuses;
 
 
-    /*
-     * 讀取排除設定
-     */
+    const chartGroup =
+      state.chartGroup;
+
+
+    const chartDistrict =
+      state.chartDistrict;
+
+
     const maxTotalAttendance =
       els.totalAttendanceFilter.value === ''
         ? null
         : Number(
             els.totalAttendanceFilter.value
           );
+
 
     const absenceWeeks =
       els.absenceWeeksFilter.value === ''
@@ -1331,29 +1794,33 @@
             els.absenceWeeksFilter.value
           );
 
+
     const availableHistoryWeeks =
       getAvailableHistoryWeeks();
 
 
-    /*
-     * 先處理一般篩選
-     */
     const normalFiltered =
       state.people.filter(
         p => {
+
           const matchesSearch =
             !q ||
             p.name
               .toLowerCase()
               .includes(q);
 
+
           const matchesDistrict =
             !district ||
-            p.district === district;
+            p.district ===
+            district;
+
 
           const matchesSmallDistrict =
             !small ||
-            p.smallDistrict === small;
+            p.smallDistrict ===
+            small;
+
 
           const matchesGroup =
             !selectedGroups.size ||
@@ -1361,15 +1828,57 @@
               p.group
             );
 
+
           const matchesStatus =
             !selectedStatuses.size ||
             selectedStatuses.has(
               p.status
             );
 
+
           const matchesNewBeliever =
             !nb ||
-            p.newBelieverStatus === nb;
+            p.newBelieverStatus ===
+            nb;
+
+
+          /*
+           * 圖表連動：
+           * 群組
+           */
+          const matchesChartGroupValue =
+            matchesChartGroup(
+              p,
+              chartGroup
+            );
+
+
+          /*
+           * 圖表連動：
+           * 大區
+           */
+          const matchesChartDistrict =
+            !chartDistrict ||
+            p.district ===
+            chartDistrict;
+
+
+          /*
+          * 圖表「穩定聚會」連動
+          *
+          * 這兩張圖的統計對象都是：
+          * 週週聚會 + 常聚會
+          *
+          * 因此只要是從圖表點進來，
+          * 人員明細也必須只顯示穩定聚會者。
+          */
+          const matchesChartStableStatus =
+            !chartGroup ||
+            (
+              p.status === STATUS.WEEKLY ||
+              p.status === STATUS.REGULAR
+            );
+
 
           return (
             matchesSearch &&
@@ -1377,15 +1886,15 @@
             matchesSmallDistrict &&
             matchesGroup &&
             matchesStatus &&
-            matchesNewBeliever
+            matchesNewBeliever &&
+            matchesChartGroupValue &&
+            matchesChartDistrict &&
+            matchesChartStableStatus
           );
         }
       );
 
 
-    /*
-     * 找出被排除的人
-     */
     const excluded =
       normalFiltered.filter(
         p =>
@@ -1398,9 +1907,6 @@
       );
 
 
-    /*
-     * 最後真正顯示的人
-     */
     const visible =
       normalFiltered.filter(
         p =>
@@ -1418,23 +1924,48 @@
       absenceWeeks !== null;
 
 
-    if (exclusionActive) {
+    if (
+      exclusionActive
+    ) {
+
       els.resultCount.innerHTML = `
         顯示
-        <strong>${visible.length}</strong>
+        <strong>
+          ${visible.length}
+        </strong>
         /
         ${normalFiltered.length}
         人
 
         <span class="excluded-count">
           ｜已排除
-          <strong>${excluded.length}</strong>
+          <strong>
+            ${excluded.length}
+          </strong>
           人
         </span>
       `;
+
     } else {
-      els.resultCount.textContent =
-        `顯示 ${visible.length} / ${state.people.length} 人`;
+
+      /*
+       * 有圖表篩選時，
+       * 分母改成目前符合條件的人數，
+       * 看起來比較直覺。
+       */
+      if (
+        chartGroup ||
+        chartDistrict
+      ) {
+
+        els.resultCount.textContent =
+          `目前圖表篩選：${visible.length} 人`;
+
+      } else {
+
+        els.resultCount.textContent =
+          `顯示 ${visible.length} / ${state.people.length} 人`;
+      }
     }
 
 
@@ -1445,21 +1976,29 @@
             <tr>
 
               <td>
-                ${escapeHtml(p.district)}
+                ${escapeHtml(
+                  p.district
+                )}
               </td>
 
               <td>
-                ${escapeHtml(p.smallDistrict)}
+                ${escapeHtml(
+                  p.smallDistrict
+                )}
               </td>
 
               <td>
                 <strong>
-                  ${escapeHtml(p.name)}
+                  ${escapeHtml(
+                    p.name
+                  )}
                 </strong>
               </td>
 
               <td>
-                ${escapeHtml(p.group)}
+                ${escapeHtml(
+                  p.group
+                )}
               </td>
 
               <td>
@@ -1486,7 +2025,9 @@
 
               <td>
                 <span class="status ${STATUS_CLASS[p.status]}">
-                  ${escapeHtml(p.status)}
+                  ${escapeHtml(
+                    p.status
+                  )}
                 </span>
               </td>
 
@@ -1524,50 +2065,233 @@
   }
 
 
+  /*
+   * ========================================
+   * 圖表篩選 UI
+   * ========================================
+   */
+
+  function updateChartFilterUI() {
+
+    if (
+      !els.chartFilterIndicator ||
+      !els.chartFilterText
+    ) {
+      return;
+    }
+
+
+    if (
+      !state.chartGroup
+    ) {
+
+      els.chartFilterIndicator
+        .classList
+        .add('hidden');
+
+
+      els.chartFilterText.textContent =
+        '';
+
+
+      document
+        .querySelectorAll(
+          '.age-filter-trigger'
+        )
+        .forEach(
+          element =>
+            element.classList.remove(
+              'is-selected'
+            )
+        );
+
+
+      return;
+    }
+
+
+    const description =
+      state.chartDistrict
+        ? `${state.chartGroup} × ${state.chartDistrict}`
+        : state.chartGroup;
+
+
+    els.chartFilterText.textContent =
+      `圖表篩選：${description}`;
+
+
+    els.chartFilterIndicator
+      .classList
+      .remove('hidden');
+
+
+    /*
+     * 更新圖表選取外觀
+     */
+    document
+      .querySelectorAll(
+        '.age-filter-trigger'
+      )
+      .forEach(
+        element => {
+
+          const group =
+            element.dataset.ageGroup ||
+            '';
+
+
+          const district =
+            element.dataset.ageDistrict ||
+            '';
+
+
+          const selected =
+            group ===
+              state.chartGroup &&
+            district ===
+              state.chartDistrict;
+
+
+          element.classList.toggle(
+            'is-selected',
+            selected
+          );
+        }
+      );
+  }
+
+
+  function clearChartFilter() {
+
+    state.chartGroup = '';
+
+    state.chartDistrict = '';
+
+
+    renderPeople();
+
+    updateChartFilterUI();
+  }
+
+
+  function applyChartFilter(
+    group,
+    district
+  ) {
+
+    /*
+     * 點同一個項目第二次：
+     * 取消。
+     */
+    if (
+      state.chartGroup === group &&
+      state.chartDistrict ===
+        district
+    ) {
+
+      clearChartFilter();
+
+      return;
+    }
+
+
+    state.chartGroup =
+      group;
+
+
+    state.chartDistrict =
+      district;
+
+
+    renderPeople();
+
+    updateChartFilterUI();
+
+
+    /*
+     * 自動捲到人員明細。
+     */
+    if (
+      els.peoplePanel
+    ) {
+
+      els.peoplePanel.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  }
+
+
   function closeMultiSelects(
     except = null
   ) {
+
     [
       els.groupMultiSelect,
       els.statusMultiSelect
     ].forEach(
       details => {
+
         if (
           details &&
           details !== except
         ) {
-          details.open = false;
+
+          details.open =
+            false;
         }
       }
     );
   }
 
 
-  function groupBy(items, fn) {
-    const m = new Map();
+  function groupBy(
+    items,
+    fn
+  ) {
+
+    const m =
+      new Map();
+
 
     items.forEach(
       x => {
-        const k = fn(x);
 
-        if (!m.has(k)) {
-          m.set(k, []);
+        const k =
+          fn(x);
+
+
+        if (
+          !m.has(k)
+        ) {
+
+          m.set(
+            k,
+            []
+          );
         }
+
 
         m.get(k).push(x);
       }
     );
+
 
     return m;
   }
 
 
   function unique(arr) {
-    return [...new Set(arr)];
+
+    return [
+      ...new Set(arr)
+    ];
   }
 
 
   function escapeHtml(v) {
+
     return String(
       v ?? ''
     ).replace(
@@ -1584,36 +2308,52 @@
 
 
   function escapeAttr(v) {
+
     return escapeHtml(v);
   }
 
 
   async function onFile(file) {
-    els.error.textContent = '';
+
+    els.error.textContent =
+      '';
+
+
     els.fileName.textContent =
       file.name;
 
+
     try {
-      if (!globalThis.XLSX) {
+
+      if (
+        !globalThis.XLSX
+      ) {
+
         throw new Error(
           'Excel 解析元件尚未載入。請確認網路連線，或依 README 將 SheetJS 改為本機 vendor。'
         );
       }
 
+
       const buffer =
         await file.arrayBuffer();
+
 
       analyzeWorkbook(
         buffer,
         file.name
       );
 
+
     } catch (err) {
+
       console.error(err);
+
 
       els.error.textContent =
         err?.message ||
         '無法讀取這份 Excel。';
+
 
       els.dashboard.classList.add(
         'hidden'
@@ -1623,85 +2363,153 @@
 
 
   function clearData() {
+
     state.fileName = '';
+
     state.rows = [];
+
     state.dateColumns = [];
+
     state.people = [];
+
     state.recentCols = [];
+
     state.windowWeeks = 12;
+
 
     state.selectedGroups =
       new Set();
 
+
     state.selectedStatuses =
       new Set();
 
-    els.fileInput.value = '';
+
+    state.chartGroup = '';
+
+    state.chartDistrict = '';
+
+
+    updateChartFilterUI();
+
+
+    els.fileInput.value =
+      '';
+
 
     els.fileName.textContent =
       '尚未選擇檔案';
 
-    els.error.textContent = '';
+
+    els.error.textContent =
+      '';
+
 
     els.dashboard.classList.add(
       'hidden'
     );
 
-    els.clearBtn.disabled = true;
 
-    els.searchInput.value = '';
-    els.districtFilter.value = '';
-    els.smallDistrictFilter.value = '';
+    els.clearBtn.disabled =
+      true;
+
+
+    els.searchInput.value =
+      '';
+
+
+    els.districtFilter.value =
+      '';
+
+
+    els.smallDistrictFilter.value =
+      '';
+
 
     els.totalAttendanceFilter.value =
       '';
 
+
     els.absenceWeeksFilter.value =
       '';
 
-    els.newBelieverFilter.value = '';
 
-    els.windowSelect.value = '12';
+    els.newBelieverFilter.value =
+      '';
+
+
+    els.windowSelect.value =
+      '12';
+
 
     closeMultiSelects();
   }
 
 
+  /*
+   * ========================================
+   * Excel
+   * ========================================
+   */
+
   els.fileInput.addEventListener(
     'change',
     e => {
+
       const file =
         e.target.files?.[0];
 
+
       if (file) {
+
         onFile(file);
       }
     }
   );
 
 
+  /*
+   * ========================================
+   * 觀察週數
+   * ========================================
+   */
+
   els.windowSelect.addEventListener(
     'change',
     () => {
+
       closeMultiSelects();
+
       recalculate();
     }
   );
 
 
+  /*
+   * ========================================
+   * 大區
+   * ========================================
+   */
+
   els.districtFilter.addEventListener(
     'change',
     () => {
+
       closeMultiSelects();
+
       updateSmallDistrictOptions();
+
       renderPeople();
     }
   );
 
 
   /*
-   * 一般篩選＋兩個排除條件
+   * ========================================
+   * 一般篩選
+   * ========================================
    */
+
   [
     els.searchInput,
     els.smallDistrictFilter,
@@ -1714,22 +2522,24 @@
       el.addEventListener(
         'input',
         () => {
+
           closeMultiSelects();
+
           renderPeople();
         }
       );
 
-      /*
-       * 下拉選單選擇後
-       * 立即重新計算
-       */
+
       el.addEventListener(
         'change',
         () => {
+
           closeMultiSelects();
+
           renderPeople();
         }
       );
+
 
       el.addEventListener(
         'focus',
@@ -1740,9 +2550,16 @@
   );
 
 
+  /*
+   * ========================================
+   * 羣組
+   * ========================================
+   */
+
   els.groupFilterOptions.addEventListener(
     'change',
     e => {
+
       if (
         !e.target.matches(
           'input[type="checkbox"]'
@@ -1751,17 +2568,25 @@
         return;
       }
 
-      if (e.target.checked) {
+
+      if (
+        e.target.checked
+      ) {
+
         state.selectedGroups.add(
           e.target.value
         );
+
       } else {
+
         state.selectedGroups.delete(
           e.target.value
         );
       }
 
+
       updateGroupSummary();
+
       renderPeople();
     }
   );
@@ -1773,6 +2598,7 @@
     )
     .forEach(
       btn => {
+
         btn.addEventListener(
           'click',
           () =>
@@ -1787,22 +2613,32 @@
   els.clearGroupFilter.addEventListener(
     'click',
     () =>
-      setSelectedGroups('all')
+      setSelectedGroups(
+        'all'
+      )
   );
 
 
   els.closeGroupFilter.addEventListener(
     'click',
     () => {
+
       els.groupMultiSelect.open =
         false;
     }
   );
 
 
+  /*
+   * ========================================
+   * 聚會情況
+   * ========================================
+   */
+
   els.statusFilterOptions.addEventListener(
     'change',
     e => {
+
       if (
         !e.target.matches(
           'input[type="checkbox"]'
@@ -1811,17 +2647,25 @@
         return;
       }
 
-      if (e.target.checked) {
+
+      if (
+        e.target.checked
+      ) {
+
         state.selectedStatuses.add(
           e.target.value
         );
+
       } else {
+
         state.selectedStatuses.delete(
           e.target.value
         );
       }
 
+
       updateStatusSummary();
+
       renderPeople();
     }
   );
@@ -1837,18 +2681,27 @@
   els.closeStatusFilter.addEventListener(
     'click',
     () => {
+
       els.statusMultiSelect.open =
         false;
     }
   );
 
 
+  /*
+   * ========================================
+   * Multi select
+   * ========================================
+   */
+
   els.groupMultiSelect.addEventListener(
     'toggle',
     () => {
+
       if (
         els.groupMultiSelect.open
       ) {
+
         closeMultiSelects(
           els.groupMultiSelect
         );
@@ -1860,9 +2713,11 @@
   els.statusMultiSelect.addEventListener(
     'toggle',
     () => {
+
       if (
         els.statusMultiSelect.open
       ) {
+
         closeMultiSelects(
           els.statusMultiSelect
         );
@@ -1872,7 +2727,9 @@
 
 
   document
-    .querySelectorAll('select')
+    .querySelectorAll(
+      'select'
+    )
     .forEach(
       select => {
 
@@ -1881,6 +2738,7 @@
           () =>
             closeMultiSelects()
         );
+
 
         select.addEventListener(
           'focus',
@@ -1894,25 +2752,102 @@
   document.addEventListener(
     'pointerdown',
     e => {
+
       const insideGroup =
         els.groupMultiSelect.contains(
           e.target
         );
+
 
       const insideStatus =
         els.statusMultiSelect.contains(
           e.target
         );
 
+
       if (
         !insideGroup &&
         !insideStatus
       ) {
+
         closeMultiSelects();
       }
     }
   );
 
+
+  /*
+   * ========================================
+   * 圖表 → 人員明細
+   * ========================================
+   *
+   * age-analysis.js 產生的按鈕
+   * 都會帶有 .age-filter-trigger。
+   */
+
+  document.addEventListener(
+    'click',
+    e => {
+
+      const trigger =
+        e.target.closest(
+          '.age-filter-trigger'
+        );
+
+
+      if (
+        !trigger
+      ) {
+        return;
+      }
+
+
+      const group =
+        trigger.dataset.ageGroup ||
+        '';
+
+
+      const district =
+        trigger.dataset.ageDistrict ||
+        '';
+
+
+      if (
+        !group
+      ) {
+        return;
+      }
+
+
+      applyChartFilter(
+        group,
+        district
+      );
+    }
+  );
+
+
+  /*
+   * 人員明細右上角：
+   * 清除圖表篩選
+   */
+
+  if (
+    els.clearChartFilter
+  ) {
+
+    els.clearChartFilter.addEventListener(
+      'click',
+      clearChartFilter
+    );
+  }
+
+
+  /*
+   * ========================================
+   * 清除全部資料
+   * ========================================
+   */
 
   els.clearBtn.addEventListener(
     'click',

@@ -247,67 +247,33 @@
         <div class="rule-legend">
 
           <span>
-
             <i class="dot weekly"></i>
-
-            <strong>
-              週週聚會
-            </strong>
-
+            <strong>週週聚會</strong>
             ：近 12 週每週都有聚會
-
           </span>
 
-
           <span>
-
             <i class="dot regular"></i>
-
-            <strong>
-              常聚會
-            </strong>
-
+            <strong>常聚會</strong>
             ：平均至少每 3 週一次
-
           </span>
 
-
           <span>
-
             <i class="dot occasional"></i>
-
-            <strong>
-              偶聚會
-            </strong>
-
+            <strong>偶聚會</strong>
             ：平均至少每 4 週一次
-
           </span>
 
-
           <span>
-
             <i class="dot sporadic"></i>
-
-            <strong>
-              零星聚會
-            </strong>
-
+            <strong>零星聚會</strong>
             ：最近 8 週內仍有出現
-
           </span>
 
-
           <span>
-
             <i class="dot inactive"></i>
-
-            <strong>
-              近期未聚會
-            </strong>
-
+            <strong>近期未聚會</strong>
             ：超過 8 週未聚會
-
           </span>
 
         </div>
@@ -395,27 +361,16 @@
               <thead>
 
                 <tr>
-
                   <th>大區</th>
-
                   <th>總人數</th>
-
                   <th>初信</th>
-
                   <th>日期不明</th>
-
                   <th>週週聚會</th>
-
                   <th>常聚會</th>
-
                   <th>偶聚會</th>
-
                   <th>零星</th>
-
                   <th>近期未聚會</th>
-
                   <th>穩定聚會率</th>
-
                 </tr>
 
               </thead>
@@ -434,10 +389,9 @@
 
 
 
-      <!-- =====================================================
+      <!-- =========================
            分析篩選
-           現在移到群組分析圖上方
-      ====================================================== -->
+      ========================== -->
 
       <section class="panel">
 
@@ -462,8 +416,6 @@
           <div class="filters">
 
 
-            <!-- 搜尋姓名 -->
-
             <label class="field">
 
               <span>
@@ -479,8 +431,6 @@
             </label>
 
 
-
-            <!-- 大區 -->
 
             <label class="field">
 
@@ -499,8 +449,6 @@
             </label>
 
 
-
-            <!-- 小區 -->
 
             <label class="field">
 
@@ -534,7 +482,6 @@
                 id="groupMultiSelect"
               >
 
-
                 <summary id="groupFilterSummary">
                   全部
                 </summary>
@@ -545,7 +492,6 @@
 
                   <div class="group-presets">
 
-
                     <button
                       type="button"
                       class="preset-btn"
@@ -553,7 +499,6 @@
                     >
                       全部
                     </button>
-
 
                     <button
                       type="button"
@@ -563,7 +508,6 @@
                       大專＋青職
                     </button>
 
-
                     <button
                       type="button"
                       class="preset-btn"
@@ -571,7 +515,6 @@
                     >
                       青少年
                     </button>
-
 
                     <button
                       type="button"
@@ -581,7 +524,6 @@
                       學生專項
                     </button>
 
-
                     <button
                       type="button"
                       class="preset-btn"
@@ -589,7 +531,6 @@
                     >
                       兒童
                     </button>
-
 
                   </div>
 
@@ -604,7 +545,6 @@
 
                   <div class="multi-actions">
 
-
                     <button
                       type="button"
                       id="clearGroupFilter"
@@ -612,7 +552,6 @@
                     >
                       清除選擇
                     </button>
-
 
                     <button
                       type="button"
@@ -622,7 +561,6 @@
                       完成
                     </button>
 
-
                   </div>
 
 
@@ -630,7 +568,6 @@
 
 
               </details>
-
 
             </div>
 
@@ -650,7 +587,6 @@
                 id="statusMultiSelect"
               >
 
-
                 <summary id="statusFilterSummary">
                   全部
                 </summary>
@@ -665,9 +601,7 @@
                   ></div>
 
 
-
                   <div class="multi-actions">
-
 
                     <button
                       type="button"
@@ -677,7 +611,6 @@
                       清除選擇
                     </button>
 
-
                     <button
                       type="button"
                       id="closeStatusFilter"
@@ -685,7 +618,6 @@
                     >
                       完成
                     </button>
-
 
                   </div>
 
@@ -695,12 +627,11 @@
 
               </details>
 
-
             </div>
 
 
 
-            <!-- 排除：總聚會最多 -->
+            <!-- 排除 -->
 
             <label class="field exclusion-filter">
 
@@ -710,61 +641,24 @@
 
               <select id="totalAttendanceFilter">
 
-                <option value="">
-                  不設定
-                </option>
-
-                <option value="0">
-                  0 次
-                </option>
-
-                <option value="1">
-                  1 次
-                </option>
-
-                <option value="2">
-                  2 次
-                </option>
-
-                <option value="3">
-                  3 次
-                </option>
-
-                <option value="4">
-                  4 次
-                </option>
-
-                <option value="5">
-                  5 次
-                </option>
-
-                <option value="6">
-                  6 次
-                </option>
-
-                <option value="7">
-                  7 次
-                </option>
-
-                <option value="8">
-                  8 次
-                </option>
-
-                <option value="9">
-                  9 次
-                </option>
-
-                <option value="10">
-                  10 次
-                </option>
+                <option value="">不設定</option>
+                <option value="0">0 次</option>
+                <option value="1">1 次</option>
+                <option value="2">2 次</option>
+                <option value="3">3 次</option>
+                <option value="4">4 次</option>
+                <option value="5">5 次</option>
+                <option value="6">6 次</option>
+                <option value="7">7 次</option>
+                <option value="8">8 次</option>
+                <option value="9">9 次</option>
+                <option value="10">10 次</option>
 
               </select>
 
             </label>
 
 
-
-            <!-- 排除：未聚會達 -->
 
             <label class="field exclusion-filter">
 
@@ -774,61 +668,24 @@
 
               <select id="absenceWeeksFilter">
 
-                <option value="">
-                  不設定
-                </option>
-                
-                <option value="17">
-                  4 個月（17週）
-                </option>
-
-                <option value="35">
-                  8 個月（35週）
-                </option>
-
-                <option value="52">
-                  1 年（52週）
-                </option>
-
-                <option value="78">
-                  1 年半（78週）
-                </option>
-
-                <option value="104">
-                  2 年（104週）
-                </option>
-
-                <option value="130">
-                  2 年半（130週）
-                </option>
-
-                <option value="156">
-                  3 年（156週）
-                </option>
-
-                <option value="182">
-                  3 年半（182週）
-                </option>
-
-                <option value="208">
-                  4 年（208週）
-                </option>
-
-                <option value="234">
-                  4 年半（234週）
-                </option>
-
-                <option value="260">
-                  5 年（260週）
-                </option>
+                <option value="">不設定</option>
+                <option value="17">4 個月（17週）</option>
+                <option value="35">8 個月（35週）</option>
+                <option value="52">1 年（52週）</option>
+                <option value="78">1 年半（78週）</option>
+                <option value="104">2 年（104週）</option>
+                <option value="130">2 年半（130週）</option>
+                <option value="156">3 年（156週）</option>
+                <option value="182">3 年半（182週）</option>
+                <option value="208">4 年（208週）</option>
+                <option value="234">4 年半（234週）</option>
+                <option value="260">5 年（260週）</option>
 
               </select>
 
             </label>
 
 
-
-            <!-- 初信 -->
 
             <label class="field">
 
@@ -866,8 +723,6 @@
 
 
 
-        <!-- 排除說明 -->
-
         <div class="exclusion-note">
 
           排除條件可單獨使用。
@@ -885,8 +740,6 @@
 
 
 
-        <!-- 篩選結果 -->
-
         <div
           class="result-count"
           id="resultCount"
@@ -897,20 +750,19 @@
 
 
 
-      <!-- =====================================================
+      <!-- =========================
            穩定聚會分析
-      ====================================================== -->
+      ========================== -->
 
       <section class="age-analysis-grid">
 
 
-        <!-- 左：穩定聚會者群組分析 -->
+        <!-- 左 -->
 
         <article class="panel age-panel">
 
 
           <div class="section-head">
-
 
             <div>
 
@@ -936,7 +788,6 @@
               —
             </div>
 
-
           </div>
 
 
@@ -945,7 +796,6 @@
             id="ageDistribution"
             class="age-bars"
           ></div>
-
 
 
           <div
@@ -958,13 +808,12 @@
 
 
 
-        <!-- 右：穩定聚會學生分布 -->
+        <!-- 右 -->
 
         <article class="panel age-panel">
 
 
           <div class="section-head">
-
 
             <div>
 
@@ -990,7 +839,6 @@
               —
             </div>
 
-
           </div>
 
 
@@ -999,7 +847,6 @@
             id="studentAgeDistribution"
             class="age-bars"
           ></div>
-
 
 
           <div
@@ -1015,12 +862,14 @@
 
 
 
-      <!-- =====================================================
+      <!-- =========================
            人員明細
-           這裡現在只留下表格
-      ====================================================== -->
+      ========================== -->
 
-      <section class="panel">
+      <section
+        class="panel"
+        id="peoplePanel"
+      >
 
 
         <div class="section-head">
@@ -1039,6 +888,27 @@
           </div>
 
 
+
+          <!-- 圖表連動篩選提示 -->
+
+          <div
+            id="chartFilterIndicator"
+            class="chart-filter-indicator hidden"
+          >
+
+            <span id="chartFilterText"></span>
+
+            <button
+              type="button"
+              id="clearChartFilter"
+              class="chart-filter-clear"
+            >
+              清除篩選
+            </button>
+
+          </div>
+
+
         </div>
 
 
@@ -1051,58 +921,23 @@
 
             <thead>
 
-
               <tr>
 
-                <th>
-                  大區
-                </th>
-
-                <th>
-                  小區
-                </th>
-
-                <th>
-                  姓名
-                </th>
-
-                <th>
-                  羣組
-                </th>
-
-                <th>
-                  受浸日期
-                </th>
-
-                <th>
-                  初信
-                </th>
-
-                <th>
-                  聚會情況
-                </th>
-
-                <th>
-                  最近一次聚會日期
-                </th>
-
-                <th>
-                  近期出席
-                </th>
-
-                <th>
-                  近期出席率
-                </th>
-
-                <th>
-                  全部出席
-                </th>
+                <th>大區</th>
+                <th>小區</th>
+                <th>姓名</th>
+                <th>羣組</th>
+                <th>受浸日期</th>
+                <th>初信</th>
+                <th>聚會情況</th>
+                <th>最近一次聚會日期</th>
+                <th>近期出席</th>
+                <th>近期出席率</th>
+                <th>全部出席</th>
 
               </tr>
 
-
             </thead>
-
 
 
             <tbody></tbody>
@@ -1124,10 +959,6 @@
 
 
 
-  <!-- =========================
-       Footer
-  ========================== -->
-
   <footer>
 
     <p>
@@ -1142,10 +973,6 @@
   </footer>
 
 
-
-  <!-- =========================
-       JavaScript
-  ========================== -->
 
   <script
     src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
