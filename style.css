@@ -501,3 +501,59 @@ select:focus-visible,
   .field { min-width: 0; }
   .multi-select > summary { max-width: none; width: 100%; }
 }
+
+/* ========================================
+   手機版：人員明細凍結「大區 / 小區 / 姓名」
+======================================== */
+@media (max-width: 680px) {
+
+  /* 第1欄：大區 */
+  #peopleTable th:nth-child(1),
+  #peopleTable td:nth-child(1) {
+    position: sticky;
+    left: 0;
+    width: 58px;
+    min-width: 58px;
+    max-width: 58px;
+    background: #fff;
+    z-index: 3;
+  }
+
+  /* 第2欄：小區 */
+  #peopleTable th:nth-child(2),
+  #peopleTable td:nth-child(2) {
+    position: sticky;
+    left: 58px;
+    width: 58px;
+    min-width: 58px;
+    max-width: 58px;
+    background: #fff;
+    z-index: 3;
+  }
+
+  /* 第3欄：姓名 */
+  #peopleTable th:nth-child(3),
+  #peopleTable td:nth-child(3) {
+    position: sticky;
+    left: 116px;
+    width: 125px;
+    min-width: 125px;
+    max-width: 125px;
+    background: #fff;
+    z-index: 3;
+
+    /* 右側陰影，讓凍結區域更容易辨識 */
+    box-shadow: 5px 0 7px -6px rgba(0, 0, 0, .35);
+  }
+
+  /* 表頭必須蓋在資料列上方 */
+  #peopleTable th:nth-child(-n+3) {
+    background: #f7f9fa;
+    z-index: 5;
+  }
+
+  /* 避免滑鼠/觸控 hover 改掉固定欄背景 */
+  #peopleTable tbody tr:hover td:nth-child(-n+3) {
+    background: #fafcfc;
+  }
+}
