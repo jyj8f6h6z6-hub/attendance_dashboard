@@ -44,6 +44,7 @@
     /*
      * 圖表點擊連動
      */
+    chartType: '',
     chartGroup: '',
     chartDistrict: ''
   };
@@ -467,6 +468,7 @@
      * 匯入新檔案時，
      * 清除上一份圖表點擊狀態。
      */
+    state.chartType = '';
     state.chartGroup = '';
     state.chartDistrict = '';
 
@@ -1703,182 +1705,84 @@
     chartGroup
   ) {
 
-    if (
-      !chartGroup
-    ) {
+    if (!chartGroup) {
       return true;
     }
 
-
-    /*
-     * 左圖的「青少年」
-     * 是合併群組。
-     */
-    if (
-      chartGroup ===
-      '青少年'
-    ) {
-
+    if (chartGroup === '青少年') {
       return [
         '國中',
         '高中',
         '中學'
-      ].includes(
-        person.group
-      );
+      ].includes(person.group);
     }
 
-
-    return (
-      person.group ===
-      chartGroup
-    );
+    return person.group === chartGroup;
   }
 
 
-  /*
-   * ========================================
-   * 人員明細
-   * ========================================
-   */
-
-  function renderPeople() {
+  function getGeneralFilteredPeople() {
 
     const q =
-      els.searchInput
-        .value
+      els.searchInput.value
         .trim()
         .toLowerCase();
-
 
     const district =
       els.districtFilter.value;
 
-
     const small =
       els.smallDistrictFilter.value;
-
 
     const nb =
       els.newBelieverFilter.value;
 
-
     const selectedGroups =
       state.selectedGroups;
-
 
     const selectedStatuses =
       state.selectedStatuses;
 
-
-    const chartGroup =
-      state.chartGroup;
-
-
-    const chartDistrict =
-      state.chartDistrict;
-
-
     const maxTotalAttendance =
       els.totalAttendanceFilter.value === ''
         ? null
-        : Number(
-            els.totalAttendanceFilter.value
-          );
-
+        : Number(els.totalAttendanceFilter.value);
 
     const absenceWeeks =
       els.absenceWeeksFilter.value === ''
         ? null
-        : Number(
-            els.absenceWeeksFilter.value
-          );
-
+        : Number(els.absenceWeeksFilter.value);
 
     const availableHistoryWeeks =
       getAvailableHistoryWeeks();
 
-
-    const normalFiltered =
+    const beforeExclusion =
       state.people.filter(
         p => {
 
           const matchesSearch =
             !q ||
-            p.name
-              .toLowerCase()
-              .includes(q);
-
+            p.name.toLowerCase().includes(q);
 
           const matchesDistrict =
             !district ||
-            p.district ===
-            district;
-
+            p.district === district;
 
           const matchesSmallDistrict =
             !small ||
-            p.smallDistrict ===
-            small;
-
+            p.smallDistrict === small;
 
           const matchesGroup =
             !selectedGroups.size ||
-            selectedGroups.has(
-              p.group
-            );
-
+            selectedGroups.has(p.group);
 
           const matchesStatus =
             !selectedStatuses.size ||
-            selectedStatuses.has(
-              p.status
-            );
-
+            selectedStatuses.has(p.status);
 
           const matchesNewBeliever =
             !nb ||
-            p.newBelieverStatus ===
-            nb;
-
-
-          /*
-           * 圖表連動：
-           * 群組
-           */
-          const matchesChartGroupValue =
-            matchesChartGroup(
-              p,
-              chartGroup
-            );
-
-
-          /*
-           * 圖表連動：
-           * 大區
-           */
-          const matchesChartDistrict =
-            !chartDistrict ||
-            p.district ===
-            chartDistrict;
-
-
-          /*
-          * 圖表「穩定聚會」連動
-          *
-          * 這兩張圖的統計對象都是：
-          * 週週聚會 + 常聚會
-          *
-          * 因此只要是從圖表點進來，
-          * 人員明細也必須只顯示穩定聚會者。
-          */
-          const matchesChartStableStatus =
-            !chartGroup ||
-            (
-              p.status === STATUS.WEEKLY ||
-              p.status === STATUS.REGULAR
-            );
-
+            p.newBelieverStatus === nb;
 
           return (
             matchesSearch &&
@@ -1886,29 +1790,13 @@
             matchesSmallDistrict &&
             matchesGroup &&
             matchesStatus &&
-            matchesNewBeliever &&
-            matchesChartGroupValue &&
-            matchesChartDistrict &&
-            matchesChartStableStatus
+            matchesNewBeliever
           );
         }
       );
 
-
-    const excluded =
-      normalFiltered.filter(
-        p =>
-          shouldExcludePerson(
-            p,
-            maxTotalAttendance,
-            absenceWeeks,
-            availableHistoryWeeks
-          )
-      );
-
-
     const visible =
-      normalFiltered.filter(
+      beforeExclusion.filter(
         p =>
           !shouldExcludePerson(
             p,
@@ -1918,151 +1806,152 @@
           )
       );
 
+    const excludedCount =
+      beforeExclusion.length - visible.length;
 
-    const exclusionActive =
-      maxTotalAttendance !== null ||
-      absenceWeeks !== null;
+    return {
+      people: visible,
+      beforeExclusionCount: beforeExclusion.length,
+      excludedCount,
+      exclusionActive:
+        maxTotalAttendance !== null ||
+        absenceWeeks !== null
+    };
+  }
 
 
-    if (
-      exclusionActive
-    ) {
+  function matchesChartTypeStatus(
+    person,
+    chartType
+  ) {
 
+    if (!chartType) {
+      return true;
+    }
+
+    if (chartType === 'stable') {
+      return (
+        person.status === STATUS.WEEKLY ||
+        person.status === STATUS.REGULAR
+      );
+    }
+
+    if (chartType === 'care') {
+      return (
+        person.status === STATUS.OCCASIONAL ||
+        person.status === STATUS.SPORADIC
+      );
+    }
+
+    return true;
+  }
+
+
+  function renderPeople() {
+
+    const base =
+      getGeneralFilteredPeople();
+
+    const chartType =
+      state.chartType;
+
+    const chartGroup =
+      state.chartGroup;
+
+    const chartDistrict =
+      state.chartDistrict;
+
+    const visible =
+      base.people.filter(
+        p =>
+          matchesChartGroup(p, chartGroup) &&
+          (
+            !chartDistrict ||
+            p.district === chartDistrict
+          ) &&
+          matchesChartTypeStatus(p, chartType)
+      );
+
+    const chartActive =
+      Boolean(
+        chartType ||
+        chartGroup ||
+        chartDistrict
+      );
+
+    if (chartActive) {
+      els.resultCount.textContent =
+        `目前圖表篩選：${visible.length} 人`;
+    } else if (base.exclusionActive) {
       els.resultCount.innerHTML = `
         顯示
-        <strong>
-          ${visible.length}
-        </strong>
+        <strong>${base.people.length}</strong>
         /
-        ${normalFiltered.length}
+        ${base.beforeExclusionCount}
         人
-
         <span class="excluded-count">
           ｜已排除
-          <strong>
-            ${excluded.length}
-          </strong>
+          <strong>${base.excludedCount}</strong>
           人
         </span>
       `;
-
     } else {
-
-      /*
-       * 有圖表篩選時，
-       * 分母改成目前符合條件的人數，
-       * 看起來比較直覺。
-       */
-      if (
-        chartGroup ||
-        chartDistrict
-      ) {
-
-        els.resultCount.textContent =
-          `目前圖表篩選：${visible.length} 人`;
-
-      } else {
-
-        els.resultCount.textContent =
-          `顯示 ${visible.length} / ${state.people.length} 人`;
-      }
+      els.resultCount.textContent =
+        `顯示 ${visible.length} / ${state.people.length} 人`;
     }
-
 
     els.peopleBody.innerHTML =
       visible
         .map(
           p => `
             <tr>
-
-              <td>
-                ${escapeHtml(
-                  p.district
-                )}
-              </td>
-
-              <td>
-                ${escapeHtml(
-                  p.smallDistrict
-                )}
-              </td>
-
-              <td>
-                <strong>
-                  ${escapeHtml(
-                    p.name
-                  )}
-                </strong>
-              </td>
-
-              <td>
-                ${escapeHtml(
-                  p.group
-                )}
-              </td>
-
+              <td>${escapeHtml(p.district)}</td>
+              <td>${escapeHtml(p.smallDistrict)}</td>
+              <td><strong>${escapeHtml(p.name)}</strong></td>
+              <td>${escapeHtml(p.group)}</td>
+              <td>${p.baptismDate ? fmtDate(p.baptismDate) : '—'}</td>
               <td>
                 ${
-                  p.baptismDate
-                    ? fmtDate(
-                        p.baptismDate
-                      )
-                    : '—'
-                }
-              </td>
-
-              <td>
-                ${
-                  p.newBelieverStatus ===
-                  'yes'
+                  p.newBelieverStatus === 'yes'
                     ? '<span class="new-believer">初信</span>'
-                    : p.newBelieverStatus ===
-                      'no'
+                    : p.newBelieverStatus === 'no'
                       ? '非初信'
                       : '日期不明'
                 }
               </td>
-
               <td>
                 <span class="status ${STATUS_CLASS[p.status]}">
-                  ${escapeHtml(
-                    p.status
-                  )}
+                  ${escapeHtml(p.status)}
                 </span>
               </td>
-
-              <td>
-                ${
-                  p.lastAttendanceDate
-                    ? fmtDate(
-                        p.lastAttendanceDate
-                      )
-                    : '—'
-                }
-              </td>
-
-              <td>
-                ${p.recentAttendance}
-                /
-                ${p.recentWeeks}
-              </td>
-
-              <td>
-                ${(
-                  p.recentRate *
-                  100
-                ).toFixed(1)}%
-              </td>
-
-              <td>
-                ${p.totalAttendance}
-              </td>
-
+              <td>${p.lastAttendanceDate ? fmtDate(p.lastAttendanceDate) : '—'}</td>
+              <td>${p.recentAttendance} / ${p.recentWeeks}</td>
+              <td>${(p.recentRate * 100).toFixed(1)}%</td>
+              <td>${p.totalAttendance}</td>
             </tr>
           `
         )
         .join('');
+
+    document.dispatchEvent(
+      new CustomEvent('analysisBaseChanged')
+    );
   }
+
+
+  globalThis.AttendanceDashboardAPI = {
+    getAnalysisBasePeople() {
+      return getGeneralFilteredPeople()
+        .people
+        .map(
+          p => ({
+            district: p.district,
+            group: p.group,
+            status: p.status
+          })
+        );
+    }
+  };
 
 
   /*
@@ -2082,6 +1971,7 @@
 
 
     if (
+      !state.chartType ||
       !state.chartGroup
     ) {
 
@@ -2110,14 +2000,18 @@
     }
 
 
+    const typeLabel =
+      state.chartType === 'care'
+        ? '需加強牧養'
+        : '穩定聚會';
+
     const description =
       state.chartDistrict
         ? `${state.chartGroup} × ${state.chartDistrict}`
         : state.chartGroup;
 
-
     els.chartFilterText.textContent =
-      `圖表篩選：${description}`;
+      `圖表篩選：${typeLabel}｜${description}`;
 
 
     els.chartFilterIndicator
@@ -2145,11 +2039,14 @@
             '';
 
 
+          const type =
+            element.dataset.chartType ||
+            'stable';
+
           const selected =
-            group ===
-              state.chartGroup &&
-            district ===
-              state.chartDistrict;
+            type === state.chartType &&
+            group === state.chartGroup &&
+            district === state.chartDistrict;
 
 
           element.classList.toggle(
@@ -2163,6 +2060,8 @@
 
   function clearChartFilter() {
 
+    state.chartType = '';
+
     state.chartGroup = '';
 
     state.chartDistrict = '';
@@ -2175,6 +2074,7 @@
 
 
   function applyChartFilter(
+    type,
     group,
     district
   ) {
@@ -2184,15 +2084,19 @@
      * 取消。
      */
     if (
+      state.chartType === type &&
       state.chartGroup === group &&
-      state.chartDistrict ===
-        district
+      state.chartDistrict === district
     ) {
 
       clearChartFilter();
 
       return;
     }
+
+
+    state.chartType =
+      type;
 
 
     state.chartGroup =
@@ -2384,6 +2288,8 @@
     state.selectedStatuses =
       new Set();
 
+
+    state.chartType = '';
 
     state.chartGroup = '';
 
@@ -2812,6 +2718,11 @@
         '';
 
 
+      const type =
+        trigger.dataset.chartType ||
+        'stable';
+
+
       if (
         !group
       ) {
@@ -2820,10 +2731,22 @@
 
 
       applyChartFilter(
+        type,
         group,
         district
       );
     }
+  );
+
+
+  /*
+   * 四張分析圖重新產生 DOM 後，
+   * 恢復目前圖表篩選的選取外觀。
+   */
+
+  document.addEventListener(
+    'ageAnalysisRendered',
+    updateChartFilterUI
   );
 
 
