@@ -674,109 +674,189 @@ button.age-label.is-selected {
 
 /* =========================================
    人員明細：大區 / 小區複選篩選
+   桌機：標題 → 大區/小區 → 圖表篩選
+   手機：改為上下排列
 ========================================= */
 
 #peoplePanel > .section-head {
-  align-items: flex-start;
-}
-
-.people-area-filters {
-  flex: 1 1 420px;
   display: flex;
   align-items: flex-start;
-  justify-content: center;
+  justify-content: flex-start;
+  gap: 18px;
+}
+
+
+/* =========================================
+   大區 / 小區篩選群組
+========================================= */
+
+.people-area-filters {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
   flex-wrap: wrap;
   gap: 8px;
+
+  /*
+   * 不再吃掉中間所有剩餘空間，
+   * 避免「大區：全部」漂到畫面中央。
+   */
+  flex: 0 1 auto;
+
   min-width: 0;
+  margin-top: 1px;
 }
+
 
 .people-area-multi {
   flex: 0 1 190px;
   min-width: 150px;
 }
 
+
 .people-area-multi > summary {
-  max-width: none;
   width: 100%;
+  max-width: none;
   font-size: 13px;
 }
 
+
+/* 下拉選單由按鈕左側對齊 */
 .people-area-panel {
-  left: 50%;
+  left: 0;
   right: auto;
-  transform: translateX(-50%);
+  transform: none;
   width: 280px;
 }
 
+
 .people-filter-caption {
   padding: 1px 2px 8px;
+
   color: var(--muted);
+
   font-size: 12px;
   line-height: 1.5;
+
   border-bottom: 1px solid #edf1f3;
 }
+
 
 .people-area-options {
   max-height: 260px;
 }
 
+
 .people-area-option {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) auto;
+
+  grid-template-columns:
+    18px
+    minmax(0, 1fr)
+    auto;
+
   align-items: center;
+
   gap: 8px;
 }
 
+
 .people-area-option span {
   min-width: 0;
+
   color: var(--text);
+
   font-size: 13px;
   font-weight: 700;
 }
 
+
 .people-area-option span em {
   display: block;
+
   margin-top: 2px;
+
   color: var(--muted);
+
   font-size: 11px;
   font-style: normal;
   font-weight: 600;
 }
 
+
 .people-area-option small {
   color: var(--muted);
+
   font-size: 11px;
+
   white-space: nowrap;
 }
 
+
 .people-filter-empty {
   padding: 12px 4px;
+
   color: var(--muted);
+
   font-size: 12px;
+
   text-align: center;
 }
 
+
+/* =========================================
+   清除名單篩選
+========================================= */
+
 .people-area-clear {
   appearance: none;
+
   min-height: 38px;
-  border: 1px solid rgba(49, 91, 102, .18);
+
+  border:
+    1px solid
+    rgba(49, 91, 102, .18);
+
   border-radius: 999px;
+
   padding: 7px 12px;
+
   background: #fff;
+
   color: var(--accent);
+
   font-family: inherit;
+
   font-size: 12px;
   font-weight: 750;
+
   cursor: pointer;
 }
+
 
 .people-area-clear:hover {
   background: var(--accent-soft);
 }
 
+
 .people-area-clear.hidden {
   display: none;
 }
+
+
+/* =========================================
+   圖表篩選提示固定靠右
+========================================= */
+
+#peoplePanel .chart-filter-indicator {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+
+
+/* =========================================
+   平板
+========================================= */
 
 @media (max-width: 1050px) {
 
@@ -784,34 +864,102 @@ button.age-label.is-selected {
     flex-wrap: wrap;
   }
 
+
+  /*
+   * 平板空間不足時，
+   * 大區 / 小區改到標題下方。
+   */
   .people-area-filters {
     order: 3;
+
     flex-basis: 100%;
+
+    width: 100%;
+
     justify-content: flex-start;
   }
 
+
+  /*
+   * 圖表篩選仍維持右上方。
+   */
+  #peoplePanel .chart-filter-indicator {
+    margin-left: auto;
+  }
+
+
   .people-area-panel {
     left: 0;
+    right: auto;
+
     transform: none;
   }
+
 }
+
+
+/* =========================================
+   手機
+========================================= */
 
 @media (max-width: 680px) {
 
-  .people-area-filters {
-    display: grid;
-    grid-template-columns: 1fr;
-    width: 100%;
+  #peoplePanel > .section-head {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: stretch;
+
+    gap: 12px;
   }
+
+
+  /*
+   * 手機：
+   * 大區、小區、清除按鈕全部一行一個。
+   */
+  .people-area-filters {
+    order: 2;
+
+    display: grid;
+
+    grid-template-columns: 1fr;
+
+    width: 100%;
+
+    gap: 8px;
+  }
+
 
   .people-area-multi,
   .people-area-clear {
     width: 100%;
+
     min-width: 0;
   }
+
 
   .people-area-panel {
     width: min(88vw, 310px);
   }
-}
 
+
+  /*
+   * 圖表連動提示放在大區 / 小區下面。
+   */
+  #peoplePanel .chart-filter-indicator {
+    order: 3;
+
+    width: 100%;
+
+    margin-left: 0;
+
+    justify-content: space-between;
+
+    border-radius: 10px;
+
+    white-space: normal;
+  }
+
+}
