@@ -411,6 +411,61 @@
 
 
       <!-- =========================
+           每週聚會人數趨勢
+      ========================== -->
+
+      <section class="panel trend-panel">
+
+        <div class="trend-head">
+
+          <div>
+            <p class="eyebrow">WEEKLY TREND</p>
+            <h2>每週聚會人數趨勢</h2>
+            <p class="trend-description">
+              以「分析母體」為基準，查看全會所、各大區或各小區每週實際聚會人數。
+            </p>
+          </div>
+
+          <div class="trend-controls">
+
+            <label class="field compact">
+              <span>大區</span>
+              <select id="trendDistrictFilter">
+                <option value="">全會所</option>
+              </select>
+            </label>
+
+            <label class="field compact">
+              <span>小區</span>
+              <select id="trendSmallDistrictFilter" disabled>
+                <option value="">全部小區</option>
+              </select>
+            </label>
+
+          </div>
+
+        </div>
+
+        <div class="trend-summary" aria-live="polite">
+          <span id="trendScopeLabel">全會所</span>
+          <span>最新一週 <strong id="trendLatestCount">—</strong> 人</span>
+          <span>平均每週 <strong id="trendAverageCount">—</strong> 人</span>
+          <span id="trendChangeText">較前一週 —</span>
+        </div>
+
+        <div class="trend-chart-scroller">
+          <div
+            id="trendChart"
+            class="trend-chart"
+            role="img"
+            aria-label="每週聚會人數趨勢圖"
+          ></div>
+        </div>
+
+      </section>
+
+
+      <!-- =========================
            整體分析
       ========================== -->
 

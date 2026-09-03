@@ -724,3 +724,163 @@ select:focus-visible,
     text-align: left;
   }
 }
+
+
+/* =========================================
+   每週聚會人數趨勢
+========================================= */
+
+.trend-panel {
+  overflow: hidden;
+}
+
+.trend-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 22px;
+}
+
+.trend-description {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.trend-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+
+.trend-controls .field {
+  min-width: 150px;
+}
+
+.trend-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin-top: 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8fafb;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.trend-summary > span:first-child {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.trend-summary strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+#trendChangeText.is-up {
+  color: #246b50;
+  font-weight: 700;
+}
+
+#trendChangeText.is-down {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.trend-chart-scroller {
+  margin-top: 14px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 4px;
+}
+
+.trend-chart {
+  min-height: 350px;
+}
+
+.trend-svg {
+  display: block;
+  max-width: none;
+}
+
+.trend-grid-line {
+  stroke: #e2e8ec;
+  stroke-width: 1;
+}
+
+.trend-y-label,
+.trend-x-label {
+  fill: #7a8791;
+  font-size: 11px;
+  font-family: inherit;
+}
+
+.trend-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.trend-point {
+  fill: #ffffff;
+  stroke: var(--accent);
+  stroke-width: 3;
+  pointer-events: none;
+}
+
+.trend-point-hit {
+  fill: transparent;
+  stroke: transparent;
+  cursor: help;
+}
+
+.trend-point-group:hover .trend-point,
+.trend-point-group:focus-within .trend-point {
+  r: 6;
+}
+
+.trend-empty {
+  display: grid;
+  place-items: center;
+  min-height: 300px;
+  color: var(--muted);
+}
+
+@media (max-width: 800px) {
+  .trend-head {
+    flex-direction: column;
+  }
+
+  .trend-controls {
+    width: 100%;
+  }
+
+  .trend-controls .field {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 560px) {
+  .trend-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .trend-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .trend-summary > span:first-child {
+    grid-column: 1 / -1;
+  }
+}

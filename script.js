@@ -83,6 +83,28 @@
     ruleText: $('ruleText'),
 
     summaryCards: $('summaryCards'),
+
+    trendDistrictFilter:
+      $('trendDistrictFilter'),
+
+    trendSmallDistrictFilter:
+      $('trendSmallDistrictFilter'),
+
+    trendScopeLabel:
+      $('trendScopeLabel'),
+
+    trendLatestCount:
+      $('trendLatestCount'),
+
+    trendAverageCount:
+      $('trendAverageCount'),
+
+    trendChangeText:
+      $('trendChangeText'),
+
+    trendChart:
+      $('trendChart'),
+
     overallBar: $('overallBar'),
     overallLegend: $('overallLegend'),
 
@@ -1165,6 +1187,10 @@
 
     renderSummary();
 
+    buildTrendFilters();
+
+    renderTrend();
+
     renderOverall();
 
     renderDistricts();
@@ -1366,6 +1392,473 @@
           `
         )
         .join('');
+  }
+
+
+  /*
+   * ========================================
+   * 每週聚會人數趨勢
+   * ========================================
+   *
+   * 趨勢圖使用「分析母體」為基準，不受下方一般分析篩選影響。
+   * 大區空白 = 全會所；選大區但小區空白 = 該大區；
+   * 大區 + 小區都有選 = 該小區。
+   */
+
+  function buildTrendFilters() {
+
+    if (
+      !els.trendDistrictFilter ||
+      !els.trendSmallDistrictFilter
+    ) {
+      return;
+    }
+
+    const basePeople =
+      getPopulationBase().people;
+
+    const districts =
+      unique(
+        basePeople
+          .map(p => p.district)
+          .filter(Boolean)
+      ).sort(
+        (a, b) =>
+          a.localeCompare(
+            b,
+            'zh-Hant'
+          )
+      );
+
+    const previousDistrict =
+      els.trendDistrictFilter.value;
+
+    els.trendDistrictFilter.innerHTML =
+      '<option value="">全會所</option>' +
+      districts
+        .map(
+          district => `
+            <option value="${escapeAttr(district)}">
+              ${escapeHtml(district)}
+            </option>
+          `
+        )
+        .join('');
+
+    if (
+      previousDistrict &&
+      districts.includes(previousDistrict)
+    ) {
+      els.trendDistrictFilter.value =
+        previousDistrict;
+    }
+
+    updateTrendSmallDistrictOptions();
+  }
+
+
+  function updateTrendSmallDistrictOptions() {
+
+    if (
+      !els.trendDistrictFilter ||
+      !els.trendSmallDistrictFilter
+    ) {
+      return;
+    }
+
+    const district =
+      els.trendDistrictFilter.value;
+
+    const previousSmall =
+      els.trendSmallDistrictFilter.value;
+
+    if (!district) {
+      els.trendSmallDistrictFilter.innerHTML =
+        '<option value="">全部小區</option>';
+
+      els.trendSmallDistrictFilter.value = '';
+      els.trendSmallDistrictFilter.disabled = true;
+      return;
+    }
+
+    const smallDistricts =
+      unique(
+        getPopulationBase().people
+          .filter(
+            p =>
+              p.district === district
+          )
+          .map(
+            p => p.smallDistrict
+          )
+          .filter(Boolean)
+      ).sort(
+        (a, b) =>
+          a.localeCompare(
+            b,
+            'zh-Hant'
+          )
+      );
+
+    els.trendSmallDistrictFilter.innerHTML =
+      '<option value="">全部小區</option>' +
+      smallDistricts
+        .map(
+          small => `
+            <option value="${escapeAttr(small)}">
+              ${escapeHtml(small)}
+            </option>
+          `
+        )
+        .join('');
+
+    els.trendSmallDistrictFilter.disabled = false;
+
+    if (
+      previousSmall &&
+      smallDistricts.includes(previousSmall)
+    ) {
+      els.trendSmallDistrictFilter.value =
+        previousSmall;
+    }
+  }
+
+
+  function getTrendPeople() {
+
+    const district =
+      els.trendDistrictFilter?.value || '';
+
+    const smallDistrict =
+      els.trendSmallDistrictFilter?.value || '';
+
+    return getPopulationBase().people.filter(
+      person =>
+        (
+          !district ||
+          person.district === district
+        ) &&
+        (
+          !smallDistrict ||
+          person.smallDistrict === smallDistrict
+        )
+    );
+  }
+
+
+  function getTrendScopeLabel() {
+
+    const district =
+      els.trendDistrictFilter?.value || '';
+
+    const smallDistrict =
+      els.trendSmallDistrictFilter?.value || '';
+
+    if (!district) {
+      return '全會所';
+    }
+
+    if (!smallDistrict) {
+      return district;
+    }
+
+    return `${district}｜${smallDistrict}`;
+  }
+
+
+  function renderTrend() {
+
+    if (!els.trendChart) {
+      return;
+    }
+
+    const people =
+      getTrendPeople();
+
+    const points =
+      state.dateColumns.map(
+        dateColumn => {
+
+          const count =
+            people.reduce(
+              (sum, person) => {
+
+                const row =
+                  state.rows[
+                    person.rowNumber - 1
+                  ];
+
+                return sum +
+                  (
+                    row &&
+                    isAttendance(
+                      row[dateColumn.col]
+                    )
+                      ? 1
+                      : 0
+                  );
+              },
+              0
+            );
+
+          return {
+            date: dateColumn.date,
+            count
+          };
+        }
+      );
+
+    const scopeLabel =
+      getTrendScopeLabel();
+
+    const latest =
+      points.length
+        ? points[points.length - 1].count
+        : 0;
+
+    const previous =
+      points.length >= 2
+        ? points[points.length - 2].count
+        : null;
+
+    const average =
+      points.length
+        ? points.reduce(
+            (sum, point) =>
+              sum + point.count,
+            0
+          ) / points.length
+        : 0;
+
+    if (els.trendScopeLabel) {
+      els.trendScopeLabel.textContent =
+        `${scopeLabel}｜${people.length} 人母體`;
+    }
+
+    if (els.trendLatestCount) {
+      els.trendLatestCount.textContent =
+        latest;
+    }
+
+    if (els.trendAverageCount) {
+      els.trendAverageCount.textContent =
+        average.toFixed(1);
+    }
+
+    if (els.trendChangeText) {
+      if (previous === null) {
+        els.trendChangeText.textContent =
+          '較前一週 —';
+      } else {
+        const diff = latest - previous;
+        const sign =
+          diff > 0
+            ? '+'
+            : '';
+
+        els.trendChangeText.textContent =
+          `較前一週 ${sign}${diff} 人`;
+
+        els.trendChangeText.classList.toggle(
+          'is-up',
+          diff > 0
+        );
+
+        els.trendChangeText.classList.toggle(
+          'is-down',
+          diff < 0
+        );
+      }
+    }
+
+    if (!points.length) {
+      els.trendChart.innerHTML =
+        '<div class="trend-empty">沒有可繪製的每週資料</div>';
+      return;
+    }
+
+    const chartWidth =
+      Math.max(
+        760,
+        points.length * 38
+      );
+
+    const chartHeight = 350;
+    const left = 58;
+    const right = 24;
+    const top = 22;
+    const bottom = 54;
+    const plotWidth =
+      chartWidth - left - right;
+    const plotHeight =
+      chartHeight - top - bottom;
+
+    const rawMax =
+      Math.max(
+        ...points.map(p => p.count),
+        1
+      );
+
+    const step =
+      rawMax <= 20
+        ? 5
+        : rawMax <= 60
+          ? 10
+          : rawMax <= 150
+            ? 25
+            : rawMax <= 300
+              ? 50
+              : 100;
+
+    const yMax =
+      Math.ceil(rawMax / step) * step;
+
+    const xAt =
+      index =>
+        points.length === 1
+          ? left + plotWidth / 2
+          : left +
+            index /
+            (points.length - 1) *
+            plotWidth;
+
+    const yAt =
+      value =>
+        top +
+        plotHeight -
+        value / yMax * plotHeight;
+
+    const linePoints =
+      points
+        .map(
+          (point, index) =>
+            `${xAt(index).toFixed(1)},${yAt(point.count).toFixed(1)}`
+        )
+        .join(' ');
+
+    const yTicks = 4;
+    const grid =
+      Array.from(
+        { length: yTicks + 1 },
+        (_, i) => {
+          const value =
+            Math.round(
+              yMax *
+              (yTicks - i) /
+              yTicks
+            );
+
+          const y =
+            top +
+            i / yTicks *
+            plotHeight;
+
+          return `
+            <line
+              class="trend-grid-line"
+              x1="${left}"
+              y1="${y}"
+              x2="${chartWidth - right}"
+              y2="${y}"
+            />
+            <text
+              class="trend-y-label"
+              x="${left - 12}"
+              y="${y + 4}"
+              text-anchor="end"
+            >${value}</text>
+          `;
+        }
+      ).join('');
+
+    const labelEvery =
+      Math.max(
+        1,
+        Math.ceil(points.length / 10)
+      );
+
+    const xLabels =
+      points
+        .map(
+          (point, index) => {
+            const isLast =
+              index === points.length - 1;
+
+            if (
+              index % labelEvery !== 0 &&
+              !isLast
+            ) {
+              return '';
+            }
+
+            const x = xAt(index);
+            const label =
+              `${point.date.getMonth() + 1}/${point.date.getDate()}`;
+
+            return `
+              <text
+                class="trend-x-label"
+                x="${x}"
+                y="${chartHeight - 20}"
+                text-anchor="middle"
+              >${label}</text>
+            `;
+          }
+        )
+        .join('');
+
+    const circles =
+      points
+        .map(
+          (point, index) => {
+            const x = xAt(index);
+            const y = yAt(point.count);
+            const dateText =
+              fmtDate(point.date);
+
+            return `
+              <g class="trend-point-group">
+                <circle
+                  class="trend-point-hit"
+                  cx="${x}"
+                  cy="${y}"
+                  r="11"
+                  tabindex="0"
+                >
+                  <title>${escapeHtml(dateText)}：${point.count} 人</title>
+                </circle>
+                <circle
+                  class="trend-point"
+                  cx="${x}"
+                  cy="${y}"
+                  r="4"
+                  aria-hidden="true"
+                />
+              </g>
+            `;
+          }
+        )
+        .join('');
+
+    els.trendChart.innerHTML = `
+      <svg
+        class="trend-svg"
+        width="${chartWidth}"
+        height="${chartHeight}"
+        viewBox="0 0 ${chartWidth} ${chartHeight}"
+        aria-hidden="true"
+      >
+        ${grid}
+
+        <polyline
+          class="trend-line"
+          points="${linePoints}"
+        />
+
+        ${circles}
+        ${xLabels}
+      </svg>
+    `;
   }
 
 
@@ -3102,6 +3595,16 @@
       '';
 
 
+    if (els.trendDistrictFilter) {
+      els.trendDistrictFilter.value = '';
+    }
+
+    if (els.trendSmallDistrictFilter) {
+      els.trendSmallDistrictFilter.value = '';
+      els.trendSmallDistrictFilter.disabled = true;
+    }
+
+
     els.totalAttendanceFilter.value =
       '';
 
@@ -3175,6 +3678,33 @@
       recalculate();
     }
   );
+
+
+  /*
+   * ========================================
+   * 每週趨勢篩選
+   * ========================================
+   */
+
+  if (els.trendDistrictFilter) {
+
+    els.trendDistrictFilter.addEventListener(
+      'change',
+      () => {
+        updateTrendSmallDistrictOptions();
+        renderTrend();
+      }
+    );
+  }
+
+
+  if (els.trendSmallDistrictFilter) {
+
+    els.trendSmallDistrictFilter.addEventListener(
+      'change',
+      renderTrend
+    );
+  }
 
 
   /*
