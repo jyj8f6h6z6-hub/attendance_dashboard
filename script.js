@@ -102,6 +102,15 @@
     absenceWeeksFilter:
       $('absenceWeeksFilter'),
 
+    populationOriginalCount:
+      $('populationOriginalCount'),
+
+    populationActiveCount:
+      $('populationActiveCount'),
+
+    populationExcludedCount:
+      $('populationExcludedCount'),
+
     newBelieverFilter:
       $('newBelieverFilter'),
 
@@ -1120,6 +1129,8 @@
 
     renderRuleText();
 
+    renderPopulationScope();
+
     renderSummary();
 
     renderOverall();
@@ -1176,8 +1187,13 @@
       )} 最近 ${recent.length} 週`;
 
 
+    const population =
+      getPopulationBase();
+
     els.infoPeople.textContent =
-      `${state.people.length} 人`;
+      population.exclusionActive
+        ? `${population.people.length} 人（原 ${population.originalCount} 人）`
+        : `${population.people.length} 人`;
   }
 
 
@@ -1221,18 +1237,21 @@
 
   function renderSummary() {
 
+    const people =
+      getPopulationBase().people;
+
     const counts =
       countStatuses(
-        state.people
+        people
       );
 
 
     const total =
-      state.people.length || 1;
+      people.length || 1;
 
 
     const newBelievers =
-      state.people.filter(
+      people.filter(
         p =>
           p.newBelieverStatus ===
           'yes'
@@ -1240,7 +1259,7 @@
 
 
     const unknownBaptism =
-      state.people.filter(
+      people.filter(
         p =>
           p.newBelieverStatus ===
           'unknown'
@@ -1251,8 +1270,8 @@
 
       [
         '總人數',
-        state.people.length,
-        '匯入名單'
+        people.length,
+        '分析母體'
       ],
 
       [
@@ -1320,14 +1339,17 @@
 
   function renderOverall() {
 
+    const people =
+      getPopulationBase().people;
+
     const counts =
       countStatuses(
-        state.people
+        people
       );
 
 
     const total =
-      state.people.length || 1;
+      people.length || 1;
 
 
     els.overallBar.innerHTML =
@@ -1393,7 +1415,7 @@
 
     const groups =
       groupBy(
-        state.people,
+        getPopulationBase().people,
         p =>
           p.district ||
           '未分類'
@@ -1480,7 +1502,7 @@
     preserveOptions(
       els.districtFilter,
       unique(
-        state.people.map(
+        getPopulationBase().people.map(
           p => p.district
         )
       )
@@ -1498,7 +1520,7 @@
   function availableGroups() {
 
     return unique(
-      state.people
+      getPopulationBase().people
         .map(
           p => p.group
         )
@@ -1795,12 +1817,12 @@
 
     const peopleInDistrict =
       selectedDistrict
-        ? state.people.filter(
+        ? getPopulationBase().people.filter(
             p =>
               p.district ===
               selectedDistrict
           )
-        : state.people;
+        : getPopulationBase().people;
 
 
     preserveOptions(
@@ -1986,6 +2008,76 @@
 
   /*
    * ========================================
+   * 分析母體
+   * ========================================
+   *
+   * 這兩個排除條件不是一般「分析篩選」，
+   * 而是先決定整份報表要分析哪些人。
+   * 上方摘要、比例、大區比較與四張群組圖，
+   * 都以這裡排除後的人員為母體。
+   */
+
+  function getPopulationBase() {
+
+    const maxTotalAttendance =
+      els.totalAttendanceFilter.value === ''
+        ? null
+        : Number(els.totalAttendanceFilter.value);
+
+    const absenceWeeks =
+      els.absenceWeeksFilter.value === ''
+        ? null
+        : Number(els.absenceWeeksFilter.value);
+
+    const availableHistoryWeeks =
+      getAvailableHistoryWeeks();
+
+    const people =
+      state.people.filter(
+        p =>
+          !shouldExcludePerson(
+            p,
+            maxTotalAttendance,
+            absenceWeeks,
+            availableHistoryWeeks
+          )
+      );
+
+    return {
+      people,
+      originalCount: state.people.length,
+      excludedCount: state.people.length - people.length,
+      exclusionActive:
+        maxTotalAttendance !== null ||
+        absenceWeeks !== null
+    };
+  }
+
+
+  function renderPopulationScope() {
+
+    const base =
+      getPopulationBase();
+
+    if (els.populationOriginalCount) {
+      els.populationOriginalCount.textContent =
+        base.originalCount;
+    }
+
+    if (els.populationActiveCount) {
+      els.populationActiveCount.textContent =
+        base.people.length;
+    }
+
+    if (els.populationExcludedCount) {
+      els.populationExcludedCount.textContent =
+        base.excludedCount;
+    }
+  }
+
+
+  /*
+   * ========================================
    * 圖表群組判斷
    * ========================================
    */
@@ -2033,21 +2125,11 @@
     const selectedStatuses =
       state.selectedStatuses;
 
-    const maxTotalAttendance =
-      els.totalAttendanceFilter.value === ''
-        ? null
-        : Number(els.totalAttendanceFilter.value);
+    const population =
+      getPopulationBase();
 
-    const absenceWeeks =
-      els.absenceWeeksFilter.value === ''
-        ? null
-        : Number(els.absenceWeeksFilter.value);
-
-    const availableHistoryWeeks =
-      getAvailableHistoryWeeks();
-
-    const beforeExclusion =
-      state.people.filter(
+    const visible =
+      population.people.filter(
         p => {
 
           const matchesSearch =
@@ -2085,27 +2167,12 @@
         }
       );
 
-    const visible =
-      beforeExclusion.filter(
-        p =>
-          !shouldExcludePerson(
-            p,
-            maxTotalAttendance,
-            absenceWeeks,
-            availableHistoryWeeks
-          )
-      );
-
-    const excludedCount =
-      beforeExclusion.length - visible.length;
-
     return {
       people: visible,
-      beforeExclusionCount: beforeExclusion.length,
-      excludedCount,
-      exclusionActive:
-        maxTotalAttendance !== null ||
-        absenceWeeks !== null
+      populationCount: population.people.length,
+      originalCount: population.originalCount,
+      excludedCount: population.excludedCount,
+      exclusionActive: population.exclusionActive
     };
   }
 
@@ -2500,22 +2567,9 @@
       els.resultCount.textContent =
         `目前${labels.join('＋')}：${visible.length} / ${sourceCount} 人`;
 
-    } else if (base.exclusionActive) {
-      els.resultCount.innerHTML = `
-        顯示
-        <strong>${base.people.length}</strong>
-        /
-        ${base.beforeExclusionCount}
-        人
-        <span class="excluded-count">
-          ｜已排除
-          <strong>${base.excludedCount}</strong>
-          人
-        </span>
-      `;
     } else {
       els.resultCount.textContent =
-        `顯示 ${visible.length} / ${state.people.length} 人`;
+        `顯示 ${visible.length} / ${base.populationCount} 人`;
     }
 
     els.peopleBody.innerHTML =
@@ -3112,6 +3166,44 @@
 
   /*
    * ========================================
+   * 分析母體設定
+   * ========================================
+   */
+
+  [
+    els.totalAttendanceFilter,
+    els.absenceWeeksFilter
+  ].forEach(
+    el => {
+
+      const refreshPopulation =
+        () => {
+
+          closeMultiSelects();
+
+          state.chartType = '';
+          state.chartGroup = '';
+          state.chartDistrict = '';
+
+          state.selectedPeopleDistricts =
+            new Set();
+
+          state.selectedPeopleSmallDistricts =
+            new Set();
+
+          renderAll();
+        };
+
+      el.addEventListener(
+        'change',
+        refreshPopulation
+      );
+    }
+  );
+
+
+  /*
+   * ========================================
    * 一般篩選
    * ========================================
    */
@@ -3119,8 +3211,6 @@
   [
     els.searchInput,
     els.smallDistrictFilter,
-    els.totalAttendanceFilter,
-    els.absenceWeeksFilter,
     els.newBelieverFilter
   ].forEach(
     el => {

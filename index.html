@@ -312,6 +312,94 @@
 
 
       <!-- =========================
+           分析母體設定
+      ========================== -->
+
+      <section class="panel population-panel">
+
+        <div class="population-copy">
+
+          <p class="eyebrow">
+            ANALYSIS BASE
+          </p>
+
+          <h2>
+            分析母體設定
+          </h2>
+
+          <p>
+            先排除不納入本次分析的人員；下方總人數、聚會比例、大區比較與群組分析，皆以排除後人數重新計算。
+          </p>
+
+        </div>
+
+        <div class="population-controls">
+
+          <label class="field population-filter">
+
+            <span>
+              排除：總聚會最多
+            </span>
+
+            <select id="totalAttendanceFilter">
+              <option value="">不設定</option>
+              <option value="0">0 次</option>
+              <option value="1">1 次</option>
+              <option value="2">2 次</option>
+              <option value="3">3 次</option>
+              <option value="4">4 次</option>
+              <option value="5">5 次</option>
+              <option value="6">6 次</option>
+              <option value="7">7 次</option>
+              <option value="8">8 次</option>
+              <option value="9">9 次</option>
+              <option value="10">10 次</option>
+            </select>
+
+          </label>
+
+          <label class="field population-filter">
+
+            <span>
+              排除：未聚會達
+            </span>
+
+            <select id="absenceWeeksFilter">
+              <option value="">不設定</option>
+              <option value="4">1 個月</option>
+              <option value="9">2 個月</option>
+              <option value="17">4 個月</option>
+              <option value="35">8 個月</option>
+              <option value="52">1 年</option>
+              <option value="78">1 年半</option>
+              <option value="104">2 年</option>
+              <option value="130">2 年半</option>
+              <option value="156">3 年</option>
+              <option value="182">3 年半</option>
+              <option value="208">4 年</option>
+              <option value="234">4 年半</option>
+              <option value="260">5 年</option>
+            </select>
+
+          </label>
+
+        </div>
+
+        <div class="population-result" aria-live="polite">
+          <span>原始名單 <strong id="populationOriginalCount">—</strong> 人</span>
+          <span class="population-arrow" aria-hidden="true">→</span>
+          <span>分析母體 <strong id="populationActiveCount">—</strong> 人</span>
+          <span class="population-excluded">已排除 <strong id="populationExcludedCount">—</strong> 人</span>
+        </div>
+
+        <div class="exclusion-note population-note">
+          排除條件可單獨使用。只設定「未聚會達」時，排除超過該期間未聚會的人；只設定「總聚會最多」時，排除總出席次數低於或等於設定值的人；兩項都有設定時，只排除同時符合兩項的人。
+        </div>
+
+      </section>
+
+
+      <!-- =========================
            摘要卡片
       ========================== -->
 
@@ -660,64 +748,6 @@
 
 
 
-            <!-- 排除 -->
-
-            <label class="field exclusion-filter">
-
-              <span>
-                排除：總聚會最多
-              </span>
-
-              <select id="totalAttendanceFilter">
-
-                <option value="">不設定</option>
-                <option value="0">0 次</option>
-                <option value="1">1 次</option>
-                <option value="2">2 次</option>
-                <option value="3">3 次</option>
-                <option value="4">4 次</option>
-                <option value="5">5 次</option>
-                <option value="6">6 次</option>
-                <option value="7">7 次</option>
-                <option value="8">8 次</option>
-                <option value="9">9 次</option>
-                <option value="10">10 次</option>
-
-              </select>
-
-            </label>
-
-
-
-            <label class="field exclusion-filter">
-
-              <span>
-                排除：未聚會達
-              </span>
-
-              <select id="absenceWeeksFilter">
-
-                <option value="">不設定</option>
-                <option value="4">1 個月</option>
-                <option value="9">2 個月</option>
-                <option value="17">4 個月</option>
-                <option value="35">8 個月</option>
-                <option value="52">1 年</option>
-                <option value="78">1 年半</option>
-                <option value="104">2 年</option>
-                <option value="130">2 年半</option>
-                <option value="156">3 年</option>
-                <option value="182">3 年半</option>
-                <option value="208">4 年</option>
-                <option value="234">4 年半</option>
-                <option value="260">5 年</option>
-
-              </select>
-
-            </label>
-
-
-
             <label class="field">
 
               <span>
@@ -754,20 +784,6 @@
 
 
 
-        <div class="exclusion-note">
-
-          排除條件可單獨使用。
-
-          只設定「未聚會達」時，
-          會排除超過該期間未聚會的人；
-
-          只設定「總聚會最多」時，
-          會排除總出席次數低於或等於設定值的人；
-
-          兩項都有設定時，
-          則只排除同時符合兩項的人。
-
-        </div>
 
 
 
