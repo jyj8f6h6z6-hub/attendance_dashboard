@@ -287,6 +287,33 @@
   }
 
 
+  /*
+   * 新版點名系統的每週日期欄位以「週一」代表該週，
+   * 但本系統分析的是主日聚會，因此遇到週一時自動 +6 天，
+   * 換算成同一週的主日。
+   *
+   * 舊版報表本來就是週日日期，因此保持不變。
+   */
+  function normalizeAttendanceDateToSunday(d) {
+
+    if (!d) {
+      return null;
+    }
+
+    const normalized =
+      startOfDay(d);
+
+    // JavaScript：0 = 週日，1 = 週一
+    if (normalized.getDay() === 1) {
+      normalized.setDate(
+        normalized.getDate() + 6
+      );
+    }
+
+    return normalized;
+  }
+
+
   function baptismValueToDate(value) {
 
     if (
@@ -545,9 +572,14 @@
     rows[0].forEach(
       (value, col) => {
 
-        const d =
+        const rawDate =
           excelDateToDate(
             value
+          );
+
+        const d =
+          normalizeAttendanceDateToSunday(
+            rawDate
           );
 
         if (
