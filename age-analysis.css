@@ -963,3 +963,48 @@ button.age-label.is-selected {
   }
 
 }
+/* =========================================
+   v2：人員明細改為 iOS 風格直接按鈕
+   覆蓋舊版下拉式區域篩選排版
+========================================= */
+
+#peoplePanel > .section-head {
+  flex-wrap: wrap;
+}
+
+#peoplePanel .people-area-button-panel {
+  order: 3;
+  flex: 1 1 100%;
+  width: 100%;
+  margin-top: 4px;
+}
+
+#peoplePanel .people-button-group {
+  width: 100%;
+}
+
+#peoplePanel .people-area-button-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: none;
+  overflow: visible;
+  padding: 0;
+}
+
+#peoplePanel .people-area-clear {
+  justify-self: start;
+  min-height: 36px;
+  border-radius: 12px;
+}
+
+@media (max-width: 680px) {
+  #peoplePanel .people-area-button-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #peoplePanel .people-area-clear {
+    width: 100%;
+  }
+}

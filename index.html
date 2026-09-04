@@ -426,21 +426,28 @@
             </p>
           </div>
 
-          <div class="trend-controls">
+          <div class="trend-area-button-panel" aria-label="每週聚會人數區域篩選">
 
-            <label class="field compact">
-              <span>大區</span>
-              <select id="trendDistrictFilter">
-                <option value="">全會所</option>
-              </select>
-            </label>
+            <div class="area-button-group">
+              <span class="area-button-label">大區</span>
+              <input id="trendDistrictFilter" type="hidden" value="" />
+              <div
+                id="trendDistrictButtons"
+                class="ios-filter-buttons trend-area-buttons"
+              ></div>
+            </div>
 
-            <label class="field compact">
-              <span>小區</span>
-              <select id="trendSmallDistrictFilter" disabled>
-                <option value="">全部小區</option>
-              </select>
-            </label>
+            <div
+              id="trendSmallDistrictGroup"
+              class="area-button-group hidden"
+            >
+              <span class="area-button-label">小區</span>
+              <input id="trendSmallDistrictFilter" type="hidden" value="" />
+              <div
+                id="trendSmallDistrictButtons"
+                class="ios-filter-buttons trend-area-buttons"
+              ></div>
+            </div>
 
           </div>
 
@@ -1116,98 +1123,35 @@
 
 
 
-          <!-- 人員明細：大區 / 小區複選篩選 -->
+          <!-- 人員明細：大區 / 小區直接按鈕複選 -->
 
           <div
-            class="people-area-filters"
+            class="people-area-filters people-area-button-panel"
             id="peopleAreaFilters"
           >
 
-            <details
-              class="multi-select people-area-multi"
-              id="peopleDistrictMultiSelect"
-            >
+            <div class="people-button-group">
+              <span class="area-button-label">大區</span>
+              <div
+                id="peopleDistrictOptions"
+                class="ios-filter-buttons people-area-button-list"
+                aria-label="人員明細大區複選"
+              ></div>
+              <span id="peopleDistrictSummary" class="visually-hidden">大區：全部</span>
+            </div>
 
-              <summary id="peopleDistrictSummary">
-                大區：全部
-              </summary>
-
-              <div class="multi-panel people-area-panel">
-
-                <div class="people-filter-caption">
-                  只列出目前名單中有人的大區，可複選
-                </div>
-
-                <div
-                  class="group-options single-col people-area-options"
-                  id="peopleDistrictOptions"
-                ></div>
-
-                <div class="multi-actions">
-                  <button
-                    type="button"
-                    id="clearPeopleDistrictFilter"
-                    class="link-btn"
-                  >
-                    清除大區
-                  </button>
-
-                  <button
-                    type="button"
-                    id="closePeopleDistrictFilter"
-                    class="primary-small"
-                  >
-                    完成
-                  </button>
-                </div>
-
-              </div>
-
-            </details>
-
-
-            <details
-              class="multi-select people-area-multi hidden"
+            <div
+              class="people-button-group hidden"
               id="peopleSmallDistrictMultiSelect"
             >
-
-              <summary id="peopleSmallDistrictSummary">
-                小區：全部
-              </summary>
-
-              <div class="multi-panel people-area-panel">
-
-                <div class="people-filter-caption">
-                  顯示已選大區所屬的小區，可再複選
-                </div>
-
-                <div
-                  class="group-options single-col people-area-options"
-                  id="peopleSmallDistrictOptions"
-                ></div>
-
-                <div class="multi-actions">
-                  <button
-                    type="button"
-                    id="clearPeopleSmallDistrictFilter"
-                    class="link-btn"
-                  >
-                    清除小區
-                  </button>
-
-                  <button
-                    type="button"
-                    id="closePeopleSmallDistrictFilter"
-                    class="primary-small"
-                  >
-                    完成
-                  </button>
-                </div>
-
-              </div>
-
-            </details>
-
+              <span class="area-button-label">小區</span>
+              <div
+                id="peopleSmallDistrictOptions"
+                class="ios-filter-buttons people-area-button-list"
+                aria-label="人員明細小區複選"
+              ></div>
+              <span id="peopleSmallDistrictSummary" class="visually-hidden">小區：全部</span>
+            </div>
 
             <button
               type="button"
@@ -1218,7 +1162,6 @@
             </button>
 
           </div>
-
 
 
           <!-- 圖表連動篩選提示 -->

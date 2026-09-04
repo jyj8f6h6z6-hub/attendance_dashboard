@@ -97,6 +97,15 @@
     trendSmallDistrictFilter:
       $('trendSmallDistrictFilter'),
 
+    trendDistrictButtons:
+      $('trendDistrictButtons'),
+
+    trendSmallDistrictButtons:
+      $('trendSmallDistrictButtons'),
+
+    trendSmallDistrictGroup:
+      $('trendSmallDistrictGroup'),
+
     trendScopeLabel:
       $('trendScopeLabel'),
 
@@ -1434,11 +1443,51 @@
    * 大區 + 小區都有選 = 該小區。
    */
 
+  function renderAreaButtons({
+    container,
+    items,
+    selectedValue,
+    allLabel,
+    dataAttr
+  }) {
+
+    if (!container) {
+      return;
+    }
+
+    const allSelected = !selectedValue;
+
+    container.innerHTML = [
+      `
+        <button
+          type="button"
+          class="ios-filter-btn${allSelected ? ' is-selected' : ''}"
+          ${dataAttr}=""
+        >
+          <span class="ios-filter-dot" aria-hidden="true"></span>
+          ${escapeHtml(allLabel)}
+        </button>
+      `,
+      ...items.map(value => `
+        <button
+          type="button"
+          class="ios-filter-btn${selectedValue === value ? ' is-selected' : ''}"
+          ${dataAttr}="${escapeAttr(value)}"
+        >
+          <span class="ios-filter-dot" aria-hidden="true"></span>
+          ${escapeHtml(value)}
+        </button>
+      `)
+    ].join('');
+  }
+
+
   function buildTrendFilters() {
 
     if (
       !els.trendDistrictFilter ||
-      !els.trendSmallDistrictFilter
+      !els.trendSmallDistrictFilter ||
+      !els.trendDistrictButtons
     ) {
       return;
     }
@@ -1455,32 +1504,29 @@
         (a, b) =>
           a.localeCompare(
             b,
-            'zh-Hant'
+            'zh-Hant',
+            { numeric: true }
           )
       );
 
     const previousDistrict =
       els.trendDistrictFilter.value;
 
-    els.trendDistrictFilter.innerHTML =
-      '<option value="">全會所</option>' +
-      districts
-        .map(
-          district => `
-            <option value="${escapeAttr(district)}">
-              ${escapeHtml(district)}
-            </option>
-          `
-        )
-        .join('');
-
     if (
       previousDistrict &&
-      districts.includes(previousDistrict)
+      !districts.includes(previousDistrict)
     ) {
-      els.trendDistrictFilter.value =
-        previousDistrict;
+      els.trendDistrictFilter.value = '';
+      els.trendSmallDistrictFilter.value = '';
     }
+
+    renderAreaButtons({
+      container: els.trendDistrictButtons,
+      items: districts,
+      selectedValue: els.trendDistrictFilter.value,
+      allLabel: '全會所',
+      dataAttr: 'data-trend-district'
+    });
 
     updateTrendSmallDistrictOptions();
   }
@@ -1490,7 +1536,8 @@
 
     if (
       !els.trendDistrictFilter ||
-      !els.trendSmallDistrictFilter
+      !els.trendSmallDistrictFilter ||
+      !els.trendSmallDistrictButtons
     ) {
       return;
     }
@@ -1498,15 +1545,14 @@
     const district =
       els.trendDistrictFilter.value;
 
-    const previousSmall =
-      els.trendSmallDistrictFilter.value;
-
     if (!district) {
-      els.trendSmallDistrictFilter.innerHTML =
-        '<option value="">全部小區</option>';
-
       els.trendSmallDistrictFilter.value = '';
-      els.trendSmallDistrictFilter.disabled = true;
+
+      if (els.trendSmallDistrictGroup) {
+        els.trendSmallDistrictGroup.classList.add('hidden');
+      }
+
+      els.trendSmallDistrictButtons.innerHTML = '';
       return;
     }
 
@@ -1525,31 +1571,31 @@
         (a, b) =>
           a.localeCompare(
             b,
-            'zh-Hant'
+            'zh-Hant',
+            { numeric: true }
           )
       );
 
-    els.trendSmallDistrictFilter.innerHTML =
-      '<option value="">全部小區</option>' +
-      smallDistricts
-        .map(
-          small => `
-            <option value="${escapeAttr(small)}">
-              ${escapeHtml(small)}
-            </option>
-          `
-        )
-        .join('');
-
-    els.trendSmallDistrictFilter.disabled = false;
-
     if (
-      previousSmall &&
-      smallDistricts.includes(previousSmall)
+      els.trendSmallDistrictFilter.value &&
+      !smallDistricts.includes(
+        els.trendSmallDistrictFilter.value
+      )
     ) {
-      els.trendSmallDistrictFilter.value =
-        previousSmall;
+      els.trendSmallDistrictFilter.value = '';
     }
+
+    if (els.trendSmallDistrictGroup) {
+      els.trendSmallDistrictGroup.classList.remove('hidden');
+    }
+
+    renderAreaButtons({
+      container: els.trendSmallDistrictButtons,
+      items: smallDistricts,
+      selectedValue: els.trendSmallDistrictFilter.value,
+      allLabel: '全部小區',
+      dataAttr: 'data-trend-small-district'
+    });
   }
 
 
@@ -3384,8 +3430,18 @@
 
     els.peopleDistrictOptions.innerHTML =
       districtList.length
-        ? districtList
-            .map(
+        ? [
+            `
+              <button
+                type="button"
+                class="ios-filter-btn people-area-btn${!state.selectedPeopleDistricts.size ? ' is-selected' : ''}"
+                data-people-district=""
+              >
+                <span class="ios-filter-dot" aria-hidden="true"></span>
+                全部
+              </button>
+            `,
+            ...districtList.map(
               district => {
 
                 const count =
@@ -3394,20 +3450,19 @@
                   ).length;
 
                 return `
-                  <label class="group-option people-area-option">
-                    <input
-                      type="checkbox"
-                      value="${escapeAttr(district)}"
-                      data-people-district="${escapeAttr(district)}"
-                      ${state.selectedPeopleDistricts.has(district) ? 'checked' : ''}
-                    />
+                  <button
+                    type="button"
+                    class="ios-filter-btn people-area-btn${state.selectedPeopleDistricts.has(district) ? ' is-selected' : ''}"
+                    data-people-district="${escapeAttr(district)}"
+                  >
+                    <span class="ios-filter-dot" aria-hidden="true"></span>
                     <span>${escapeHtml(district)}</span>
-                    <small>${count} 人</small>
-                  </label>
+                    <small>${count}</small>
+                  </button>
                 `;
               }
             )
-            .join('')
+          ].join('')
         : '<div class="people-filter-empty">目前沒有可選大區</div>';
 
 
@@ -3519,24 +3574,32 @@
 
     els.peopleSmallDistrictOptions.innerHTML =
       smallList.length
-        ? smallList
-            .map(
+        ? [
+            `
+              <button
+                type="button"
+                class="ios-filter-btn people-area-btn${!state.selectedPeopleSmallDistricts.size ? ' is-selected' : ''}"
+                data-people-small-district=""
+              >
+                <span class="ios-filter-dot" aria-hidden="true"></span>
+                全部小區
+              </button>
+            `,
+            ...smallList.map(
               item => `
-                <label class="group-option people-area-option">
-                  <input
-                    type="checkbox"
-                    value="${escapeAttr(item.key)}"
-                    data-people-small-district="${escapeAttr(item.key)}"
-                    ${state.selectedPeopleSmallDistricts.has(item.key) ? 'checked' : ''}
-                  />
-                  <span>
-                    ${escapeHtml(item.smallDistrict)}
-                  </span>
-                  <small>${item.count} 人</small>
-                </label>
+                <button
+                  type="button"
+                  class="ios-filter-btn people-area-btn${state.selectedPeopleSmallDistricts.has(item.key) ? ' is-selected' : ''}"
+                  data-people-small-district="${escapeAttr(item.key)}"
+                  title="${escapeAttr(`${item.district}｜${item.smallDistrict} ${item.count} 人`)}"
+                >
+                  <span class="ios-filter-dot" aria-hidden="true"></span>
+                  <span>${escapeHtml(item.smallDistrict)}</span>
+                  <small>${item.count}</small>
+                </button>
               `
             )
-            .join('')
+          ].join('')
         : '<div class="people-filter-empty">所選大區目前沒有小區資料</div>';
 
 
@@ -4287,12 +4350,25 @@
    * ========================================
    */
 
-  if (els.trendDistrictFilter) {
+  if (els.trendDistrictButtons) {
 
-    els.trendDistrictFilter.addEventListener(
-      'change',
-      () => {
-        updateTrendSmallDistrictOptions();
+    els.trendDistrictButtons.addEventListener(
+      'click',
+      e => {
+        const button = e.target.closest('[data-trend-district]');
+        if (!button) {
+          return;
+        }
+
+        const nextDistrict =
+          button.dataset.trendDistrict || '';
+
+        if (els.trendDistrictFilter.value !== nextDistrict) {
+          els.trendDistrictFilter.value = nextDistrict;
+          els.trendSmallDistrictFilter.value = '';
+        }
+
+        buildTrendFilters();
         renderTrend();
         buildGroupTrendButtons();
         renderGroupTrend();
@@ -4301,11 +4377,20 @@
   }
 
 
-  if (els.trendSmallDistrictFilter) {
+  if (els.trendSmallDistrictButtons) {
 
-    els.trendSmallDistrictFilter.addEventListener(
-      'change',
-      () => {
+    els.trendSmallDistrictButtons.addEventListener(
+      'click',
+      e => {
+        const button = e.target.closest('[data-trend-small-district]');
+        if (!button) {
+          return;
+        }
+
+        els.trendSmallDistrictFilter.value =
+          button.dataset.trendSmallDistrict || '';
+
+        updateTrendSmallDistrictOptions();
         renderTrend();
         buildGroupTrendButtons();
         renderGroupTrend();
@@ -4713,45 +4798,35 @@
   if (els.peopleDistrictOptions) {
 
     els.peopleDistrictOptions.addEventListener(
-      'change',
+      'click',
       e => {
 
-        const input =
+        const button =
           e.target.closest(
-            'input[data-people-district]'
+            '[data-people-district]'
           );
 
-        if (!input) {
+        if (!button) {
           return;
         }
 
         const district =
-          input.dataset.peopleDistrict || '';
+          button.dataset.peopleDistrict || '';
 
-        if (input.checked) {
-          state.selectedPeopleDistricts.add(
-            district
-          );
+        if (!district) {
+          state.selectedPeopleDistricts = new Set();
+          state.selectedPeopleSmallDistricts = new Set();
+          renderPeople();
+          return;
+        }
+
+        if (state.selectedPeopleDistricts.has(district)) {
+          state.selectedPeopleDistricts.delete(district);
         } else {
-          state.selectedPeopleDistricts.delete(
-            district
-          );
+          state.selectedPeopleDistricts.add(district);
         }
 
-        /*
-         * 大區變更後，小區可選範圍會一起更新；
-         * 不屬於已選大區的小區會自動移除。
-         */
         renderPeople();
-
-        if (
-          state.selectedPeopleDistricts.size &&
-          els.peopleSmallDistrictMultiSelect
-        ) {
-          els.peopleSmallDistrictMultiSelect
-            .classList
-            .remove('hidden');
-        }
       }
     );
   }
@@ -4760,29 +4835,31 @@
   if (els.peopleSmallDistrictOptions) {
 
     els.peopleSmallDistrictOptions.addEventListener(
-      'change',
+      'click',
       e => {
 
-        const input =
+        const button =
           e.target.closest(
-            'input[data-people-small-district]'
+            '[data-people-small-district]'
           );
 
-        if (!input) {
+        if (!button) {
           return;
         }
 
         const key =
-          input.dataset.peopleSmallDistrict || '';
+          button.dataset.peopleSmallDistrict || '';
 
-        if (input.checked) {
-          state.selectedPeopleSmallDistricts.add(
-            key
-          );
+        if (!key) {
+          state.selectedPeopleSmallDistricts = new Set();
+          renderPeople();
+          return;
+        }
+
+        if (state.selectedPeopleSmallDistricts.has(key)) {
+          state.selectedPeopleSmallDistricts.delete(key);
         } else {
-          state.selectedPeopleSmallDistricts.delete(
-            key
-          );
+          state.selectedPeopleSmallDistricts.add(key);
         }
 
         renderPeople();
