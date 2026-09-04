@@ -44,6 +44,9 @@
     selectedGroups: new Set(),
     selectedStatuses: new Set(),
 
+    /* 分析篩選：小區可複選；空集合代表全部小區 */
+    selectedAnalysisSmallDistricts: new Set(),
+
     /*
      * 羣組成長趨勢：按鈕可複選。
      * 第一次載入時預設顯示所有可用羣組。
@@ -147,6 +150,7 @@
     analysisGroupButtons: $('analysisGroupButtons'),
     analysisStatusButtons: $('analysisStatusButtons'),
     analysisBelieverButtons: $('analysisBelieverButtons'),
+    analysisBelieverRow: $('analysisBelieverRow'),
     districtFilter: $('districtFilter'),
     smallDistrictFilter:
       $('smallDistrictFilter'),
@@ -691,6 +695,9 @@
       new Set();
 
     state.selectedPeopleSmallDistricts =
+      new Set();
+
+    state.selectedAnalysisSmallDistricts =
       new Set();
 
     state.chartType = '';
@@ -2686,31 +2693,102 @@
 
   function renderAnalysisFilterButtons() {
     if (!els.analysisDistrictButtons) return;
+
     const basePeople = getPopulationBase().people;
-    const districts = unique(basePeople.map(p=>p.district).filter(Boolean)).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+    const districts = unique(
+      basePeople.map(p => p.district).filter(Boolean)
+    ).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+
     const d = els.districtFilter.value;
-    els.analysisDistrictButtons.innerHTML = makeAnalysisButton('', '全部', !d, 'data-analysis-district') + districts.map(x=>makeAnalysisButton(x,x,d===x,'data-analysis-district')).join('');
+    els.analysisDistrictButtons.innerHTML =
+      makeAnalysisButton('', '全部', !d, 'data-analysis-district') +
+      districts.map(x =>
+        makeAnalysisButton(x, x, d === x, 'data-analysis-district')
+      ).join('');
 
-    const smalls = unique(basePeople.filter(p=>!d || p.district===d).map(p=>p.smallDistrict).filter(Boolean)).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
-    const sm = els.smallDistrictFilter.value;
+    /*
+     * 小區只有在選定大區後才出現，而且可以複選。
+     * 空集合代表「全部小區」。
+     */
+    const smalls = d
+      ? unique(
+          basePeople
+            .filter(p => p.district === d)
+            .map(p => p.smallDistrict)
+            .filter(Boolean)
+        ).sort((a,b)=>a.localeCompare(b,'zh-Hant',{numeric:true}))
+      : [];
+
+    state.selectedAnalysisSmallDistricts = new Set(
+      [...state.selectedAnalysisSmallDistricts].filter(x => smalls.includes(x))
+    );
+
     els.analysisSmallDistrictRow.classList.toggle('hidden', !d);
-    els.analysisSmallDistrictButtons.innerHTML = makeAnalysisButton('', '全部', !sm, 'data-analysis-small') + smalls.map(x=>makeAnalysisButton(x,x,sm===x,'data-analysis-small')).join('');
+    if (d) {
+      els.analysisSmallDistrictButtons.innerHTML =
+        makeAnalysisButton('', '全部', !state.selectedAnalysisSmallDistricts.size, 'data-analysis-small') +
+        smalls.map(x =>
+          makeAnalysisButton(
+            x,
+            x,
+            state.selectedAnalysisSmallDistricts.has(x),
+            'data-analysis-small'
+          )
+        ).join('');
+    } else {
+      els.analysisSmallDistrictButtons.innerHTML = '';
+    }
 
-    const areaPeople = basePeople.filter(p=>(!d||p.district===d)&&(!sm||p.smallDistrict===sm));
-    els.analysisGroupButtons.innerHTML = analysisFilterGroups().map(g=>{
-      let detail='';
-      if (g==='青少年') {
-        const counts={國中:0,高中:0,中學:0};
-        areaPeople.forEach(p=>{const x=cleanGroupText(p.group); if (x in counts) counts[x]++;});
-        const total=counts.國中+counts.高中+counts.中學;
-        detail=`共 ${total}｜國中 ${counts.國中}・高中 ${counts.高中}・中學 ${counts.中學}`;
-      }
-      return makeAnalysisButton(g,g,state.selectedGroups.has(g),'data-analysis-group',detail);
-    }).join('');
+    const areaPeople = basePeople.filter(p =>
+      (!d || p.district === d) &&
+      (!state.selectedAnalysisSmallDistricts.size ||
+        state.selectedAnalysisSmallDistricts.has(p.smallDistrict))
+    );
 
-    els.analysisStatusButtons.innerHTML = STATUS_ORDER.map(x=>makeAnalysisButton(x,x,state.selectedStatuses.has(x),'data-analysis-status')).join('');
-    const nb=els.newBelieverFilter.value;
-    els.analysisBelieverButtons.innerHTML = [['','全部'],['yes','初信'],['no','非初信'],['unknown','日期不明']].map(([v,l])=>makeAnalysisButton(v,l,nb===v,'data-analysis-believer')).join('');
+    /* 羣組只顯示名稱；青少年仍代表 國中＋高中＋中學，但不顯示拆分統計。 */
+    els.analysisGroupButtons.innerHTML = analysisFilterGroups()
+      .map(g => makeAnalysisButton(
+        g,
+        g,
+        state.selectedGroups.has(g),
+        'data-analysis-group'
+      ))
+      .join('');
+
+    els.analysisStatusButtons.innerHTML = STATUS_ORDER
+      .map(x => makeAnalysisButton(
+        x,
+        x,
+        state.selectedStatuses.has(x),
+        'data-analysis-status'
+      ))
+      .join('');
+
+    /*
+     * 初信只保留一顆按鈕：
+     * 未按 = 全部；按下 = 只看初信；再按一次 = 取消。
+     * 若目前完全沒有受浸日期來源，就把整列隱藏。
+     */
+    const hasBaptismData =
+      state.indexes.baptism >= 0 ||
+      state.baptismByName.size > 0;
+
+    if (els.analysisBelieverRow) {
+      els.analysisBelieverRow.classList.toggle('hidden', !hasBaptismData);
+    }
+
+    if (!hasBaptismData) {
+      els.newBelieverFilter.value = '';
+      els.analysisBelieverButtons.innerHTML = '';
+    } else {
+      const onlyNewBelievers = els.newBelieverFilter.value === 'yes';
+      els.analysisBelieverButtons.innerHTML = makeAnalysisButton(
+        'yes',
+        '初信',
+        onlyNewBelievers,
+        'data-analysis-believer'
+      );
+    }
   }
 
   function buildFilters() {
@@ -3330,8 +3408,8 @@
     const district =
       els.districtFilter.value;
 
-    const small =
-      els.smallDistrictFilter.value;
+    const selectedSmalls =
+      state.selectedAnalysisSmallDistricts;
 
     const nb =
       els.newBelieverFilter.value;
@@ -3358,8 +3436,8 @@
             p.district === district;
 
           const matchesSmallDistrict =
-            !small ||
-            p.smallDistrict === small;
+            !selectedSmalls.size ||
+            selectedSmalls.has(p.smallDistrict);
 
           const normalizedFilterGroup =
             ['國中', '高中', '中學'].includes(cleanGroupText(p.group))
@@ -4251,6 +4329,10 @@
       new Set();
 
 
+    state.selectedAnalysisSmallDistricts =
+      new Set();
+
+
     state.selectedPeopleDistricts =
       new Set();
 
@@ -4445,6 +4527,8 @@
     const districtBtn = e.target.closest('[data-analysis-district]');
     if (districtBtn) {
       els.districtFilter.value = districtBtn.dataset.analysisDistrict || '';
+      state.selectedAnalysisSmallDistricts = new Set();
+      els.smallDistrictFilter.value = '';
       updateSmallDistrictOptions();
       renderAnalysisFilterButtons();
       renderPeople();
@@ -4452,8 +4536,18 @@
     }
     const smallBtn = e.target.closest('[data-analysis-small]');
     if (smallBtn) {
-      els.smallDistrictFilter.value = smallBtn.dataset.analysisSmall || '';
-      renderAnalysisFilterButtons(); renderPeople(); return;
+      const small = smallBtn.dataset.analysisSmall || '';
+      if (!small) {
+        state.selectedAnalysisSmallDistricts = new Set();
+      } else if (state.selectedAnalysisSmallDistricts.has(small)) {
+        state.selectedAnalysisSmallDistricts.delete(small);
+      } else {
+        state.selectedAnalysisSmallDistricts.add(small);
+      }
+      els.smallDistrictFilter.value = '';
+      renderAnalysisFilterButtons();
+      renderPeople();
+      return;
     }
     const groupBtn = e.target.closest('[data-analysis-group]');
     if (groupBtn) {
@@ -4469,8 +4563,12 @@
     }
     const believerBtn = e.target.closest('[data-analysis-believer]');
     if (believerBtn) {
-      els.newBelieverFilter.value=believerBtn.dataset.analysisBeliever || '';
-      renderAnalysisFilterButtons(); renderPeople(); return;
+      const value = believerBtn.dataset.analysisBeliever || '';
+      els.newBelieverFilter.value =
+        els.newBelieverFilter.value === value ? '' : value;
+      renderAnalysisFilterButtons();
+      renderPeople();
+      return;
     }
   });
 

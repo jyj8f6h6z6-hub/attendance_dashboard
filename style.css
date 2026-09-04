@@ -1288,7 +1288,7 @@ select:focus-visible,
 .analysis-button-label { color:var(--muted); font-size:12px; font-weight:800; }
 .analysis-ios-buttons { display:grid; grid-template-columns:repeat(auto-fit,minmax(108px,1fr)); gap:9px; }
 .analysis-ios-buttons .ios-filter-btn { width:100%; min-width:0; min-height:48px; padding:8px 12px; }
-.analysis-group-buttons .ios-filter-btn { min-height:58px; flex-direction:column; gap:2px; line-height:1.2; }
+.analysis-group-buttons .ios-filter-btn { min-height:48px; line-height:1.2; }
 .analysis-group-main { display:flex; align-items:center; justify-content:center; gap:7px; }
 .analysis-group-detail { font-size:10px; font-weight:650; color:#7a8791; white-space:nowrap; }
 .analysis-group-buttons .ios-filter-btn.is-selected .analysis-group-detail { color:#53666e; }
