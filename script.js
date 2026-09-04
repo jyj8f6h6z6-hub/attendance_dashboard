@@ -86,7 +86,6 @@
     infoWeeks: $('infoWeeks'),
     infoPeople: $('infoPeople'),
 
-    windowSelect: $('windowSelect'),
     ruleText: $('ruleText'),
 
     summaryCards: $('summaryCards'),
@@ -142,6 +141,12 @@
       ),
 
     searchInput: $('searchInput'),
+    analysisDistrictButtons: $('analysisDistrictButtons'),
+    analysisSmallDistrictButtons: $('analysisSmallDistrictButtons'),
+    analysisSmallDistrictRow: $('analysisSmallDistrictRow'),
+    analysisGroupButtons: $('analysisGroupButtons'),
+    analysisStatusButtons: $('analysisStatusButtons'),
+    analysisBelieverButtons: $('analysisBelieverButtons'),
     districtFilter: $('districtFilter'),
     smallDistrictFilter:
       $('smallDistrictFilter'),
@@ -940,11 +945,8 @@
     }
 
 
-    state.windowWeeks =
-      Number(
-        els.windowSelect.value ||
-        12
-      );
+    // 聚會情況固定以最近 12 週判定，不再提供切換。
+    state.windowWeeks = 12;
 
 
     const recentCols =
@@ -2662,6 +2664,55 @@
   }
 
 
+  function analysisFilterGroups() {
+    const found = unique(
+      getPopulationBase().people
+        .map(p => {
+          const g = cleanGroupText(p.group);
+          return ['國中', '高中', '中學'].includes(g) ? '青少年' : g;
+        })
+        .filter(Boolean)
+    );
+    const preferred = ['年長','中壯','青壯','青職','大學','大專','青少年','國小','學齡前'];
+    return [...preferred.filter(g => found.includes(g)), ...found.filter(g => !preferred.includes(g)).sort((a,b)=>a.localeCompare(b,'zh-Hant'))];
+  }
+
+  function makeAnalysisButton(value, label, selected, attr, detail='') {
+    return `<button type="button" class="ios-filter-btn ${selected ? 'is-selected' : ''}" ${attr}="${escapeAttr(value)}" aria-pressed="${selected}">
+      <span class="analysis-group-main"><i class="ios-filter-dot"></i><span>${escapeHtml(label)}</span></span>
+      ${detail ? `<span class="analysis-group-detail">${escapeHtml(detail)}</span>` : ''}
+    </button>`;
+  }
+
+  function renderAnalysisFilterButtons() {
+    if (!els.analysisDistrictButtons) return;
+    const basePeople = getPopulationBase().people;
+    const districts = unique(basePeople.map(p=>p.district).filter(Boolean)).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+    const d = els.districtFilter.value;
+    els.analysisDistrictButtons.innerHTML = makeAnalysisButton('', '全部', !d, 'data-analysis-district') + districts.map(x=>makeAnalysisButton(x,x,d===x,'data-analysis-district')).join('');
+
+    const smalls = unique(basePeople.filter(p=>!d || p.district===d).map(p=>p.smallDistrict).filter(Boolean)).sort((a,b)=>a.localeCompare(b,'zh-Hant'));
+    const sm = els.smallDistrictFilter.value;
+    els.analysisSmallDistrictRow.classList.toggle('hidden', !d);
+    els.analysisSmallDistrictButtons.innerHTML = makeAnalysisButton('', '全部', !sm, 'data-analysis-small') + smalls.map(x=>makeAnalysisButton(x,x,sm===x,'data-analysis-small')).join('');
+
+    const areaPeople = basePeople.filter(p=>(!d||p.district===d)&&(!sm||p.smallDistrict===sm));
+    els.analysisGroupButtons.innerHTML = analysisFilterGroups().map(g=>{
+      let detail='';
+      if (g==='青少年') {
+        const counts={國中:0,高中:0,中學:0};
+        areaPeople.forEach(p=>{const x=cleanGroupText(p.group); if (x in counts) counts[x]++;});
+        const total=counts.國中+counts.高中+counts.中學;
+        detail=`共 ${total}｜國中 ${counts.國中}・高中 ${counts.高中}・中學 ${counts.中學}`;
+      }
+      return makeAnalysisButton(g,g,state.selectedGroups.has(g),'data-analysis-group',detail);
+    }).join('');
+
+    els.analysisStatusButtons.innerHTML = STATUS_ORDER.map(x=>makeAnalysisButton(x,x,state.selectedStatuses.has(x),'data-analysis-status')).join('');
+    const nb=els.newBelieverFilter.value;
+    els.analysisBelieverButtons.innerHTML = [['','全部'],['yes','初信'],['no','非初信'],['unknown','日期不明']].map(([v,l])=>makeAnalysisButton(v,l,nb===v,'data-analysis-believer')).join('');
+  }
+
   function buildFilters() {
 
     preserveOptions(
@@ -2679,6 +2730,7 @@
     buildGroupOptions();
 
     buildStatusOptions();
+    renderAnalysisFilterButtons();
   }
 
 
@@ -2686,9 +2738,10 @@
 
     return unique(
       getPopulationBase().people
-        .map(
-          p => p.group
-        )
+        .map(p => {
+          const g = cleanGroupText(p.group);
+          return ['國中', '高中', '中學'].includes(g) ? '青少年' : g;
+        })
         .filter(Boolean)
     )
       .sort(
@@ -2846,10 +2899,7 @@
       groups === 'teen'
     ) {
 
-      wanted = [
-        ...resolve('junior'),
-        ...resolve('senior')
-      ];
+      wanted = ['青少年'];
     }
 
 
@@ -2880,6 +2930,7 @@
 
 
     buildGroupOptions();
+    renderAnalysisFilterButtons();
 
     renderPeople();
   }
@@ -2969,6 +3020,7 @@
 
 
     buildStatusOptions();
+    renderAnalysisFilterButtons();
 
     renderPeople();
   }
@@ -3309,9 +3361,14 @@
             !small ||
             p.smallDistrict === small;
 
+          const normalizedFilterGroup =
+            ['國中', '高中', '中學'].includes(cleanGroupText(p.group))
+              ? '青少年'
+              : cleanGroupText(p.group);
+
           const matchesGroup =
             !selectedGroups.size ||
-            selectedGroups.has(p.group);
+            selectedGroups.has(normalizedFilterGroup);
 
           const matchesStatus =
             !selectedStatuses.size ||
@@ -4281,10 +4338,6 @@
       '';
 
 
-    els.windowSelect.value =
-      '12';
-
-
     closeMultiSelects();
   }
 
@@ -4323,23 +4376,6 @@
 
         onBaptismFile(file);
       }
-    }
-  );
-
-
-  /*
-   * ========================================
-   * 觀察週數
-   * ========================================
-   */
-
-  els.windowSelect.addEventListener(
-    'change',
-    () => {
-
-      closeMultiSelects();
-
-      recalculate();
     }
   );
 
@@ -4405,6 +4441,39 @@
    * ========================================
    */
 
+  document.addEventListener('click', e => {
+    const districtBtn = e.target.closest('[data-analysis-district]');
+    if (districtBtn) {
+      els.districtFilter.value = districtBtn.dataset.analysisDistrict || '';
+      updateSmallDistrictOptions();
+      renderAnalysisFilterButtons();
+      renderPeople();
+      return;
+    }
+    const smallBtn = e.target.closest('[data-analysis-small]');
+    if (smallBtn) {
+      els.smallDistrictFilter.value = smallBtn.dataset.analysisSmall || '';
+      renderAnalysisFilterButtons(); renderPeople(); return;
+    }
+    const groupBtn = e.target.closest('[data-analysis-group]');
+    if (groupBtn) {
+      const g=groupBtn.dataset.analysisGroup;
+      if (state.selectedGroups.has(g)) state.selectedGroups.delete(g); else state.selectedGroups.add(g);
+      buildGroupOptions(); renderAnalysisFilterButtons(); renderPeople(); return;
+    }
+    const statusBtn = e.target.closest('[data-analysis-status]');
+    if (statusBtn) {
+      const st=statusBtn.dataset.analysisStatus;
+      if (state.selectedStatuses.has(st)) state.selectedStatuses.delete(st); else state.selectedStatuses.add(st);
+      buildStatusOptions(); renderAnalysisFilterButtons(); renderPeople(); return;
+    }
+    const believerBtn = e.target.closest('[data-analysis-believer]');
+    if (believerBtn) {
+      els.newBelieverFilter.value=believerBtn.dataset.analysisBeliever || '';
+      renderAnalysisFilterButtons(); renderPeople(); return;
+    }
+  });
+
   if (els.groupTrendButtons) {
     els.groupTrendButtons.addEventListener(
       'click',
@@ -4459,6 +4528,7 @@
       closeMultiSelects();
 
       updateSmallDistrictOptions();
+      renderAnalysisFilterButtons();
 
       renderPeople();
     }
@@ -4522,6 +4592,7 @@
 
           closeMultiSelects();
 
+          renderAnalysisFilterButtons();
           renderPeople();
         }
       );
@@ -4533,6 +4604,7 @@
 
           closeMultiSelects();
 
+          renderAnalysisFilterButtons();
           renderPeople();
         }
       );
@@ -4583,6 +4655,7 @@
 
 
       updateGroupSummary();
+      renderAnalysisFilterButtons();
 
       renderPeople();
     }
@@ -4662,6 +4735,7 @@
 
 
       updateStatusSummary();
+      renderAnalysisFilterButtons();
 
       renderPeople();
     }
