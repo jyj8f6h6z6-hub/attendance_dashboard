@@ -45,6 +45,13 @@
     selectedStatuses: new Set(),
 
     /*
+     * 羣組成長趨勢：按鈕可複選。
+     * 第一次載入時預設顯示所有可用羣組。
+     */
+    selectedTrendGroups: new Set(),
+    trendGroupsInitialized: false,
+
+    /*
      * 人員明細區域複選篩選
      * 只影響人員明細，不影響四張分析圖。
      */
@@ -104,6 +111,18 @@
 
     trendChart:
       $('trendChart'),
+
+    groupTrendScopeLabel:
+      $('groupTrendScopeLabel'),
+
+    groupTrendButtons:
+      $('groupTrendButtons'),
+
+    groupTrendSelectedText:
+      $('groupTrendSelectedText'),
+
+    groupTrendChart:
+      $('groupTrendChart'),
 
     overallBar: $('overallBar'),
     overallLegend: $('overallLegend'),
@@ -664,6 +683,12 @@
     state.chartGroup = '';
     state.chartDistrict = '';
 
+    state.selectedTrendGroups =
+      new Set();
+
+    state.trendGroupsInitialized =
+      false;
+
     updateChartFilterUI();
 
 
@@ -1190,6 +1215,10 @@
     buildTrendFilters();
 
     renderTrend();
+
+    buildGroupTrendButtons();
+
+    renderGroupTrend();
 
     renderOverall();
 
@@ -1856,6 +1885,571 @@
         />
 
         ${circles}
+        ${xLabels}
+      </svg>
+    `;
+  }
+
+
+  /*
+   * ========================================
+   * 羣組成長趨勢
+   * ========================================
+   *
+   * 1. 使用與上方每週人數相同的「全會所 / 大區 / 小區」範圍。
+   * 2. 國小、學齡前不納入。
+   * 3. 國中、高中、中學統一合併為「青少年」。
+   * 4. 每條線採 4 週移動平均，不顯示每週折點。
+   */
+
+  const GROUP_TREND_COLORS = [
+    '#315b66',
+    '#6f8793',
+    '#9a755f',
+    '#6f8061',
+    '#756b8a',
+    '#a07f45',
+    '#8a5f69',
+    '#567b78'
+  ];
+
+
+  function cleanGroupText(value) {
+    return String(value ?? '')
+      .trim()
+      .replace(/\s+/g, '');
+  }
+
+
+  function normalizeTrendGroup(group) {
+    const value =
+      cleanGroupText(group);
+
+    if (!value) {
+      return null;
+    }
+
+    if (
+      value === '國小' ||
+      value === '學齡前'
+    ) {
+      return null;
+    }
+
+    if (
+      [
+        '國中',
+        '高中',
+        '中學'
+      ].includes(value)
+    ) {
+      return '青少年';
+    }
+
+    return value;
+  }
+
+
+  function getAvailableTrendGroups() {
+    const found =
+      unique(
+        getTrendPeople()
+          .map(
+            person =>
+              normalizeTrendGroup(
+                person.group
+              )
+          )
+          .filter(Boolean)
+      );
+
+    const preferred = [
+      '年長',
+      '中壯',
+      '青壯',
+      '青職',
+      '大學',
+      '大專',
+      '青少年'
+    ];
+
+    return [
+      ...preferred.filter(
+        group => found.includes(group)
+      ),
+      ...found
+        .filter(
+          group => !preferred.includes(group)
+        )
+        .sort(
+          (a, b) =>
+            a.localeCompare(
+              b,
+              'zh-Hant',
+              { numeric: true }
+            )
+        )
+    ];
+  }
+
+
+  function getTrendGroupColor(
+    group,
+    availableGroups
+  ) {
+    const index =
+      Math.max(
+        0,
+        availableGroups.indexOf(group)
+      );
+
+    return GROUP_TREND_COLORS[
+      index % GROUP_TREND_COLORS.length
+    ];
+  }
+
+
+  function buildGroupTrendButtons() {
+    if (!els.groupTrendButtons) {
+      return;
+    }
+
+    const groups =
+      getAvailableTrendGroups();
+
+    state.selectedTrendGroups =
+      new Set(
+        [...state.selectedTrendGroups]
+          .filter(
+            group => groups.includes(group)
+          )
+      );
+
+    if (
+      !state.trendGroupsInitialized
+    ) {
+      state.selectedTrendGroups =
+        new Set(groups);
+
+      state.trendGroupsInitialized =
+        true;
+    }
+
+    els.groupTrendButtons.innerHTML =
+      groups.length
+        ? groups
+            .map(
+              group => {
+                const selected =
+                  state.selectedTrendGroups.has(
+                    group
+                  );
+
+                const color =
+                  getTrendGroupColor(
+                    group,
+                    groups
+                  );
+
+                return `
+                  <button
+                    type="button"
+                    class="group-trend-btn${selected ? ' is-selected' : ''}"
+                    data-trend-group="${escapeAttr(group)}"
+                    aria-pressed="${selected ? 'true' : 'false'}"
+                    style="--group-trend-color:${escapeAttr(color)}"
+                  >
+                    <span class="group-trend-btn-dot" aria-hidden="true"></span>
+                    <span>${escapeHtml(group)}</span>
+                  </button>
+                `;
+              }
+            )
+            .join('')
+        : '<div class="group-trend-no-groups">目前沒有可分析的羣組</div>';
+
+    updateGroupTrendMeta();
+  }
+
+
+  function updateGroupTrendMeta() {
+    if (els.groupTrendScopeLabel) {
+      els.groupTrendScopeLabel.textContent =
+        getTrendScopeLabel();
+    }
+
+    if (!els.groupTrendSelectedText) {
+      return;
+    }
+
+    const selected =
+      getAvailableTrendGroups()
+        .filter(
+          group =>
+            state.selectedTrendGroups.has(
+              group
+            )
+        );
+
+    els.groupTrendSelectedText.textContent =
+      selected.length
+        ? `目前顯示：${selected.join('＋')}`
+        : '目前未選擇羣組';
+  }
+
+
+  function movingAverage4(values) {
+    return values.map(
+      (_, index) => {
+        if (index < 3) {
+          return null;
+        }
+
+        const window =
+          values.slice(
+            index - 3,
+            index + 1
+          );
+
+        return window.reduce(
+          (sum, value) => sum + value,
+          0
+        ) / 4;
+      }
+    );
+  }
+
+
+  function smoothSvgPath(points) {
+    if (!points.length) {
+      return '';
+    }
+
+    if (points.length === 1) {
+      return `M ${points[0].x} ${points[0].y}`;
+    }
+
+    let path =
+      `M ${points[0].x} ${points[0].y}`;
+
+    for (
+      let i = 1;
+      i < points.length;
+      i++
+    ) {
+      const previous =
+        points[i - 1];
+
+      const current =
+        points[i];
+
+      const middleX =
+        (previous.x + current.x) / 2;
+
+      path +=
+        ` C ${middleX} ${previous.y}, ${middleX} ${current.y}, ${current.x} ${current.y}`;
+    }
+
+    return path;
+  }
+
+
+  function renderGroupTrend() {
+    if (!els.groupTrendChart) {
+      return;
+    }
+
+    updateGroupTrendMeta();
+
+    const availableGroups =
+      getAvailableTrendGroups();
+
+    const selectedGroups =
+      availableGroups.filter(
+        group =>
+          state.selectedTrendGroups.has(
+            group
+          )
+      );
+
+    if (!selectedGroups.length) {
+      els.groupTrendChart.innerHTML =
+        '<div class="trend-empty">請點選至少一個羣組查看成長趨勢</div>';
+      return;
+    }
+
+    const people =
+      getTrendPeople();
+
+    const series =
+      selectedGroups.map(
+        group => {
+          const groupPeople =
+            people.filter(
+              person =>
+                normalizeTrendGroup(
+                  person.group
+                ) === group
+            );
+
+          const weeklyCounts =
+            state.dateColumns.map(
+              dateColumn =>
+                groupPeople.reduce(
+                  (sum, person) => {
+                    const row =
+                      state.rows[
+                        person.rowNumber - 1
+                      ];
+
+                    return sum +
+                      (
+                        row &&
+                        isAttendance(
+                          row[dateColumn.col]
+                        )
+                          ? 1
+                          : 0
+                      );
+                  },
+                  0
+                )
+            );
+
+          return {
+            group,
+            color:
+              getTrendGroupColor(
+                group,
+                availableGroups
+              ),
+            values:
+              movingAverage4(
+                weeklyCounts
+              )
+          };
+        }
+      );
+
+    if (
+      state.dateColumns.length < 4
+    ) {
+      els.groupTrendChart.innerHTML =
+        '<div class="trend-empty">至少需要 4 週資料才能計算 4 週移動平均</div>';
+      return;
+    }
+
+    const chartWidth =
+      Math.max(
+        760,
+        state.dateColumns.length * 28
+      );
+
+    const chartHeight = 350;
+    const left = 58;
+    const right = 24;
+    const top = 24;
+    const bottom = 54;
+    const plotWidth =
+      chartWidth - left - right;
+    const plotHeight =
+      chartHeight - top - bottom;
+
+    const allValues =
+      series.flatMap(
+        item =>
+          item.values.filter(
+            value => value !== null
+          )
+      );
+
+    const rawMax =
+      Math.max(
+        ...allValues,
+        1
+      );
+
+    const step =
+      rawMax <= 20
+        ? 5
+        : rawMax <= 60
+          ? 10
+          : rawMax <= 150
+            ? 25
+            : rawMax <= 300
+              ? 50
+              : 100;
+
+    const yMax =
+      Math.ceil(rawMax / step) * step;
+
+    const xAt =
+      index =>
+        state.dateColumns.length === 1
+          ? left + plotWidth / 2
+          : left +
+            index /
+            (state.dateColumns.length - 1) *
+            plotWidth;
+
+    const yAt =
+      value =>
+        top +
+        plotHeight -
+        value / yMax * plotHeight;
+
+    const yTicks = 4;
+
+    const grid =
+      Array.from(
+        { length: yTicks + 1 },
+        (_, i) => {
+          const value =
+            Math.round(
+              yMax *
+              (yTicks - i) /
+              yTicks
+            );
+
+          const y =
+            top +
+            i / yTicks *
+            plotHeight;
+
+          return `
+            <line
+              class="trend-grid-line"
+              x1="${left}"
+              y1="${y}"
+              x2="${chartWidth - right}"
+              y2="${y}"
+            />
+            <text
+              class="trend-y-label"
+              x="${left - 12}"
+              y="${y + 4}"
+              text-anchor="end"
+            >${value}</text>
+          `;
+        }
+      ).join('');
+
+    const labelEvery =
+      Math.max(
+        1,
+        Math.ceil(
+          state.dateColumns.length / 10
+        )
+      );
+
+    const xLabels =
+      state.dateColumns
+        .map(
+          (dateColumn, index) => {
+            const isLast =
+              index ===
+              state.dateColumns.length - 1;
+
+            if (
+              index % labelEvery !== 0 &&
+              !isLast
+            ) {
+              return '';
+            }
+
+            const label =
+              `${dateColumn.date.getMonth() + 1}/${dateColumn.date.getDate()}`;
+
+            return `
+              <text
+                class="trend-x-label"
+                x="${xAt(index)}"
+                y="${chartHeight - 20}"
+                text-anchor="middle"
+              >${label}</text>
+            `;
+          }
+        )
+        .join('');
+
+    const paths =
+      series
+        .map(
+          item => {
+            const chartPoints =
+              item.values
+                .map(
+                  (value, index) =>
+                    value === null
+                      ? null
+                      : {
+                          x: Number(
+                            xAt(index).toFixed(1)
+                          ),
+                          y: Number(
+                            yAt(value).toFixed(1)
+                          ),
+                          value,
+                          index
+                        }
+                )
+                .filter(Boolean);
+
+            const path =
+              smoothSvgPath(
+                chartPoints
+              );
+
+            const hitPoints =
+              chartPoints
+                .map(
+                  point => {
+                    const dateText =
+                      fmtDate(
+                        state.dateColumns[
+                          point.index
+                        ].date
+                      );
+
+                    return `
+                      <circle
+                        class="group-trend-hit"
+                        cx="${point.x}"
+                        cy="${point.y}"
+                        r="10"
+                        tabindex="0"
+                      >
+                        <title>${escapeHtml(item.group)}｜${escapeHtml(dateText)}｜4週平均 ${point.value.toFixed(1)} 人</title>
+                      </circle>
+                    `;
+                  }
+                )
+                .join('');
+
+            return `
+              <g class="group-trend-series">
+                <path
+                  class="group-trend-line"
+                  d="${path}"
+                  style="stroke:${escapeAttr(item.color)}"
+                />
+                ${hitPoints}
+              </g>
+            `;
+          }
+        )
+        .join('');
+
+    els.groupTrendChart.innerHTML = `
+      <svg
+        class="trend-svg"
+        width="${chartWidth}"
+        height="${chartHeight}"
+        viewBox="0 0 ${chartWidth} ${chartHeight}"
+        aria-hidden="true"
+      >
+        ${grid}
+        ${paths}
         ${xLabels}
       </svg>
     `;
@@ -3551,6 +4145,13 @@
     state.chartDistrict = '';
 
 
+    state.selectedTrendGroups =
+      new Set();
+
+    state.trendGroupsInitialized =
+      false;
+
+
     updateChartFilterUI();
 
 
@@ -3693,6 +4294,8 @@
       () => {
         updateTrendSmallDistrictOptions();
         renderTrend();
+        buildGroupTrendButtons();
+        renderGroupTrend();
       }
     );
   }
@@ -3702,7 +4305,58 @@
 
     els.trendSmallDistrictFilter.addEventListener(
       'change',
-      renderTrend
+      () => {
+        renderTrend();
+        buildGroupTrendButtons();
+        renderGroupTrend();
+      }
+    );
+  }
+
+
+  /*
+   * ========================================
+   * 羣組成長趨勢：iPhone App 式複選按鈕
+   * ========================================
+   */
+
+  if (els.groupTrendButtons) {
+    els.groupTrendButtons.addEventListener(
+      'click',
+      e => {
+        const button =
+          e.target.closest(
+            '[data-trend-group]'
+          );
+
+        if (!button) {
+          return;
+        }
+
+        const group =
+          button.dataset.trendGroup || '';
+
+        if (!group) {
+          return;
+        }
+
+        if (
+          state.selectedTrendGroups.has(
+            group
+          )
+        ) {
+          state.selectedTrendGroups.delete(
+            group
+          );
+        } else {
+          state.selectedTrendGroups.add(
+            group
+          );
+        }
+
+        buildGroupTrendButtons();
+        renderGroupTrend();
+      }
     );
   }
 

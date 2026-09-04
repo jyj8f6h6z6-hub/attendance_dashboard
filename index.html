@@ -411,7 +411,7 @@
 
 
       <!-- =========================
-           每週聚會人數趨勢
+           每週聚會人數 / 羣組成長趨勢
       ========================== -->
 
       <section class="panel trend-panel">
@@ -419,8 +419,8 @@
         <div class="trend-head">
 
           <div>
-            <p class="eyebrow">WEEKLY TREND</p>
-            <h2>每週聚會人數趨勢</h2>
+            <p class="eyebrow">WEEKLY ATTENDANCE</p>
+            <h2>每週聚會人數</h2>
             <p class="trend-description">
               以「分析母體」為基準，查看全會所、各大區或各小區每週實際聚會人數。
             </p>
@@ -458,8 +458,49 @@
             id="trendChart"
             class="trend-chart"
             role="img"
-            aria-label="每週聚會人數趨勢圖"
+            aria-label="每週聚會人數折線圖"
           ></div>
+        </div>
+
+        <div class="group-trend-section">
+
+          <div class="group-trend-head">
+            <div>
+              <p class="eyebrow">GROUP TREND</p>
+              <h3>羣組成長趨勢</h3>
+              <p class="group-trend-description">
+                以 4 週移動平均呈現長期方向，降低單週高低波動；國小以下不納入，國中＋高中＋中學合併為「青少年」。
+              </p>
+            </div>
+
+            <div
+              id="groupTrendScopeLabel"
+              class="group-trend-scope"
+            >
+              全會所
+            </div>
+          </div>
+
+          <div
+            id="groupTrendButtons"
+            class="group-trend-buttons"
+            aria-label="羣組成長趨勢複選"
+          ></div>
+
+          <div class="group-trend-meta" aria-live="polite">
+            <span>趨勢算法：4 週移動平均</span>
+            <span id="groupTrendSelectedText">—</span>
+          </div>
+
+          <div class="trend-chart-scroller group-trend-scroller">
+            <div
+              id="groupTrendChart"
+              class="trend-chart group-trend-chart"
+              role="img"
+              aria-label="羣組成長趨勢圖"
+            ></div>
+          </div>
+
         </div>
 
       </section>
