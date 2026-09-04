@@ -1650,279 +1650,238 @@
   }
 
 
+  function aggregateMonthlyPoints(points) {
+    const months = new Map();
+
+    points.forEach(point => {
+      const date = point.date;
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+
+      if (!months.has(key)) {
+        months.set(key, {
+          year: date.getFullYear(),
+          month: date.getMonth(),
+          sum: 0,
+          weeks: 0
+        });
+      }
+
+      const item = months.get(key);
+      item.sum += Number(point.count || 0);
+      item.weeks++;
+    });
+
+    return [...months.values()].map(item => ({
+      date: new Date(item.year, item.month, 1),
+      count: item.weeks ? item.sum / item.weeks : 0,
+      weeks: item.weeks
+    }));
+  }
+
+
+  function smoothSvgPath(points) {
+    if (!points.length) {
+      return '';
+    }
+
+    if (points.length === 1) {
+      return `M ${points[0].x} ${points[0].y}`;
+    }
+
+    let path = `M ${points[0].x} ${points[0].y}`;
+
+    for (let i = 1; i < points.length; i++) {
+      const previous = points[i - 1];
+      const current = points[i];
+      const middleX = (previous.x + current.x) / 2;
+
+      path += ` C ${middleX} ${previous.y}, ${middleX} ${current.y}, ${current.x} ${current.y}`;
+    }
+
+    return path;
+  }
+
+
   function renderTrend() {
 
     if (!els.trendChart) {
       return;
     }
 
-    const people =
-      getTrendPeople();
+    const people = getTrendPeople();
 
-    const points =
-      state.dateColumns.map(
-        dateColumn => {
+    const weeklyPoints = state.dateColumns.map(
+      dateColumn => {
+        const count = people.reduce(
+          (sum, person) => {
+            const row = state.rows[person.rowNumber - 1];
 
-          const count =
-            people.reduce(
-              (sum, person) => {
-
-                const row =
-                  state.rows[
-                    person.rowNumber - 1
-                  ];
-
-                return sum +
-                  (
-                    row &&
-                    isAttendance(
-                      row[dateColumn.col]
-                    )
-                      ? 1
-                      : 0
-                  );
-              },
-              0
+            return sum + (
+              row && isAttendance(row[dateColumn.col])
+                ? 1
+                : 0
             );
+          },
+          0
+        );
 
-          return {
-            date: dateColumn.date,
-            count
-          };
-        }
-      );
+        return {
+          date: dateColumn.date,
+          count
+        };
+      }
+    );
 
-    const scopeLabel =
-      getTrendScopeLabel();
+    const points = aggregateMonthlyPoints(weeklyPoints);
+    const scopeLabel = getTrendScopeLabel();
 
-    const latest =
-      points.length
-        ? points[points.length - 1].count
-        : 0;
+    const latest = points.length
+      ? points[points.length - 1].count
+      : 0;
 
-    const previous =
-      points.length >= 2
-        ? points[points.length - 2].count
-        : null;
+    const previous = points.length >= 2
+      ? points[points.length - 2].count
+      : null;
 
-    const average =
-      points.length
-        ? points.reduce(
-            (sum, point) =>
-              sum + point.count,
-            0
-          ) / points.length
-        : 0;
+    const average = points.length
+      ? points.reduce((sum, point) => sum + point.count, 0) / points.length
+      : 0;
 
     if (els.trendScopeLabel) {
-      els.trendScopeLabel.textContent =
-        `${scopeLabel}｜${people.length} 人母體`;
+      els.trendScopeLabel.textContent = `${scopeLabel}｜${people.length} 人母體`;
     }
 
     if (els.trendLatestCount) {
-      els.trendLatestCount.textContent =
-        latest;
+      els.trendLatestCount.textContent = latest.toFixed(1);
     }
 
     if (els.trendAverageCount) {
-      els.trendAverageCount.textContent =
-        average.toFixed(1);
+      els.trendAverageCount.textContent = average.toFixed(1);
     }
 
     if (els.trendChangeText) {
+      els.trendChangeText.classList.remove('is-up', 'is-down');
+
       if (previous === null) {
-        els.trendChangeText.textContent =
-          '較前一週 —';
+        els.trendChangeText.textContent = '較前一月 —';
       } else {
         const diff = latest - previous;
-        const sign =
-          diff > 0
-            ? '+'
-            : '';
+        const sign = diff > 0 ? '+' : '';
 
-        els.trendChangeText.textContent =
-          `較前一週 ${sign}${diff} 人`;
-
-        els.trendChangeText.classList.toggle(
-          'is-up',
-          diff > 0
-        );
-
-        els.trendChangeText.classList.toggle(
-          'is-down',
-          diff < 0
-        );
+        els.trendChangeText.textContent = `較前一月 ${sign}${diff.toFixed(1)} 人`;
+        els.trendChangeText.classList.toggle('is-up', diff > 0);
+        els.trendChangeText.classList.toggle('is-down', diff < 0);
       }
     }
 
     if (!points.length) {
-      els.trendChart.innerHTML =
-        '<div class="trend-empty">沒有可繪製的每週資料</div>';
+      els.trendChart.innerHTML = '<div class="trend-empty">沒有可繪製的月份資料</div>';
       return;
     }
 
-    const chartWidth =
-      Math.max(
-        760,
-        points.length * 38
-      );
-
+    const chartWidth = Math.max(760, points.length * 92);
     const chartHeight = 350;
     const left = 58;
     const right = 24;
-    const top = 22;
-    const bottom = 54;
-    const plotWidth =
-      chartWidth - left - right;
-    const plotHeight =
-      chartHeight - top - bottom;
+    const top = 24;
+    const bottom = 56;
+    const plotWidth = chartWidth - left - right;
+    const plotHeight = chartHeight - top - bottom;
 
-    const rawMax =
-      Math.max(
-        ...points.map(p => p.count),
-        1
-      );
+    const rawMax = Math.max(...points.map(p => p.count), 1);
 
-    const step =
-      rawMax <= 20
-        ? 5
-        : rawMax <= 60
-          ? 10
-          : rawMax <= 150
-            ? 25
-            : rawMax <= 300
-              ? 50
-              : 100;
+    const step = rawMax <= 20
+      ? 5
+      : rawMax <= 60
+        ? 10
+        : rawMax <= 150
+          ? 25
+          : rawMax <= 300
+            ? 50
+            : 100;
 
-    const yMax =
-      Math.ceil(rawMax / step) * step;
+    const yMax = Math.ceil(rawMax / step) * step;
 
-    const xAt =
-      index =>
-        points.length === 1
-          ? left + plotWidth / 2
-          : left +
-            index /
-            (points.length - 1) *
-            plotWidth;
+    const xAt = index =>
+      points.length === 1
+        ? left + plotWidth / 2
+        : left + index / (points.length - 1) * plotWidth;
 
-    const yAt =
-      value =>
-        top +
-        plotHeight -
-        value / yMax * plotHeight;
+    const yAt = value =>
+      top + plotHeight - value / yMax * plotHeight;
 
-    const linePoints =
-      points
-        .map(
-          (point, index) =>
-            `${xAt(index).toFixed(1)},${yAt(point.count).toFixed(1)}`
-        )
-        .join(' ');
+    const chartPoints = points.map((point, index) => ({
+      x: Number(xAt(index).toFixed(1)),
+      y: Number(yAt(point.count).toFixed(1)),
+      point,
+      index
+    }));
 
+    const path = smoothSvgPath(chartPoints);
     const yTicks = 4;
-    const grid =
-      Array.from(
-        { length: yTicks + 1 },
-        (_, i) => {
-          const value =
-            Math.round(
-              yMax *
-              (yTicks - i) /
-              yTicks
-            );
 
-          const y =
-            top +
-            i / yTicks *
-            plotHeight;
+    const grid = Array.from(
+      { length: yTicks + 1 },
+      (_, i) => {
+        const value = Math.round(yMax * (yTicks - i) / yTicks);
+        const y = top + i / yTicks * plotHeight;
 
-          return `
-            <line
-              class="trend-grid-line"
-              x1="${left}"
-              y1="${y}"
-              x2="${chartWidth - right}"
-              y2="${y}"
-            />
-            <text
-              class="trend-y-label"
-              x="${left - 12}"
-              y="${y + 4}"
-              text-anchor="end"
-            >${value}</text>
-          `;
-        }
-      ).join('');
+        return `
+          <line
+            class="trend-grid-line"
+            x1="${left}"
+            y1="${y}"
+            x2="${chartWidth - right}"
+            y2="${y}"
+          />
+          <text
+            class="trend-y-label"
+            x="${left - 12}"
+            y="${y + 4}"
+            text-anchor="end"
+          >${value}</text>
+        `;
+      }
+    ).join('');
 
-    const labelEvery =
-      Math.max(
-        1,
-        Math.ceil(points.length / 10)
-      );
+    const xLabels = points.map((point, index) => {
+      const date = point.date;
+      const label = `${date.getFullYear()}/${date.getMonth() + 1}`;
 
-    const xLabels =
-      points
-        .map(
-          (point, index) => {
-            const isLast =
-              index === points.length - 1;
+      return `
+        <text
+          class="trend-x-label"
+          x="${xAt(index)}"
+          y="${chartHeight - 20}"
+          text-anchor="middle"
+        >${label}</text>
+      `;
+    }).join('');
 
-            if (
-              index % labelEvery !== 0 &&
-              !isLast
-            ) {
-              return '';
-            }
+    const circles = chartPoints.map(({ x, y, point }) => {
+      const monthText = `${point.date.getFullYear()}/${point.date.getMonth() + 1}`;
 
-            const x = xAt(index);
-            const label =
-              `${point.date.getMonth() + 1}/${point.date.getDate()}`;
-
-            return `
-              <text
-                class="trend-x-label"
-                x="${x}"
-                y="${chartHeight - 20}"
-                text-anchor="middle"
-              >${label}</text>
-            `;
-          }
-        )
-        .join('');
-
-    const circles =
-      points
-        .map(
-          (point, index) => {
-            const x = xAt(index);
-            const y = yAt(point.count);
-            const dateText =
-              fmtDate(point.date);
-
-            return `
-              <g class="trend-point-group">
-                <circle
-                  class="trend-point-hit"
-                  cx="${x}"
-                  cy="${y}"
-                  r="11"
-                  tabindex="0"
-                >
-                  <title>${escapeHtml(dateText)}：${point.count} 人</title>
-                </circle>
-                <circle
-                  class="trend-point"
-                  cx="${x}"
-                  cy="${y}"
-                  r="4"
-                  aria-hidden="true"
-                />
-              </g>
-            `;
-          }
-        )
-        .join('');
+      return `
+        <g class="trend-point-group">
+          <circle
+            class="trend-point-hit"
+            cx="${x}"
+            cy="${y}"
+            r="11"
+            tabindex="0"
+          >
+            <title>${escapeHtml(monthText)}｜月平均 ${point.count.toFixed(1)} 人｜${point.weeks} 週</title>
+          </circle>
+          <circle
+            class="trend-point"
+            cx="${x}"
+            cy="${y}"
+            r="4"
+            aria-hidden="true"
+          />
+        </g>
+      `;
+    }).join('');
 
     els.trendChart.innerHTML = `
       <svg
@@ -1933,12 +1892,7 @@
         aria-hidden="true"
       >
         ${grid}
-
-        <polyline
-          class="trend-line"
-          points="${linePoints}"
-        />
-
+        <path class="trend-line" d="${path}" />
         ${circles}
         ${xLabels}
       </svg>
@@ -1954,7 +1908,7 @@
    * 1. 使用與上方每週人數相同的「全會所 / 大區 / 小區」範圍。
    * 2. 國小、學齡前不納入。
    * 3. 國中、高中、中學統一合併為「青少年」。
-   * 4. 每條線採 4 週移動平均，不顯示每週折點。
+   * 4. 每條線將每週資料彙整為每月平均，再以平滑曲線呈現。
    */
 
   const GROUP_TREND_COLORS = [
@@ -2153,62 +2107,6 @@
   }
 
 
-  function movingAverage4(values) {
-    return values.map(
-      (_, index) => {
-        if (index < 3) {
-          return null;
-        }
-
-        const window =
-          values.slice(
-            index - 3,
-            index + 1
-          );
-
-        return window.reduce(
-          (sum, value) => sum + value,
-          0
-        ) / 4;
-      }
-    );
-  }
-
-
-  function smoothSvgPath(points) {
-    if (!points.length) {
-      return '';
-    }
-
-    if (points.length === 1) {
-      return `M ${points[0].x} ${points[0].y}`;
-    }
-
-    let path =
-      `M ${points[0].x} ${points[0].y}`;
-
-    for (
-      let i = 1;
-      i < points.length;
-      i++
-    ) {
-      const previous =
-        points[i - 1];
-
-      const current =
-        points[i];
-
-      const middleX =
-        (previous.x + current.x) / 2;
-
-      path +=
-        ` C ${middleX} ${previous.y}, ${middleX} ${current.y}, ${current.x} ${current.y}`;
-    }
-
-    return path;
-  }
-
-
   function renderGroupTrend() {
     if (!els.groupTrendChart) {
       return;
@@ -2216,16 +2114,10 @@
 
     updateGroupTrendMeta();
 
-    const availableGroups =
-      getAvailableTrendGroups();
-
-    const selectedGroups =
-      availableGroups.filter(
-        group =>
-          state.selectedTrendGroups.has(
-            group
-          )
-      );
+    const availableGroups = getAvailableTrendGroups();
+    const selectedGroups = availableGroups.filter(
+      group => state.selectedTrendGroups.has(group)
+    );
 
     if (!selectedGroups.length) {
       els.groupTrendChart.innerHTML =
@@ -2233,267 +2125,174 @@
       return;
     }
 
-    const people =
-      getTrendPeople();
+    const people = getTrendPeople();
 
-    const series =
-      selectedGroups.map(
-        group => {
-          const groupPeople =
-            people.filter(
-              person =>
-                normalizeTrendGroup(
-                  person.group
-                ) === group
-            );
-
-          const weeklyCounts =
-            state.dateColumns.map(
-              dateColumn =>
-                groupPeople.reduce(
-                  (sum, person) => {
-                    const row =
-                      state.rows[
-                        person.rowNumber - 1
-                      ];
-
-                    return sum +
-                      (
-                        row &&
-                        isAttendance(
-                          row[dateColumn.col]
-                        )
-                          ? 1
-                          : 0
-                      );
-                  },
-                  0
-                )
-            );
-
-          return {
-            group,
-            color:
-              getTrendGroupColor(
-                group,
-                availableGroups
-              ),
-            values:
-              movingAverage4(
-                weeklyCounts
-              )
-          };
-        }
+    const series = selectedGroups.map(group => {
+      const groupPeople = people.filter(
+        person => normalizeTrendGroup(person.group) === group
       );
 
-    if (
-      state.dateColumns.length < 4
-    ) {
+      const weeklyPoints = state.dateColumns.map(dateColumn => {
+        const count = groupPeople.reduce(
+          (sum, person) => {
+            const row = state.rows[person.rowNumber - 1];
+
+            return sum + (
+              row && isAttendance(row[dateColumn.col])
+                ? 1
+                : 0
+            );
+          },
+          0
+        );
+
+        return {
+          date: dateColumn.date,
+          count
+        };
+      });
+
+      return {
+        group,
+        color: getTrendGroupColor(group, availableGroups),
+        points: aggregateMonthlyPoints(weeklyPoints)
+      };
+    });
+
+    const monthCount = Math.max(
+      ...series.map(item => item.points.length),
+      0
+    );
+
+    if (!monthCount) {
       els.groupTrendChart.innerHTML =
-        '<div class="trend-empty">至少需要 4 週資料才能計算 4 週移動平均</div>';
+        '<div class="trend-empty">沒有可繪製的月份資料</div>';
       return;
     }
 
-    const chartWidth =
-      Math.max(
-        760,
-        state.dateColumns.length * 28
-      );
-
+    const chartWidth = Math.max(760, monthCount * 92);
     const chartHeight = 350;
     const left = 58;
     const right = 24;
     const top = 24;
-    const bottom = 54;
-    const plotWidth =
-      chartWidth - left - right;
-    const plotHeight =
-      chartHeight - top - bottom;
+    const bottom = 56;
+    const plotWidth = chartWidth - left - right;
+    const plotHeight = chartHeight - top - bottom;
 
-    const allValues =
-      series.flatMap(
-        item =>
-          item.values.filter(
-            value => value !== null
-          )
-      );
+    const allValues = series.flatMap(
+      item => item.points.map(point => point.count)
+    );
 
-    const rawMax =
-      Math.max(
-        ...allValues,
-        1
-      );
+    const rawMax = Math.max(...allValues, 1);
 
-    const step =
-      rawMax <= 20
-        ? 5
-        : rawMax <= 60
-          ? 10
-          : rawMax <= 150
-            ? 25
-            : rawMax <= 300
-              ? 50
-              : 100;
+    const step = rawMax <= 20
+      ? 5
+      : rawMax <= 60
+        ? 10
+        : rawMax <= 150
+          ? 25
+          : rawMax <= 300
+            ? 50
+            : 100;
 
-    const yMax =
-      Math.ceil(rawMax / step) * step;
+    const yMax = Math.ceil(rawMax / step) * step;
 
-    const xAt =
-      index =>
-        state.dateColumns.length === 1
-          ? left + plotWidth / 2
-          : left +
-            index /
-            (state.dateColumns.length - 1) *
-            plotWidth;
+    const xAt = index =>
+      monthCount === 1
+        ? left + plotWidth / 2
+        : left + index / (monthCount - 1) * plotWidth;
 
-    const yAt =
-      value =>
-        top +
-        plotHeight -
-        value / yMax * plotHeight;
+    const yAt = value =>
+      top + plotHeight - value / yMax * plotHeight;
 
     const yTicks = 4;
 
-    const grid =
-      Array.from(
-        { length: yTicks + 1 },
-        (_, i) => {
-          const value =
-            Math.round(
-              yMax *
-              (yTicks - i) /
-              yTicks
-            );
+    const grid = Array.from(
+      { length: yTicks + 1 },
+      (_, i) => {
+        const value = Math.round(yMax * (yTicks - i) / yTicks);
+        const y = top + i / yTicks * plotHeight;
 
-          const y =
-            top +
-            i / yTicks *
-            plotHeight;
+        return `
+          <line
+            class="trend-grid-line"
+            x1="${left}"
+            y1="${y}"
+            x2="${chartWidth - right}"
+            y2="${y}"
+          />
+          <text
+            class="trend-y-label"
+            x="${left - 12}"
+            y="${y + 4}"
+            text-anchor="end"
+          >${value}</text>
+        `;
+      }
+    ).join('');
 
-          return `
-            <line
-              class="trend-grid-line"
-              x1="${left}"
-              y1="${y}"
-              x2="${chartWidth - right}"
-              y2="${y}"
+    const referencePoints = series.find(item => item.points.length)?.points || [];
+
+    const xLabels = referencePoints.map((point, index) => {
+      const label = `${point.date.getFullYear()}/${point.date.getMonth() + 1}`;
+
+      return `
+        <text
+          class="trend-x-label"
+          x="${xAt(index)}"
+          y="${chartHeight - 20}"
+          text-anchor="middle"
+        >${label}</text>
+      `;
+    }).join('');
+
+    const paths = series.map(item => {
+      const chartPoints = item.points.map((point, index) => ({
+        x: Number(xAt(index).toFixed(1)),
+        y: Number(yAt(point.count).toFixed(1)),
+        point,
+        index
+      }));
+
+      const path = smoothSvgPath(chartPoints);
+
+      const hitPoints = chartPoints.map(({ x, y, point }) => {
+        const monthText = `${point.date.getFullYear()}/${point.date.getMonth() + 1}`;
+
+        return `
+          <g class="group-trend-point-group">
+            <circle
+              class="group-trend-hit"
+              cx="${x}"
+              cy="${y}"
+              r="10"
+              tabindex="0"
+            >
+              <title>${escapeHtml(item.group)}｜${escapeHtml(monthText)}｜月平均 ${point.count.toFixed(1)} 人｜${point.weeks} 週</title>
+            </circle>
+            <circle
+              class="group-trend-point"
+              cx="${x}"
+              cy="${y}"
+              r="3.5"
+              style="fill:${escapeAttr(item.color)}"
+              aria-hidden="true"
             />
-            <text
-              class="trend-y-label"
-              x="${left - 12}"
-              y="${y + 4}"
-              text-anchor="end"
-            >${value}</text>
-          `;
-        }
-      ).join('');
+          </g>
+        `;
+      }).join('');
 
-    const labelEvery =
-      Math.max(
-        1,
-        Math.ceil(
-          state.dateColumns.length / 10
-        )
-      );
-
-    const xLabels =
-      state.dateColumns
-        .map(
-          (dateColumn, index) => {
-            const isLast =
-              index ===
-              state.dateColumns.length - 1;
-
-            if (
-              index % labelEvery !== 0 &&
-              !isLast
-            ) {
-              return '';
-            }
-
-            const label =
-              `${dateColumn.date.getMonth() + 1}/${dateColumn.date.getDate()}`;
-
-            return `
-              <text
-                class="trend-x-label"
-                x="${xAt(index)}"
-                y="${chartHeight - 20}"
-                text-anchor="middle"
-              >${label}</text>
-            `;
-          }
-        )
-        .join('');
-
-    const paths =
-      series
-        .map(
-          item => {
-            const chartPoints =
-              item.values
-                .map(
-                  (value, index) =>
-                    value === null
-                      ? null
-                      : {
-                          x: Number(
-                            xAt(index).toFixed(1)
-                          ),
-                          y: Number(
-                            yAt(value).toFixed(1)
-                          ),
-                          value,
-                          index
-                        }
-                )
-                .filter(Boolean);
-
-            const path =
-              smoothSvgPath(
-                chartPoints
-              );
-
-            const hitPoints =
-              chartPoints
-                .map(
-                  point => {
-                    const dateText =
-                      fmtDate(
-                        state.dateColumns[
-                          point.index
-                        ].date
-                      );
-
-                    return `
-                      <circle
-                        class="group-trend-hit"
-                        cx="${point.x}"
-                        cy="${point.y}"
-                        r="10"
-                        tabindex="0"
-                      >
-                        <title>${escapeHtml(item.group)}｜${escapeHtml(dateText)}｜4週平均 ${point.value.toFixed(1)} 人</title>
-                      </circle>
-                    `;
-                  }
-                )
-                .join('');
-
-            return `
-              <g class="group-trend-series">
-                <path
-                  class="group-trend-line"
-                  d="${path}"
-                  style="stroke:${escapeAttr(item.color)}"
-                />
-                ${hitPoints}
-              </g>
-            `;
-          }
-        )
-        .join('');
+      return `
+        <g class="group-trend-series">
+          <path
+            class="group-trend-line"
+            d="${path}"
+            style="stroke:${escapeAttr(item.color)}"
+          />
+          ${hitPoints}
+        </g>
+      `;
+    }).join('');
 
     els.groupTrendChart.innerHTML = `
       <svg

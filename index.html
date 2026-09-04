@@ -392,7 +392,7 @@
             <p class="eyebrow">WEEKLY ATTENDANCE</p>
             <h2>每週聚會人數</h2>
             <p class="trend-description">
-              以「分析母體」為基準，查看全會所、各大區或各小區每週實際聚會人數。
+              以「分析母體」為基準，將每週實際聚會人數彙整為每月平均，使用平滑曲線查看全會所、各大區或各小區的長期方向。
             </p>
           </div>
 
@@ -425,9 +425,9 @@
 
         <div class="trend-summary" aria-live="polite">
           <span id="trendScopeLabel">全會所</span>
-          <span>最新一週 <strong id="trendLatestCount">—</strong> 人</span>
-          <span>平均每週 <strong id="trendAverageCount">—</strong> 人</span>
-          <span id="trendChangeText">較前一週 —</span>
+          <span>最新月平均 <strong id="trendLatestCount">—</strong> 人</span>
+          <span>全期月平均 <strong id="trendAverageCount">—</strong> 人</span>
+          <span id="trendChangeText">較前一月 —</span>
         </div>
 
         <div class="trend-chart-scroller">
@@ -435,7 +435,7 @@
             id="trendChart"
             class="trend-chart"
             role="img"
-            aria-label="每週聚會人數折線圖"
+            aria-label="每週聚會人數月平均趨勢圖"
           ></div>
         </div>
 
@@ -446,7 +446,7 @@
               <p class="eyebrow">GROUP TREND</p>
               <h3>羣組成長趨勢</h3>
               <p class="group-trend-description">
-                以 4 週移動平均呈現長期方向，降低單週高低波動；國小以下不納入，國中＋高中＋中學合併為「青少年」。
+                將每週聚會人數彙整為每月平均並以平滑曲線呈現長期方向；國小以下不納入，國中＋高中＋中學合併為「青少年」。
               </p>
             </div>
 
@@ -465,7 +465,7 @@
           ></div>
 
           <div class="group-trend-meta" aria-live="polite">
-            <span>趨勢算法：4 週移動平均</span>
+            <span>趨勢算法：每月平均＋平滑曲線</span>
             <span id="groupTrendSelectedText">—</span>
           </div>
 

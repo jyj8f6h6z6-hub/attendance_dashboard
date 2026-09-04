@@ -903,7 +903,7 @@ select:focus-visible,
 
 /* =========================================
    羣組成長趨勢
-   iPhone App 式等尺寸複選按鈕 + 4 週移動平均
+   iPhone App 式等尺寸複選按鈕 + 每月平均平滑曲線
 ========================================= */
 
 .group-trend-section {
@@ -1059,6 +1059,17 @@ select:focus-visible,
   fill: transparent;
   stroke: transparent;
   cursor: help;
+}
+
+.group-trend-point {
+  stroke: #ffffff;
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.group-trend-point-group:hover .group-trend-point,
+.group-trend-point-group:focus-within .group-trend-point {
+  r: 5.5;
 }
 
 @media (max-width: 800px) {
