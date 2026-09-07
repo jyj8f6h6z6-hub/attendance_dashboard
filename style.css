@@ -810,18 +810,20 @@ select:focus-visible,
 
 .trend-chart-scroller {
   margin-top: 14px;
-  overflow-x: auto;
-  overflow-y: hidden;
-  padding-bottom: 4px;
+  width: 100%;
+  overflow: hidden;
 }
 
 .trend-chart {
+  width: 100%;
+  min-width: 0;
   min-height: 350px;
 }
 
 .trend-svg {
   display: block;
-  max-width: none;
+  width: 100%;
+  max-width: 100%;
 }
 
 .trend-grid-line {
@@ -1193,6 +1195,10 @@ select:focus-visible,
   justify-items: end;
 }
 
+#trendSmallDistrictGroup.hidden {
+  display: none;
+}
+
 .area-button-group {
   display: flex;
   align-items: center;
@@ -1309,4 +1315,17 @@ select:focus-visible,
   .analysis-search-field { width:100%; }
   .analysis-button-row { grid-template-columns:1fr; gap:7px; }
   .analysis-ios-buttons { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+
+/* 2026-09-07：趨勢圖完整適應容器，不使用橫向滑動 */
+@media (max-width: 680px) {
+  .trend-chart,
+  .group-trend-chart {
+    min-height: 280px;
+  }
+
+  .trend-svg {
+    height: 280px;
+  }
 }

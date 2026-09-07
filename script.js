@@ -1779,10 +1779,11 @@
       return;
     }
 
-    const chartWidth = Math.max(760, points.length * 92);
-    const chartHeight = 350;
-    const left = 58;
-    const right = 24;
+    // 圖表寬度直接跟著目前容器，不再用 min-width 撐出橫向捲動。
+    const chartWidth = Math.max(320, Math.round(els.trendChart.clientWidth || 760));
+    const chartHeight = chartWidth <= 680 ? 280 : 350;
+    const left = chartWidth <= 420 ? 42 : 58;
+    const right = chartWidth <= 420 ? 12 : 24;
     const top = 24;
     const bottom = 56;
     const plotWidth = chartWidth - left - right;
@@ -1844,7 +1845,11 @@
       }
     ).join('');
 
+    // 小螢幕只降低 X 軸文字密度；所有月份資料點仍完整保留。
+    const maxXLabels = Math.max(3, Math.floor((chartWidth - left - right) / 62));
+    const xLabelEvery = Math.max(1, Math.ceil(points.length / maxXLabels));
     const xLabels = points.map((point, index) => {
+      if (index % xLabelEvery !== 0 && index !== points.length - 1) return '';
       const date = point.date;
       const label = `${date.getFullYear()}/${date.getMonth() + 1}`;
 
@@ -1886,7 +1891,7 @@
     els.trendChart.innerHTML = `
       <svg
         class="trend-svg"
-        width="${chartWidth}"
+        width="100%"
         height="${chartHeight}"
         viewBox="0 0 ${chartWidth} ${chartHeight}"
         aria-hidden="true"
@@ -2170,10 +2175,11 @@
       return;
     }
 
-    const chartWidth = Math.max(760, monthCount * 92);
-    const chartHeight = 350;
-    const left = 58;
-    const right = 24;
+    // 與上方圖表一致：完整縮放到容器寬度，不產生橫向捲動。
+    const chartWidth = Math.max(320, Math.round(els.groupTrendChart.clientWidth || 760));
+    const chartHeight = chartWidth <= 680 ? 280 : 350;
+    const left = chartWidth <= 420 ? 42 : 58;
+    const right = chartWidth <= 420 ? 12 : 24;
     const top = 24;
     const bottom = 56;
     const plotWidth = chartWidth - left - right;
@@ -2233,7 +2239,10 @@
 
     const referencePoints = series.find(item => item.points.length)?.points || [];
 
+    const maxXLabels = Math.max(3, Math.floor((chartWidth - left - right) / 62));
+    const xLabelEvery = Math.max(1, Math.ceil(referencePoints.length / maxXLabels));
     const xLabels = referencePoints.map((point, index) => {
+      if (index % xLabelEvery !== 0 && index !== referencePoints.length - 1) return '';
       const label = `${point.date.getFullYear()}/${point.date.getMonth() + 1}`;
 
       return `
@@ -2297,7 +2306,7 @@
     els.groupTrendChart.innerHTML = `
       <svg
         class="trend-svg"
-        width="${chartWidth}"
+        width="100%"
         height="${chartHeight}"
         viewBox="0 0 ${chartWidth} ${chartHeight}"
         aria-hidden="true"
@@ -5029,5 +5038,16 @@
     'click',
     clearData
   );
+
+  // 桌機視窗縮放或手機旋轉時，依新的可用寬度重畫兩張趨勢圖。
+  let trendResizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(trendResizeTimer);
+    trendResizeTimer = setTimeout(() => {
+      if (!state.rows.length) return;
+      renderTrend();
+      renderGroupTrend();
+    }, 120);
+  });
 
 })();
