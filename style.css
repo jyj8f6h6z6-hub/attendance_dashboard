@@ -1329,3 +1329,20 @@ select:focus-visible,
     height: 280px;
   }
 }
+
+/* 2026-09-07 修正：手機版每週聚會人數「大區」下方異常留白
+   .trend-area-button-panel 在桌機使用 flex-basis:720px 作為寬度；
+   當 .trend-head 於 <=800px 改為 column 時，flex-basis 會變成高度，
+   因而形成約 720px 的垂直空白。手機/平板改回內容自動高度。 */
+@media (max-width: 800px) {
+  .trend-area-button-panel {
+    flex: 0 0 auto;
+    flex-basis: auto;
+    height: auto;
+    min-height: 0;
+  }
+
+  .trend-head {
+    gap: 16px;
+  }
+}
