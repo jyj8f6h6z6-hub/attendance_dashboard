@@ -1346,3 +1346,38 @@ select:focus-visible,
     gap: 16px;
   }
 }
+
+/* 2026-09-07 v3：徹底移除手機版趨勢篩選區的 flex-basis 高度副作用。
+   桌機以寬度限制控制；手機改用 grid，讓高度完全由實際按鈕內容決定。 */
+.trend-area-button-panel {
+  flex: 0 1 auto;
+  width: min(720px, 58%);
+  min-width: 320px;
+}
+
+@media (max-width: 800px) {
+  .trend-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 16px;
+  }
+
+  .trend-head > * {
+    min-width: 0;
+  }
+
+  .trend-area-button-panel {
+    width: 100%;
+    min-width: 0;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    flex: none !important;
+    align-self: start;
+  }
+
+  .trend-summary {
+    margin-top: 14px;
+  }
+}
