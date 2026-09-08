@@ -230,11 +230,22 @@ main {
 }
 
 .overall-bar div { height: 100%; min-width: 0; }
-.seg-weekly { background: var(--weekly); }
-.seg-regular { background: var(--regular); }
-.seg-occasional { background: var(--occasional); }
-.seg-sporadic { background: var(--sporadic); }
-.seg-inactive { background: var(--inactive); }
+
+/* 整體聚會情況：09 活力亮色系
+   依聚會情況順序使用參考表的 5 色：
+   週週聚會 / 常聚會 / 偶聚會 / 零星聚會 / 近期未聚會 */
+.seg-weekly { background: #FF6B6B; }
+.seg-regular { background: #FFB703; }
+.seg-occasional { background: #4CC9A6; }
+.seg-sporadic { background: #3A86FF; }
+.seg-inactive { background: #8338EC; }
+
+/* 圖條下方圖例同步使用同一組顏色，避免圖條與圖例對不上 */
+.overall-legend .dot.weekly { background: #FF6B6B; }
+.overall-legend .dot.regular { background: #FFB703; }
+.overall-legend .dot.occasional { background: #4CC9A6; }
+.overall-legend .dot.sporadic { background: #3A86FF; }
+.overall-legend .dot.inactive { background: #8338EC; }
 
 .overall-legend {
   margin-top: 18px;
