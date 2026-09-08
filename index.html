@@ -419,13 +419,27 @@
           <span id="trendChangeText">較前一季 —</span>
         </div>
 
-        <div class="trend-chart-scroller">
-          <div
-            id="trendChart"
-            class="trend-chart"
-            role="img"
-            aria-label="每週聚會人數月平均趨勢圖"
-          ></div>
+        <div class="trend-chart-layout">
+          <aside class="age-structure-card" aria-label="目前羣組結構">
+            <div class="age-structure-head">
+              <div>
+                <p class="eyebrow">AGE STRUCTURE</p>
+                <h3>目前羣組結構</h3>
+              </div>
+              <span class="age-structure-period">最新季</span>
+            </div>
+            <div id="currentAgePyramid" class="age-pyramid"></div>
+            <div id="currentAgeStructureMeta" class="age-structure-meta"></div>
+          </aside>
+
+          <div class="trend-chart-scroller">
+            <div
+              id="trendChart"
+              class="trend-chart"
+              role="img"
+              aria-label="每週聚會人數月平均趨勢圖"
+            ></div>
+          </div>
         </div>
 
         <div class="group-trend-section">
@@ -458,13 +472,28 @@
             <span id="groupTrendSelectedText">—</span>
           </div>
 
-          <div class="trend-chart-scroller group-trend-scroller">
-            <div
-              id="groupTrendChart"
-              class="trend-chart group-trend-chart"
-              role="img"
-              aria-label="羣組成長趨勢圖"
-            ></div>
+          <div class="trend-chart-layout group-trend-layout">
+            <aside class="age-structure-card age-structure-compare-card" aria-label="季度結構變化">
+              <div class="age-structure-head">
+                <div>
+                  <p class="eyebrow">STRUCTURE SHIFT</p>
+                  <h3>季度結構變化</h3>
+                </div>
+                <span class="age-structure-period">前一季 → 最新季</span>
+              </div>
+              <div class="pyramid-compare-legend"><span>前一季</span><span>最新季</span></div>
+              <div id="quarterAgePyramid" class="age-pyramid age-pyramid-compare"></div>
+              <div id="ageStructureSignal" class="age-structure-signal"></div>
+            </aside>
+
+            <div class="trend-chart-scroller group-trend-scroller">
+              <div
+                id="groupTrendChart"
+                class="trend-chart group-trend-chart"
+                role="img"
+                aria-label="羣組成長趨勢圖"
+              ></div>
+            </div>
           </div>
 
         </div>

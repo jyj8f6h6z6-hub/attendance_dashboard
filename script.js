@@ -135,6 +135,18 @@
     groupTrendChart:
       $('groupTrendChart'),
 
+    currentAgePyramid:
+      $('currentAgePyramid'),
+
+    currentAgeStructureMeta:
+      $('currentAgeStructureMeta'),
+
+    quarterAgePyramid:
+      $('quarterAgePyramid'),
+
+    ageStructureSignal:
+      $('ageStructureSignal'),
+
     overallBar: $('overallBar'),
     overallLegend: $('overallLegend'),
 
@@ -1827,6 +1839,347 @@
   }
 
 
+  const AGE_STRUCTURE_GROUPS = [
+    '年長',
+    '中壯',
+    '青壯',
+    '青職',
+    '大學',
+    '青少年'
+  ];
+
+  /*
+   * 羣組固定配色：以「07 自然療癒色系」為主，
+   * 補入相容的土色與柔和紫灰，確保六條趨勢線都有足夠辨識度。
+   * 顏色固定綁定羣組，不因排序改變。
+   */
+  const AGE_STRUCTURE_COLORS = {
+    '年長': '#405B4A',
+    '中壯': '#6F8F76',
+    '青壯': '#9A7E62',
+    '青職': '#7FA184',
+    '大學': '#756B8A',
+    '青少年': '#A07F45'
+  };
+
+  const AGE_ASCENDING_GROUPS = [
+    '青少年',
+    '大學',
+    '青職',
+    '青壯',
+    '中壯',
+    '年長'
+  ];
+
+
+  function normalizeAgeStructureGroup(value) {
+    const group = cleanGroupText(value);
+
+    if (['國中', '高中', '中學'].includes(group)) {
+      return '青少年';
+    }
+
+    if (group === '大專') {
+      return '大學';
+    }
+
+    return AGE_STRUCTURE_GROUPS.includes(group)
+      ? group
+      : '';
+  }
+
+
+  function getQuarterGroupAverages(people, period) {
+    const columns = state.dateColumns.filter(
+      item => sameCustomQuarter(item.date, period)
+    );
+
+    const result = Object.fromEntries(
+      AGE_STRUCTURE_GROUPS.map(group => [group, 0])
+    );
+
+    if (!columns.length) {
+      return {
+        averages: result,
+        total: 0,
+        weeks: 0
+      };
+    }
+
+    AGE_STRUCTURE_GROUPS.forEach(group => {
+      const groupPeople = people.filter(
+        person => normalizeAgeStructureGroup(person.group) === group
+      );
+
+      const sum = columns.reduce((quarterSum, dateColumn) => {
+        const weeklyCount = groupPeople.reduce((count, person) => {
+          const row = state.rows[person.rowNumber - 1];
+          return count + (
+            row && isAttendance(row[dateColumn.col])
+              ? 1
+              : 0
+          );
+        }, 0);
+
+        return quarterSum + weeklyCount;
+      }, 0);
+
+      result[group] = sum / columns.length;
+    });
+
+    return {
+      averages: result,
+      total: AGE_STRUCTURE_GROUPS.reduce(
+        (sum, group) => sum + result[group],
+        0
+      ),
+      weeks: columns.length
+    };
+  }
+
+
+  function groupShare(stats, group) {
+    return stats.total
+      ? stats.averages[group] / stats.total * 100
+      : 0;
+  }
+
+
+  function ageStructureColor(group) {
+    return AGE_STRUCTURE_COLORS[group] || '#6F8793';
+  }
+
+
+  function groupsSortedByLatestShare(stats) {
+    return [...AGE_STRUCTURE_GROUPS].sort((a, b) => {
+      const diff = groupShare(stats, b) - groupShare(stats, a);
+
+      if (Math.abs(diff) > 0.0001) {
+        return diff;
+      }
+
+      return AGE_STRUCTURE_GROUPS.indexOf(a) -
+        AGE_STRUCTURE_GROUPS.indexOf(b);
+    });
+  }
+
+
+  function medianAgeGroup(stats) {
+    if (!stats.total) {
+      return '—';
+    }
+
+    const midpoint = stats.total / 2;
+    let cumulative = 0;
+
+    for (const group of AGE_ASCENDING_GROUPS) {
+      cumulative += stats.averages[group] || 0;
+
+      if (cumulative >= midpoint) {
+        return group;
+      }
+    }
+
+    return AGE_ASCENDING_GROUPS[AGE_ASCENDING_GROUPS.length - 1];
+  }
+
+
+  function renderCurrentAgePyramid() {
+    if (!els.currentAgePyramid) {
+      return;
+    }
+
+    const people = getTrendPeople();
+
+    if (!state.dateColumns.length) {
+      els.currentAgePyramid.innerHTML = '<div class="trend-empty compact">沒有可分析資料</div>';
+      return;
+    }
+
+    const latestPeriod = getCustomQuarter(
+      state.dateColumns[state.dateColumns.length - 1].date
+    );
+    const latest = getQuarterGroupAverages(people, latestPeriod);
+    const sortedGroups = groupsSortedByLatestShare(latest);
+    const maxShare = Math.max(
+      ...sortedGroups.map(group => groupShare(latest, group)),
+      1
+    );
+
+    els.currentAgePyramid.innerHTML = sortedGroups.map(group => {
+      const average = latest.averages[group];
+      const share = groupShare(latest, group);
+      const width = share / maxShare * 100;
+      const color = ageStructureColor(group);
+
+      return `
+        <div class="pyramid-row" style="--age-group-color:${escapeAttr(color)}">
+          <span class="pyramid-label">
+            <i class="pyramid-label-dot" aria-hidden="true"></i>
+            ${escapeHtml(group)}
+          </span>
+          <div class="pyramid-track">
+            <div class="pyramid-bar" style="width:${width.toFixed(1)}%"></div>
+          </div>
+          <span class="pyramid-value"><strong>${average.toFixed(1)}</strong><small>${share.toFixed(1)}%</small></span>
+        </div>
+      `;
+    }).join('');
+
+    if (els.currentAgeStructureMeta) {
+      els.currentAgeStructureMeta.textContent =
+        `最新季平均聚會結構｜${latest.weeks} 週｜六羣組合計 ${latest.total.toFixed(1)} 人／週`;
+    }
+  }
+
+
+  function renderQuarterAgePyramid() {
+    if (!els.quarterAgePyramid || !state.dateColumns.length) {
+      return;
+    }
+
+    const people = getTrendPeople();
+    const latestPeriod = getCustomQuarter(
+      state.dateColumns[state.dateColumns.length - 1].date
+    );
+    const previousPeriod = getPreviousCustomQuarter(latestPeriod);
+    const latest = getQuarterGroupAverages(people, latestPeriod);
+    const previous = getQuarterGroupAverages(people, previousPeriod);
+
+    if (!previous.weeks) {
+      els.quarterAgePyramid.innerHTML = '<div class="trend-empty compact">前一季沒有足夠資料可比較</div>';
+      if (els.ageStructureSignal) {
+        els.ageStructureSignal.innerHTML = `
+          <div class="age-structure-highlight is-neutral">
+            <span>中位數年齡層</span>
+            <strong>資料不足</strong>
+          </div>
+          <div class="age-structure-highlight is-neutral">
+            <span>結構趨勢</span>
+            <strong>資料不足</strong>
+          </div>
+        `;
+      }
+      return;
+    }
+
+    /*
+     * 前後兩季共用「最新季」的排序。
+     * 最新季占比高的羣組在最上，前一季只跟著對齊比較。
+     */
+    const sortedGroups = groupsSortedByLatestShare(latest);
+
+    const maxShare = Math.max(
+      ...sortedGroups.flatMap(group => [
+        groupShare(previous, group),
+        groupShare(latest, group)
+      ]),
+      1
+    );
+
+    els.quarterAgePyramid.innerHTML = sortedGroups.map(group => {
+      const prevShare = groupShare(previous, group);
+      const latestShare = groupShare(latest, group);
+      const prevWidth = prevShare / maxShare * 100;
+      const latestWidth = latestShare / maxShare * 100;
+      const diff = latestShare - prevShare;
+      const diffClass = diff > .05 ? 'is-up' : diff < -.05 ? 'is-down' : 'is-flat';
+      const sign = diff > 0 ? '+' : '';
+      const color = ageStructureColor(group);
+
+      return `
+        <div class="pyramid-compare-row" style="--age-group-color:${escapeAttr(color)}">
+          <div class="pyramid-half pyramid-half-left">
+            <span class="pyramid-side-value">${prevShare.toFixed(1)}%</span>
+            <div class="pyramid-compare-track">
+              <div class="pyramid-compare-bar previous" style="width:${prevWidth.toFixed(1)}%"></div>
+            </div>
+          </div>
+          <div class="pyramid-center-label">
+            <strong><i class="pyramid-label-dot" aria-hidden="true"></i>${escapeHtml(group)}</strong>
+            <small class="${diffClass}">${sign}${diff.toFixed(1)}</small>
+          </div>
+          <div class="pyramid-half pyramid-half-right">
+            <div class="pyramid-compare-track">
+              <div class="pyramid-compare-bar latest" style="width:${latestWidth.toFixed(1)}%"></div>
+            </div>
+            <span class="pyramid-side-value">${latestShare.toFixed(1)}%</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    if (els.ageStructureSignal) {
+      const olderGroups = ['年長', '中壯'];
+      const youngerGroups = ['青職', '大學', '青少年'];
+      const sumShares = (stats, groups) => groups.reduce(
+        (sum, group) => sum + groupShare(stats, group),
+        0
+      );
+
+      const olderPrev = sumShares(previous, olderGroups);
+      const olderLatest = sumShares(latest, olderGroups);
+      const youngerPrev = sumShares(previous, youngerGroups);
+      const youngerLatest = sumShares(latest, youngerGroups);
+      const olderDiff = olderLatest - olderPrev;
+      const youngerDiff = youngerLatest - youngerPrev;
+
+      const previousMedian = medianAgeGroup(previous);
+      const latestMedian = medianAgeGroup(latest);
+      const previousMedianIndex = AGE_ASCENDING_GROUPS.indexOf(previousMedian);
+      const latestMedianIndex = AGE_ASCENDING_GROUPS.indexOf(latestMedian);
+
+      let label = '大致穩定';
+      let signalClass = 'is-stable';
+
+      /*
+       * 中位數年齡層跨層時視為強訊號；
+       * 若中位數未跨層，再以年長端與年輕端占比 ±2 個百分點判讀。
+       */
+      if (latestMedianIndex > previousMedianIndex) {
+        label = '年齡重心上移';
+        signalClass = 'is-aging';
+      } else if (latestMedianIndex < previousMedianIndex) {
+        label = '年齡重心下移';
+        signalClass = 'is-younger';
+      } else if (olderDiff >= 2 && youngerDiff <= -2) {
+        label = '年齡重心上移';
+        signalClass = 'is-aging';
+      } else if (olderDiff <= -2 && youngerDiff >= 2) {
+        label = '年齡重心下移';
+        signalClass = 'is-younger';
+      }
+
+      const smallSample = people.length < 30;
+      const signOlder = olderDiff > 0 ? '+' : '';
+      const signYounger = youngerDiff > 0 ? '+' : '';
+
+      els.ageStructureSignal.innerHTML = `
+        <span>年長＋中壯 ${olderLatest.toFixed(1)}%（${signOlder}${olderDiff.toFixed(1)} 個百分點）</span>
+        <span>青職＋大學＋青少年 ${youngerLatest.toFixed(1)}%（${signYounger}${youngerDiff.toFixed(1)} 個百分點）</span>
+
+        <div class="age-structure-highlight median-highlight">
+          <span>中位數年齡層</span>
+          <strong>${escapeHtml(previousMedian)} <b aria-hidden="true">→</b> ${escapeHtml(latestMedian)}</strong>
+        </div>
+
+        <div class="age-structure-highlight trend-highlight ${signalClass}">
+          <span>結構趨勢</span>
+          <strong>${escapeHtml(label)}</strong>
+        </div>
+
+        ${smallSample ? '<small>此範圍人數較少，結構變化請搭配實際人數判讀。</small>' : ''}
+      `;
+    }
+  }
+
+
+  function renderAgeStructurePanels() {
+    renderCurrentAgePyramid();
+    renderQuarterAgePyramid();
+  }
+
+
   function renderTrend() {
 
     if (!els.trendChart) {
@@ -1839,6 +2192,8 @@
     const points = aggregateMonthlyPoints(weeklyPoints);
     const scopeLabel = getTrendScopeLabel();
     const quarter = getQuarterComparison(people);
+
+    renderAgeStructurePanels();
 
     if (els.trendScopeLabel) {
       els.trendScopeLabel.textContent = `${scopeLabel}｜${people.length} 人母體`;
@@ -2014,16 +2369,14 @@
    * 4. 每條線將每週資料彙整為每月平均，再以平滑曲線呈現。
    */
 
-  const GROUP_TREND_COLORS = [
-    '#315b66',
-    '#6f8793',
-    '#9a755f',
-    '#6f8061',
-    '#756b8a',
-    '#a07f45',
-    '#8a5f69',
-    '#567b78'
-  ];
+  const GROUP_TREND_COLORS = {
+    '年長': '#405B4A',
+    '中壯': '#6F8F76',
+    '青壯': '#9A7E62',
+    '青職': '#7FA184',
+    '大學': '#756B8A',
+    '青少年': '#A07F45'
+  };
 
 
   function cleanGroupText(value) {
@@ -2109,15 +2462,22 @@
     group,
     availableGroups
   ) {
-    const index =
-      Math.max(
-        0,
-        availableGroups.indexOf(group)
-      );
+    if (GROUP_TREND_COLORS[group]) {
+      return GROUP_TREND_COLORS[group];
+    }
 
-    return GROUP_TREND_COLORS[
-      index % GROUP_TREND_COLORS.length
+    /*
+     * 若匯入資料出現額外羣組，才使用備援色；
+     * 主要六羣組顏色固定，不會因按鈕順序改變。
+     */
+    const fallback = [
+      '#567B78',
+      '#8A5F69',
+      '#6F8793'
     ];
+    const index = Math.max(0, availableGroups.indexOf(group));
+
+    return fallback[index % fallback.length];
   }
 
 
