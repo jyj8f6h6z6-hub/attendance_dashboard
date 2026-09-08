@@ -1363,14 +1363,6 @@
       ).length;
 
 
-    const unknownBaptism =
-      people.filter(
-        p =>
-          p.newBelieverStatus ===
-          'unknown'
-      ).length;
-
-
     const cards = [
 
       [
@@ -1384,16 +1376,6 @@
         newBelievers,
         `${(
           newBelievers /
-          total *
-          100
-        ).toFixed(1)}%`
-      ],
-
-      [
-        '日期不明',
-        unknownBaptism,
-        `${(
-          unknownBaptism /
           total *
           100
         ).toFixed(1)}%`
@@ -2560,14 +2542,6 @@
               ).length;
 
 
-            const unknown =
-              people.filter(
-                p =>
-                  p.newBelieverStatus ===
-                  'unknown'
-              ).length;
-
-
             return `
               <tr>
 
@@ -2579,7 +2553,6 @@
 
                 <td>${people.length}</td>
                 <td>${nb}</td>
-                <td>${unknown}</td>
                 <td>${c[STATUS.WEEKLY]}</td>
                 <td>${c[STATUS.REGULAR]}</td>
                 <td>${c[STATUS.OCCASIONAL]}</td>
@@ -3829,7 +3802,7 @@
                     ? '<span class="new-believer">初信</span>'
                     : p.newBelieverStatus === 'no'
                       ? '非初信'
-                      : '日期不明'
+                      : '—'
                 }
               </td>
               <td>
