@@ -1457,7 +1457,8 @@
     items,
     selectedValue,
     allLabel,
-    dataAttr
+    dataAttr,
+    growthClassForValue = null
   }) {
 
     if (!container) {
@@ -1465,29 +1466,154 @@
     }
 
     const allSelected = !selectedValue;
+    const allGrowthClass = growthClassForValue
+      ? growthClassForValue('')
+      : '';
 
     container.innerHTML = [
       `
         <button
           type="button"
-          class="ios-filter-btn${allSelected ? ' is-selected' : ''}"
+          class="ios-filter-btn${allSelected ? ' is-selected' : ''}${allGrowthClass ? ` ${allGrowthClass}` : ''}"
           ${dataAttr}=""
         >
           <span class="ios-filter-dot" aria-hidden="true"></span>
           ${escapeHtml(allLabel)}
         </button>
       `,
-      ...items.map(value => `
-        <button
-          type="button"
-          class="ios-filter-btn${selectedValue === value ? ' is-selected' : ''}"
-          ${dataAttr}="${escapeAttr(value)}"
-        >
-          <span class="ios-filter-dot" aria-hidden="true"></span>
-          ${escapeHtml(value)}
-        </button>
-      `)
+      ...items.map(value => {
+        const growthClass = growthClassForValue
+          ? growthClassForValue(value)
+          : '';
+
+        return `
+          <button
+            type="button"
+            class="ios-filter-btn${selectedValue === value ? ' is-selected' : ''}${growthClass ? ` ${growthClass}` : ''}"
+            ${dataAttr}="${escapeAttr(value)}"
+          >
+            <span class="ios-filter-dot" aria-hidden="true"></span>
+            ${escapeHtml(value)}
+          </button>
+        `;
+      })
     ].join('');
+  }
+
+
+  /*
+   * 自訂季別：1–4 月＝第一季、5–8 月＝第二季、9–12 月＝第三季。
+   * 季平均採該季所有已匯入週次的實際聚會人數平均；
+   * 最新季尚未結束時，使用目前已有的週次計算。
+   */
+  function getCustomQuarter(date) {
+    const month = date.getMonth() + 1;
+
+    return {
+      year: date.getFullYear(),
+      quarter: month <= 4 ? 1 : month <= 8 ? 2 : 3
+    };
+  }
+
+
+  function getPreviousCustomQuarter(period) {
+    return period.quarter > 1
+      ? { year: period.year, quarter: period.quarter - 1 }
+      : { year: period.year - 1, quarter: 3 };
+  }
+
+
+  function sameCustomQuarter(date, period) {
+    const current = getCustomQuarter(date);
+
+    return current.year === period.year &&
+      current.quarter === period.quarter;
+  }
+
+
+  function getWeeklyAttendancePoints(people) {
+    return state.dateColumns.map(dateColumn => {
+      const count = people.reduce(
+        (sum, person) => {
+          const row = state.rows[person.rowNumber - 1];
+
+          return sum + (
+            row && isAttendance(row[dateColumn.col])
+              ? 1
+              : 0
+          );
+        },
+        0
+      );
+
+      return {
+        date: dateColumn.date,
+        count
+      };
+    });
+  }
+
+
+  function getQuarterComparison(people) {
+    if (!state.dateColumns.length) {
+      return {
+        latest: null,
+        previous: null,
+        diff: null
+      };
+    }
+
+    const latestPeriod = getCustomQuarter(
+      state.dateColumns[state.dateColumns.length - 1].date
+    );
+    const previousPeriod = getPreviousCustomQuarter(latestPeriod);
+    const weeklyPoints = getWeeklyAttendancePoints(people);
+
+    const averageFor = period => {
+      const points = weeklyPoints.filter(
+        point => sameCustomQuarter(point.date, period)
+      );
+
+      if (!points.length) {
+        return null;
+      }
+
+      return points.reduce(
+        (sum, point) => sum + point.count,
+        0
+      ) / points.length;
+    };
+
+    const latest = averageFor(latestPeriod);
+    const previous = averageFor(previousPeriod);
+
+    return {
+      latest,
+      previous,
+      diff:
+        latest === null || previous === null
+          ? null
+          : latest - previous
+    };
+  }
+
+
+  function quarterGrowthClass(people) {
+    const { diff } = getQuarterComparison(people);
+
+    if (diff === null) {
+      return 'trend-growth-neutral';
+    }
+
+    if (diff > 0.049) {
+      return 'trend-growth-up';
+    }
+
+    if (diff < -0.049) {
+      return 'trend-growth-down';
+    }
+
+    return 'trend-growth-flat';
   }
 
 
@@ -1534,7 +1660,13 @@
       items: districts,
       selectedValue: els.trendDistrictFilter.value,
       allLabel: '全會所',
-      dataAttr: 'data-trend-district'
+      dataAttr: 'data-trend-district',
+      growthClassForValue: value =>
+        quarterGrowthClass(
+          value
+            ? basePeople.filter(person => person.district === value)
+            : basePeople
+        )
     });
 
     updateTrendSmallDistrictOptions();
@@ -1598,12 +1730,23 @@
       els.trendSmallDistrictGroup.classList.remove('hidden');
     }
 
+    const districtPeople =
+      getPopulationBase().people.filter(
+        person => person.district === district
+      );
+
     renderAreaButtons({
       container: els.trendSmallDistrictButtons,
       items: smallDistricts,
       selectedValue: els.trendSmallDistrictFilter.value,
       allLabel: '全部小區',
-      dataAttr: 'data-trend-small-district'
+      dataAttr: 'data-trend-small-district',
+      growthClassForValue: value =>
+        quarterGrowthClass(
+          value
+            ? districtPeople.filter(person => person.smallDistrict === value)
+            : districtPeople
+        )
     });
   }
 
@@ -1710,67 +1853,40 @@
 
     const people = getTrendPeople();
 
-    const weeklyPoints = state.dateColumns.map(
-      dateColumn => {
-        const count = people.reduce(
-          (sum, person) => {
-            const row = state.rows[person.rowNumber - 1];
-
-            return sum + (
-              row && isAttendance(row[dateColumn.col])
-                ? 1
-                : 0
-            );
-          },
-          0
-        );
-
-        return {
-          date: dateColumn.date,
-          count
-        };
-      }
-    );
-
+    const weeklyPoints = getWeeklyAttendancePoints(people);
     const points = aggregateMonthlyPoints(weeklyPoints);
     const scopeLabel = getTrendScopeLabel();
-
-    const latest = points.length
-      ? points[points.length - 1].count
-      : 0;
-
-    const previous = points.length >= 2
-      ? points[points.length - 2].count
-      : null;
-
-    const average = points.length
-      ? points.reduce((sum, point) => sum + point.count, 0) / points.length
-      : 0;
+    const quarter = getQuarterComparison(people);
 
     if (els.trendScopeLabel) {
       els.trendScopeLabel.textContent = `${scopeLabel}｜${people.length} 人母體`;
     }
 
     if (els.trendLatestCount) {
-      els.trendLatestCount.textContent = latest.toFixed(1);
+      els.trendLatestCount.textContent =
+        quarter.latest === null
+          ? '—'
+          : quarter.latest.toFixed(1);
     }
 
     if (els.trendAverageCount) {
-      els.trendAverageCount.textContent = average.toFixed(1);
+      els.trendAverageCount.textContent =
+        quarter.previous === null
+          ? '—'
+          : quarter.previous.toFixed(1);
     }
 
     if (els.trendChangeText) {
       els.trendChangeText.classList.remove('is-up', 'is-down');
 
-      if (previous === null) {
-        els.trendChangeText.textContent = '較前一月 —';
+      if (quarter.diff === null) {
+        els.trendChangeText.textContent = '較前一季 —';
       } else {
-        const diff = latest - previous;
-        const sign = diff > 0 ? '+' : '';
+        const sign = quarter.diff > 0 ? '+' : '';
 
-        els.trendChangeText.textContent = `較前一月 ${sign}${diff.toFixed(1)} 人`;
-        els.trendChangeText.classList.toggle('is-up', diff > 0);
-        els.trendChangeText.classList.toggle('is-down', diff < 0);
+        els.trendChangeText.textContent = `較前一季 ${sign}${quarter.diff.toFixed(1)} 人`;
+        els.trendChangeText.classList.toggle('is-up', quarter.diff > 0);
+        els.trendChangeText.classList.toggle('is-down', quarter.diff < 0);
       }
     }
 
