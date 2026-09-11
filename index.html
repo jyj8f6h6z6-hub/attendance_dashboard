@@ -59,23 +59,16 @@
         匯入當次點名報表與受浸報表，在瀏覽器本機完成分析；重新整理或清除後即移除資料。
       </p>
 
-      <p class="release-meta" aria-label="版本資訊">
-        <span>v1.0.0</span>
-        <span aria-hidden="true">·</span>
-        <span>J.C</span>
-      </p>
+      <button
+        id="clearBtn"
+        class="btn ghost"
+        type="button"
+        disabled
+      >
+        清除本次資料
+      </button>
 
     </div>
-
-
-    <button
-      id="clearBtn"
-      class="btn ghost"
-      type="button"
-      disabled
-    >
-      清除本次資料
-    </button>
 
   </header>
 
@@ -1017,12 +1010,14 @@
 
   <footer>
 
-    <p>
+    <p class="footer-copy">
 
       資料僅存在本頁記憶體中。
 
       關閉、重新整理或按「清除本次資料」後，
       本次匯入內容不會由本工具保存。
+
+      <span class="footer-version" aria-label="版本資訊">v1.0.1 · J.C</span>
 
     </p>
 

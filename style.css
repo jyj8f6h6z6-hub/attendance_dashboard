@@ -2160,3 +2160,101 @@ select:focus-visible,
     max-width: 100%;
   }
 }
+
+/* =========================================
+   v1.0.1｜公開版版面微調
+   - 清除按鈕移到副標正下方
+   - 版本資訊移至頁尾並以獨立標籤呈現
+   - iPhone Hero 減少頂部留白、增加垂直畫面高度
+========================================= */
+
+/* 清除按鈕改為標題區內的下一列，不再漂到 Hero 最右側 */
+.topbar {
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.topbar > div {
+  display: block;
+}
+
+.topbar .btn.ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 14px 0 0;
+  margin-left: 0;
+}
+
+/* v1.0.0 頁首版本標籤不再使用；版本移到 footer */
+.topbar .release-meta {
+  display: none !important;
+}
+
+.footer-copy {
+  margin: 0;
+  line-height: 1.8;
+}
+
+.footer-version {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 10px;
+  padding: 3px 8px;
+  border: 1px solid #d6dee2;
+  border-radius: 999px;
+  background: #eef3f5;
+  color: #55707a;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+/* iPhone / 窄螢幕：減少 Hero 上方空白，同時讓禾場多露一些垂直畫面 */
+@media (max-width: 680px) {
+  .topbar {
+    align-content: start;
+    min-height: 305px;
+    padding: 16px 20px 20px;
+  }
+
+  .topbar > div {
+    max-width: 100%;
+    padding-right: 0;
+  }
+
+  .topbar h1 {
+    margin-top: 0;
+    margin-bottom: 8px;
+  }
+
+  .topbar .subtitle {
+    max-width: 100%;
+    margin-bottom: 0;
+  }
+
+  .topbar .btn.ghost {
+    justify-self: auto;
+    margin: 13px 0 0;
+    padding: 9px 14px;
+  }
+
+  footer {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .footer-version {
+    margin: 7px 0 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    min-height: 312px;
+    padding-top: 14px;
+  }
+}
