@@ -2258,3 +2258,35 @@ select:focus-visible,
     padding-top: 14px;
   }
 }
+
+
+/* =========================================
+   v1.1.1｜手機版頁首標題排版修正
+   - 配合「召會生活人數成長統計」較長的新站名
+   - 手機版固定單行顯示，避免最後一字掉到第二行
+   - 略縮字級與上方留白，維持禾場 Hero 的視覺比例
+========================================= */
+@media (max-width: 680px) {
+  .topbar {
+    padding: 14px 20px 20px;
+  }
+
+  .topbar h1 {
+    margin: 0 0 9px;
+    font-size: clamp(25px, 7.35vw, 31px);
+    line-height: 1.14;
+    letter-spacing: -0.045em;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    padding-top: 12px;
+  }
+
+  .topbar h1 {
+    font-size: clamp(24px, 7.15vw, 29px);
+    letter-spacing: -0.05em;
+  }
+}
