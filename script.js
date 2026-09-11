@@ -54,6 +54,10 @@
     selectedTrendGroups: new Set(),
     trendGroupsInitialized: false,
 
+    /* 季度比較：空白時由實際資料自動帶入「前一季 → 最新季」 */
+    quarterFromKey: '',
+    quarterToKey: '',
+
     /*
      * 人員明細區域複選篩選
      * 只影響人員明細，不影響四張分析圖。
@@ -119,6 +123,30 @@
 
     trendChangeText:
       $('trendChangeText'),
+
+    quarterFromSelect:
+      $('quarterFromSelect'),
+
+    quarterToSelect:
+      $('quarterToSelect'),
+
+    trendFromQuarterLabel:
+      $('trendFromQuarterLabel'),
+
+    trendToQuarterLabel:
+      $('trendToQuarterLabel'),
+
+    currentAgeQuarterLabel:
+      $('currentAgeQuarterLabel'),
+
+    quarterComparePeriodLabel:
+      $('quarterComparePeriodLabel'),
+
+    quarterCompareFromLegend:
+      $('quarterCompareFromLegend'),
+
+    quarterCompareToLegend:
+      $('quarterCompareToLegend'),
 
     trendChart:
       $('trendChart'),
@@ -722,6 +750,9 @@
     state.trendGroupsInitialized =
       false;
 
+    state.quarterFromKey = '';
+    state.quarterToKey = '';
+
     updateChartFilterUI();
 
 
@@ -1242,6 +1273,8 @@
 
     renderSummary();
 
+    buildQuarterCompareControls();
+
     buildTrendFilters();
 
     renderTrend();
@@ -1517,6 +1550,133 @@
   }
 
 
+  function quarterKey(period) {
+    return period
+      ? `${period.year}Q${period.quarter}`
+      : '';
+  }
+
+
+  function quarterLabel(period) {
+    return quarterKey(period) || '—';
+  }
+
+
+  function parseQuarterKey(key) {
+    const match = String(key || '').match(/^(\d{4})Q([123])$/);
+
+    return match
+      ? { year: Number(match[1]), quarter: Number(match[2]) }
+      : null;
+  }
+
+
+  function quarterOrderValue(period) {
+    return period ? period.year * 3 + period.quarter : -Infinity;
+  }
+
+
+  function getAvailableQuarterPeriods() {
+    const seen = new Map();
+
+    state.dateColumns.forEach(item => {
+      const period = getCustomQuarter(item.date);
+      seen.set(quarterKey(period), period);
+    });
+
+    return [...seen.values()].sort(
+      (a, b) => quarterOrderValue(a) - quarterOrderValue(b)
+    );
+  }
+
+
+  function getSelectedQuarterPeriods() {
+    const available = getAvailableQuarterPeriods();
+
+    if (!available.length) {
+      return { from: null, to: null };
+    }
+
+    const availableKeys = new Set(available.map(quarterKey));
+    let to = parseQuarterKey(state.quarterToKey);
+    let from = parseQuarterKey(state.quarterFromKey);
+
+    if (!to || !availableKeys.has(quarterKey(to))) {
+      to = available[available.length - 1];
+    }
+
+    if (!from || !availableKeys.has(quarterKey(from)) || quarterOrderValue(from) >= quarterOrderValue(to)) {
+      const actualPrevious = getPreviousCustomQuarter(to);
+      from = available.find(period => quarterKey(period) === quarterKey(actualPrevious)) ||
+        [...available].reverse().find(period => quarterOrderValue(period) < quarterOrderValue(to)) ||
+        null;
+    }
+
+    return { from, to };
+  }
+
+
+  function buildQuarterCompareControls() {
+    const available = getAvailableQuarterPeriods();
+
+    if (!available.length) {
+      return;
+    }
+
+    const selected = getSelectedQuarterPeriods();
+    state.quarterFromKey = quarterKey(selected.from);
+    state.quarterToKey = quarterKey(selected.to);
+
+    if (els.quarterFromSelect) {
+      const validFrom = available.filter(period =>
+        selected.to && quarterOrderValue(period) < quarterOrderValue(selected.to)
+      );
+
+      els.quarterFromSelect.innerHTML = validFrom.map(period =>
+        `<option value="${escapeAttr(quarterKey(period))}">${escapeHtml(quarterLabel(period))}</option>`
+      ).join('');
+      els.quarterFromSelect.value = state.quarterFromKey;
+      els.quarterFromSelect.disabled = validFrom.length === 0;
+    }
+
+    if (els.quarterToSelect) {
+      const from = parseQuarterKey(state.quarterFromKey);
+      const validTo = available.filter(period =>
+        !from || quarterOrderValue(period) > quarterOrderValue(from)
+      );
+
+      els.quarterToSelect.innerHTML = validTo.map(period =>
+        `<option value="${escapeAttr(quarterKey(period))}">${escapeHtml(quarterLabel(period))}</option>`
+      ).join('');
+
+      if (!validTo.some(period => quarterKey(period) === state.quarterToKey)) {
+        state.quarterToKey = validTo.length
+          ? quarterKey(validTo[validTo.length - 1])
+          : '';
+      }
+
+      els.quarterToSelect.value = state.quarterToKey;
+      els.quarterToSelect.disabled = validTo.length === 0;
+    }
+
+    updateQuarterCompareLabels();
+  }
+
+
+  function updateQuarterCompareLabels() {
+    const { from, to } = getSelectedQuarterPeriods();
+    const fromLabel = quarterLabel(from);
+    const toLabel = quarterLabel(to);
+
+    if (els.trendFromQuarterLabel) els.trendFromQuarterLabel.textContent = fromLabel;
+    if (els.trendToQuarterLabel) els.trendToQuarterLabel.textContent = toLabel;
+    if (els.currentAgeQuarterLabel) els.currentAgeQuarterLabel.textContent = toLabel;
+    if (els.quarterComparePeriodLabel) els.quarterComparePeriodLabel.textContent = `${fromLabel} → ${toLabel}`;
+    if (els.quarterCompareFromLegend) els.quarterCompareFromLegend.textContent = fromLabel;
+    if (els.quarterCompareToLegend) els.quarterCompareToLegend.textContent = toLabel;
+  }
+
+
   function sameCustomQuarter(date, period) {
     const current = getCustomQuarter(date);
 
@@ -1557,10 +1717,19 @@
       };
     }
 
-    const latestPeriod = getCustomQuarter(
-      state.dateColumns[state.dateColumns.length - 1].date
-    );
-    const previousPeriod = getPreviousCustomQuarter(latestPeriod);
+    const { from: previousPeriod, to: latestPeriod } =
+      getSelectedQuarterPeriods();
+
+    if (!previousPeriod || !latestPeriod) {
+      return {
+        latest: null,
+        previous: null,
+        diff: null,
+        latestPeriod,
+        previousPeriod
+      };
+    }
+
     const weeklyPoints = getWeeklyAttendancePoints(people);
 
     const averageFor = period => {
@@ -1587,7 +1756,9 @@
       diff:
         latest === null || previous === null
           ? null
-          : latest - previous
+          : latest - previous,
+      latestPeriod,
+      previousPeriod
     };
   }
 
@@ -1996,9 +2167,13 @@
       return;
     }
 
-    const latestPeriod = getCustomQuarter(
-      state.dateColumns[state.dateColumns.length - 1].date
-    );
+    const { to: latestPeriod } = getSelectedQuarterPeriods();
+
+    if (!latestPeriod) {
+      els.currentAgePyramid.innerHTML = '<div class="trend-empty compact">沒有可分析季度</div>';
+      return;
+    }
+
     const latest = getQuarterGroupAverages(people, latestPeriod);
     const sortedGroups = groupsSortedByLatestShare(latest);
     const maxShare = Math.max(
@@ -2028,7 +2203,7 @@
 
     if (els.currentAgeStructureMeta) {
       els.currentAgeStructureMeta.textContent =
-        `最新季平均聚會結構｜${latest.weeks} 週｜六羣組合計 ${latest.total.toFixed(1)} 人／週`;
+        `${quarterLabel(latestPeriod)} 平均聚會結構｜${latest.weeks} 週｜六羣組合計 ${latest.total.toFixed(1)} 人／週`;
     }
   }
 
@@ -2039,15 +2214,19 @@
     }
 
     const people = getTrendPeople();
-    const latestPeriod = getCustomQuarter(
-      state.dateColumns[state.dateColumns.length - 1].date
-    );
-    const previousPeriod = getPreviousCustomQuarter(latestPeriod);
+    const { from: previousPeriod, to: latestPeriod } =
+      getSelectedQuarterPeriods();
+
+    if (!previousPeriod || !latestPeriod) {
+      els.quarterAgePyramid.innerHTML = '<div class="trend-empty compact">沒有足夠季度可比較</div>';
+      return;
+    }
+
     const latest = getQuarterGroupAverages(people, latestPeriod);
     const previous = getQuarterGroupAverages(people, previousPeriod);
 
     if (!previous.weeks) {
-      els.quarterAgePyramid.innerHTML = '<div class="trend-empty compact">前一季沒有足夠資料可比較</div>';
+      els.quarterAgePyramid.innerHTML = '<div class="trend-empty compact">所選基準季沒有足夠資料可比較</div>';
       if (els.ageStructureSignal) {
         els.ageStructureSignal.innerHTML = `
           <div class="age-structure-highlight is-neutral">
@@ -2064,8 +2243,8 @@
     }
 
     /*
-     * 前後兩季共用「最新季」的排序。
-     * 最新季占比高的羣組在最上，前一季只跟著對齊比較。
+     * 兩個所選季度共用「比較季」的排序。
+     * 比較季占比高的羣組在最上，基準季只跟著對齊比較。
      */
     const sortedGroups = groupsSortedByLatestShare(latest);
 
@@ -2193,6 +2372,7 @@
     const scopeLabel = getTrendScopeLabel();
     const quarter = getQuarterComparison(people);
 
+    updateQuarterCompareLabels();
     renderAgeStructurePanels();
 
     if (els.trendScopeLabel) {
@@ -2217,11 +2397,11 @@
       els.trendChangeText.classList.remove('is-up', 'is-down');
 
       if (quarter.diff === null) {
-        els.trendChangeText.textContent = '較前一季 —';
+        els.trendChangeText.textContent = `較 ${quarterLabel(quarter.previousPeriod)} —`;
       } else {
         const sign = quarter.diff > 0 ? '+' : '';
 
-        els.trendChangeText.textContent = `較前一季 ${sign}${quarter.diff.toFixed(1)} 人`;
+        els.trendChangeText.textContent = `較 ${quarterLabel(quarter.previousPeriod)} ${sign}${quarter.diff.toFixed(1)} 人`;
         els.trendChangeText.classList.toggle('is-up', quarter.diff > 0);
         els.trendChangeText.classList.toggle('is-down', quarter.diff < 0);
       }
@@ -4610,6 +4790,9 @@
     state.trendGroupsInitialized =
       false;
 
+    state.quarterFromKey = '';
+    state.quarterToKey = '';
+
 
     updateChartFilterUI();
 
@@ -4717,6 +4900,49 @@
       }
     }
   );
+
+
+  /*
+   * ========================================
+   * 季度比較選擇
+   * ========================================
+   */
+
+  if (els.quarterFromSelect) {
+    els.quarterFromSelect.addEventListener('change', () => {
+      state.quarterFromKey = els.quarterFromSelect.value || '';
+
+      const from = parseQuarterKey(state.quarterFromKey);
+      const to = parseQuarterKey(state.quarterToKey);
+
+      if (from && to && quarterOrderValue(from) >= quarterOrderValue(to)) {
+        state.quarterToKey = '';
+      }
+
+      buildQuarterCompareControls();
+      buildTrendFilters();
+      renderTrend();
+      renderGroupTrend();
+    });
+  }
+
+  if (els.quarterToSelect) {
+    els.quarterToSelect.addEventListener('change', () => {
+      state.quarterToKey = els.quarterToSelect.value || '';
+
+      const from = parseQuarterKey(state.quarterFromKey);
+      const to = parseQuarterKey(state.quarterToKey);
+
+      if (from && to && quarterOrderValue(from) >= quarterOrderValue(to)) {
+        state.quarterFromKey = '';
+      }
+
+      buildQuarterCompareControls();
+      buildTrendFilters();
+      renderTrend();
+      renderGroupTrend();
+    });
+  }
 
 
   /*

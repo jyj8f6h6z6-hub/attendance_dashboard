@@ -1816,3 +1816,75 @@ select:focus-visible,
     margin-top: 10px;
   }
 }
+
+/* =========================================
+   2026-09-11：季度比較選擇
+   季別依實際匯入資料產生，顯示為 YYYYQ1 / YYYYQ2 / YYYYQ3。
+========================================= */
+.quarter-compare-controls {
+  display: inline-flex;
+  align-items: end;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #f8fafb;
+}
+
+.quarter-compare-controls label {
+  display: grid;
+  gap: 4px;
+}
+
+.quarter-compare-controls label > span {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.quarter-compare-controls select {
+  min-width: 112px;
+  min-height: 36px;
+  padding: 6px 30px 6px 10px;
+  border: 1px solid #ccd5da;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.quarter-compare-controls select:focus-visible {
+  outline: 3px solid rgba(49, 91, 102, .16);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+.quarter-compare-arrow {
+  padding-bottom: 8px;
+  color: #7a8791;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.trend-summary b {
+  color: #52616a;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+@media (max-width: 560px) {
+  .quarter-compare-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    width: 100%;
+    align-items: end;
+  }
+
+  .quarter-compare-controls select {
+    width: 100%;
+    min-width: 0;
+  }
+}

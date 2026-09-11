@@ -420,11 +420,23 @@
 
         </div>
 
+        <div class="quarter-compare-controls" aria-label="季度比較">
+          <label>
+            <span>基準季</span>
+            <select id="quarterFromSelect" aria-label="比較基準季度"></select>
+          </label>
+          <span class="quarter-compare-arrow" aria-hidden="true">→</span>
+          <label>
+            <span>比較季</span>
+            <select id="quarterToSelect" aria-label="比較目標季度"></select>
+          </label>
+        </div>
+
         <div class="trend-summary" aria-live="polite">
           <span id="trendScopeLabel">全會所</span>
-          <span>最新季平均 <strong id="trendLatestCount">—</strong> 人</span>
-          <span>前一季平均 <strong id="trendAverageCount">—</strong> 人</span>
-          <span id="trendChangeText">較前一季 —</span>
+          <span><b id="trendToQuarterLabel">—</b> 平均 <strong id="trendLatestCount">—</strong> 人</span>
+          <span><b id="trendFromQuarterLabel">—</b> 平均 <strong id="trendAverageCount">—</strong> 人</span>
+          <span id="trendChangeText">較基準季 —</span>
         </div>
 
         <div class="trend-chart-layout">
@@ -434,7 +446,7 @@
                 <p class="eyebrow">AGE STRUCTURE</p>
                 <h3>目前羣組結構</h3>
               </div>
-              <span class="age-structure-period">最新季</span>
+              <span id="currentAgeQuarterLabel" class="age-structure-period">—</span>
             </div>
             <div id="currentAgePyramid" class="age-pyramid"></div>
             <div id="currentAgeStructureMeta" class="age-structure-meta"></div>
@@ -489,9 +501,9 @@
                   <p class="eyebrow">STRUCTURE SHIFT</p>
                   <h3>季度結構變化</h3>
                 </div>
-                <span class="age-structure-period">前一季 → 最新季</span>
+                <span id="quarterComparePeriodLabel" class="age-structure-period">— → —</span>
               </div>
-              <div class="pyramid-compare-legend"><span>前一季</span><span>最新季</span></div>
+              <div class="pyramid-compare-legend"><span id="quarterCompareFromLegend">—</span><span id="quarterCompareToLegend">—</span></div>
               <div id="quarterAgePyramid" class="age-pyramid age-pyramid-compare"></div>
               <div id="ageStructureSignal" class="age-structure-signal"></div>
             </aside>
