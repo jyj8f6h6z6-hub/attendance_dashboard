@@ -2040,3 +2040,123 @@ select:focus-visible,
     max-width: 100%;
   }
 }
+
+
+/* =========================================
+   v1.0.0｜正式公開版 Hero 微調
+   - 移除明顯的左右漸層斷點
+   - 文字只保留局部柔光，不讓模糊區延伸過長
+   - 桌機／手機使用同一張連續禾場背景
+========================================= */
+
+.topbar {
+  min-height: 252px;
+  padding: 40px clamp(24px, 4.6vw, 72px);
+  background:
+    radial-gradient(
+      ellipse 560px 220px at 18% 47%,
+      rgba(255, 253, 246, .82) 0%,
+      rgba(255, 253, 246, .62) 42%,
+      rgba(255, 253, 246, .24) 70%,
+      rgba(255, 253, 246, 0) 100%
+    ),
+    url("header-wheat.png") center 52% / cover no-repeat;
+}
+
+.topbar > div {
+  max-width: min(700px, 49vw);
+}
+
+.release-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 9px 0 0;
+  padding: 4px 8px;
+  border: 1px solid rgba(23, 55, 68, .10);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .38);
+  color: rgba(23, 55, 68, .70);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  line-height: 1;
+  backdrop-filter: blur(3px);
+}
+
+@media (max-width: 900px) {
+  .topbar {
+    min-height: 238px;
+    background:
+      radial-gradient(
+        ellipse 520px 210px at 20% 44%,
+        rgba(255, 253, 246, .82) 0%,
+        rgba(255, 253, 246, .58) 45%,
+        rgba(255, 253, 246, .18) 74%,
+        rgba(255, 253, 246, 0) 100%
+      ),
+      url("header-wheat.png") 58% 52% / cover no-repeat;
+  }
+
+  .topbar > div {
+    max-width: 62%;
+  }
+}
+
+@media (max-width: 680px) {
+  .topbar {
+    min-height: 270px;
+    padding: 28px 20px 22px;
+    background:
+      radial-gradient(
+        ellipse 430px 230px at 18% 31%,
+        rgba(255, 253, 246, .88) 0%,
+        rgba(255, 253, 246, .64) 48%,
+        rgba(255, 253, 246, .20) 76%,
+        rgba(255, 253, 246, 0) 100%
+      ),
+      url("header-wheat.png") 60% center / cover no-repeat;
+  }
+
+  .topbar > div {
+    max-width: 100%;
+    padding-right: 0;
+  }
+
+  .topbar h1 {
+    font-size: clamp(29px, 9.4vw, 39px);
+  }
+
+  .topbar .subtitle {
+    max-width: 92%;
+    font-size: 13px;
+  }
+
+  .release-meta {
+    margin-top: 8px;
+    background: rgba(255, 255, 255, .46);
+  }
+
+  .topbar .btn.ghost {
+    margin-top: 15px;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    min-height: 278px;
+    background:
+      radial-gradient(
+        ellipse 390px 220px at 18% 29%,
+        rgba(255, 253, 246, .90) 0%,
+        rgba(255, 253, 246, .66) 48%,
+        rgba(255, 253, 246, .18) 77%,
+        rgba(255, 253, 246, 0) 100%
+      ),
+      url("header-wheat.png") 62% center / cover no-repeat;
+  }
+
+  .topbar .subtitle {
+    max-width: 100%;
+  }
+}
