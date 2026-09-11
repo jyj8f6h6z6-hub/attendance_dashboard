@@ -19,6 +19,14 @@
     主日聚會情況分析
   </title>
 
+  <!-- iPhone / Windows 桌面捷徑與瀏覽器 Icon -->
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png" />
+  <link rel="shortcut icon" href="favicon.ico" />
+  <link rel="manifest" href="site.webmanifest" />
+  <meta name="theme-color" content="#5EB8F2" />
+
   <link
     rel="stylesheet"
     href="style.css"
@@ -461,18 +469,20 @@
             </div>
           </div>
 
-          <div
-            id="groupTrendButtons"
-            class="group-trend-buttons"
-            aria-label="羣組成長趨勢複選"
-          ></div>
-
-          <div class="group-trend-meta" aria-live="polite">
-            <span>趨勢算法：每月平均＋平滑曲線</span>
-            <span id="groupTrendSelectedText">—</span>
-          </div>
-
           <div class="trend-chart-layout group-trend-layout">
+            <div class="group-trend-controls">
+              <div
+                id="groupTrendButtons"
+                class="group-trend-buttons"
+                aria-label="羣組成長趨勢複選"
+              ></div>
+
+              <div class="group-trend-meta" aria-live="polite">
+                <span>趨勢算法：每月平均＋平滑曲線</span>
+                <span id="groupTrendSelectedText">—</span>
+              </div>
+            </div>
+
             <aside class="age-structure-card age-structure-compare-card" aria-label="季度結構變化">
               <div class="age-structure-head">
                 <div>

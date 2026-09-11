@@ -1755,3 +1755,64 @@ select:focus-visible,
   .pyramid-half-left { grid-template-columns: 34px minmax(0, 1fr); }
   .pyramid-half-right { grid-template-columns: minmax(0, 1fr) 34px; }
 }
+
+/* =========================================
+   2026-09-11：羣組成長趨勢控制列位置
+   桌機維持原本順序：篩選 → 季度結構變化 / 趨勢圖。
+   手機改為：季度結構變化 → 羣組篩選 → 趨勢圖，
+   讓點選年長／中壯／青壯／青職／大學／青少年後，
+   下方折線變化可立即看見。
+========================================= */
+.group-trend-layout {
+  grid-template-areas:
+    "group-controls group-controls"
+    "group-structure group-chart";
+}
+
+.group-trend-controls {
+  grid-area: group-controls;
+  min-width: 0;
+}
+
+.group-trend-layout > .age-structure-compare-card {
+  grid-area: group-structure;
+}
+
+.group-trend-layout > .group-trend-scroller {
+  grid-area: group-chart;
+}
+
+/* 因控制列現在位於 layout 內，保留原本桌機視覺間距 */
+.group-trend-controls .group-trend-buttons {
+  margin-top: 0;
+}
+
+@media (max-width: 1050px) {
+  .group-trend-layout {
+    grid-template-areas:
+      "group-controls"
+      "group-structure"
+      "group-chart";
+  }
+}
+
+@media (max-width: 680px) {
+  .group-trend-layout {
+    grid-template-areas:
+      "group-structure"
+      "group-controls"
+      "group-chart";
+  }
+
+  .group-trend-controls {
+    margin-top: 0;
+  }
+
+  .group-trend-controls .group-trend-buttons {
+    margin-top: 0;
+  }
+
+  .group-trend-controls .group-trend-meta {
+    margin-top: 10px;
+  }
+}
