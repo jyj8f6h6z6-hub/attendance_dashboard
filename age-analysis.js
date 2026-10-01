@@ -11,6 +11,10 @@
     '零星聚會'
   ]);
 
+  const INACTIVE_STATUSES = new Set([
+    '近期未聚會'
+  ]);
+
   const MAIN_GROUP_ORDER = [
     '年長',
     '中壯',
@@ -439,6 +443,10 @@
       person => CARE_STATUSES.has(person.status)
     );
 
+    const inactivePeople = basePeople.filter(
+      person => INACTIVE_STATUSES.has(person.status)
+    );
+
     renderSet({
       people: stablePeople,
       chartType: 'stable',
@@ -467,6 +475,20 @@
       warningSubject: '需加強牧養者'
     });
 
+    renderSet({
+      people: inactivePeople,
+      chartType: 'inactive',
+      ageTotalId: 'inactiveAgeTotal',
+      ageDistributionId: 'inactiveAgeDistribution',
+      studentTotalId: 'inactiveStudentAgeTotal',
+      studentDistributionId: 'inactiveStudentAgeDistribution',
+      studentShareId: 'inactiveStudentShare',
+      warningId: 'inactiveAgeUnknown',
+      studentLabel: '待關心聖徒學生',
+      shareLabel: '占待關心聖徒',
+      warningSubject: '待關心聖徒'
+    });
+
     document.dispatchEvent(
       new CustomEvent('ageAnalysisRendered')
     );
@@ -477,7 +499,9 @@
       'ageTotal',
       'studentAgeTotal',
       'careAgeTotal',
-      'careStudentAgeTotal'
+      'careStudentAgeTotal',
+      'inactiveAgeTotal',
+      'inactiveStudentAgeTotal'
     ].forEach(id => {
       const element = $(id);
       if (element) {
@@ -491,7 +515,10 @@
       'studentShare',
       'careAgeDistribution',
       'careStudentAgeDistribution',
-      'careStudentShare'
+      'careStudentShare',
+      'inactiveAgeDistribution',
+      'inactiveStudentAgeDistribution',
+      'inactiveStudentShare'
     ].forEach(id => {
       const element = $(id);
       if (element) {
@@ -501,7 +528,8 @@
 
     [
       'ageUnknown',
-      'careAgeUnknown'
+      'careAgeUnknown',
+      'inactiveAgeUnknown'
     ].forEach(id => {
       const warning = $(id);
       if (warning) {

@@ -225,15 +225,14 @@
 
         <div class="rules-copy">
 
-          <p class="eyebrow">
-            分析規則
-          </p>
+          <div class="rules-title-row">
+            <h2>分析規則</h2>
+            <button type="button" class="info-toggle" data-info-target="ruleText" aria-expanded="false" aria-label="查看分析規則說明">ⓘ</button>
+          </div>
 
-          <h2>
-            目前聚會狀況
-          </h2>
+          <h3 class="rules-subtitle">資料範圍</h3>
 
-          <p id="ruleText">
+          <p id="ruleText" class="collapsible-info hidden">
             以匯入資料中最新的主日為基準，固定觀察最近 12 週。
           </p>
 
@@ -472,11 +471,12 @@
               </p>
             </div>
 
-            <div
-              id="groupTrendScopeLabel"
-              class="group-trend-scope"
-            >
-              全會所
+            <div class="group-trend-head-actions">
+              <div class="group-trend-mode" aria-label="羣組成長趨勢顯示模式">
+                <button type="button" class="group-trend-mode-btn is-selected" data-group-trend-mode="groups" aria-pressed="true">全會所</button>
+                <button type="button" class="group-trend-mode-btn" data-group-trend-mode="districts" aria-pressed="false">大區比較</button>
+              </div>
+              <div id="groupTrendScopeLabel" class="group-trend-scope">全會所</div>
             </div>
           </div>
 
@@ -492,20 +492,8 @@
                 <span>趨勢算法：每月平均＋平滑曲線</span>
                 <span id="groupTrendSelectedText">—</span>
               </div>
+              <div id="groupTrendDistrictLegend" class="group-trend-district-legend hidden" aria-label="大區圖例"></div>
             </div>
-
-            <aside class="age-structure-card age-structure-compare-card" aria-label="季度結構變化">
-              <div class="age-structure-head">
-                <div>
-                  <p class="eyebrow">STRUCTURE SHIFT</p>
-                  <h3>季度結構變化</h3>
-                </div>
-                <span id="quarterComparePeriodLabel" class="age-structure-period">— → —</span>
-              </div>
-              <div class="pyramid-compare-legend"><span id="quarterCompareFromLegend">—</span><span id="quarterCompareToLegend">—</span></div>
-              <div id="quarterAgePyramid" class="age-pyramid age-pyramid-compare"></div>
-              <div id="ageStructureSignal" class="age-structure-signal"></div>
-            </aside>
 
             <div class="trend-chart-scroller group-trend-scroller">
               <div
@@ -871,6 +859,37 @@
 
 
       <!-- =========================
+           待關心聖徒分析
+      ========================== -->
+
+      <section class="age-analysis-grid">
+        <article class="panel age-panel">
+          <div class="section-head">
+            <div>
+              <h2>待關心聖徒群組分析</h2>
+              <p class="age-description">統計對象：近期未聚會（超過 8 週未聚會）</p>
+            </div>
+            <div class="age-total" id="inactiveAgeTotal">—</div>
+          </div>
+          <div id="inactiveAgeDistribution" class="age-bars"></div>
+          <div id="inactiveAgeUnknown" class="age-warning hidden"></div>
+        </article>
+
+        <article class="panel age-panel">
+          <div class="section-head">
+            <div>
+              <h2>待關心聖徒學生分布</h2>
+              <p class="age-description">統計對象：待關心聖徒中的國中、高中、大學</p>
+            </div>
+            <div class="age-total" id="inactiveStudentAgeTotal">—</div>
+          </div>
+          <div id="inactiveStudentAgeDistribution" class="age-bars"></div>
+          <div id="inactiveStudentShare" class="student-share"></div>
+        </article>
+      </section>
+
+
+      <!-- =========================
            人員明細
       ========================== -->
 
@@ -1017,7 +1036,7 @@
       關閉、重新整理或按「清除本次資料」後，
       本次匯入內容不會由本工具保存。
 
-      <span class="footer-version" aria-label="版本資訊">v1.0.2 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.0.3 · J.C</span>
 
     </p>
 

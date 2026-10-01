@@ -53,6 +53,7 @@
      */
     selectedTrendGroups: new Set(),
     trendGroupsInitialized: false,
+    groupTrendMode: 'groups',
 
     /* 季度比較：空白時由實際資料自動帶入「前一季 → 最新季」 */
     quarterFromKey: '',
@@ -159,6 +160,9 @@
 
     groupTrendSelectedText:
       $('groupTrendSelectedText'),
+
+    groupTrendDistrictLegend:
+      $('groupTrendDistrictLegend'),
 
     groupTrendChart:
       $('groupTrendChart'),
@@ -2596,9 +2600,14 @@
 
 
   function getAvailableTrendGroups() {
+    const sourcePeople =
+      state.groupTrendMode === 'districts'
+        ? getPopulationBase().people
+        : getPopulationBase().people;
+
     const found =
       unique(
-        getTrendPeople()
+        sourcePeople
           .map(
             person =>
               normalizeTrendGroup(
@@ -2727,7 +2736,9 @@
   function updateGroupTrendMeta() {
     if (els.groupTrendScopeLabel) {
       els.groupTrendScopeLabel.textContent =
-        getTrendScopeLabel();
+        state.groupTrendMode === 'districts'
+          ? '各大區比較'
+          : '全會所';
     }
 
     if (!els.groupTrendSelectedText) {
@@ -2745,7 +2756,9 @@
 
     els.groupTrendSelectedText.textContent =
       selected.length
-        ? `目前顯示：${selected.join('＋')}`
+        ? state.groupTrendMode === 'districts'
+          ? `比較羣組：${selected[0]}`
+          : `目前顯示：${selected.join('＋')}`
         : '目前未選擇羣組';
   }
 
@@ -2768,39 +2781,57 @@
       return;
     }
 
-    const people = getTrendPeople();
+    const buildPoints = people => aggregateMonthlyPoints(
+      state.dateColumns.map(dateColumn => ({
+        date: dateColumn.date,
+        count: people.reduce((sum, person) => {
+          const row = state.rows[person.rowNumber - 1];
+          return sum + (row && isAttendance(row[dateColumn.col]) ? 1 : 0);
+        }, 0)
+      }))
+    );
 
-    const series = selectedGroups.map(group => {
-      const groupPeople = people.filter(
-        person => normalizeTrendGroup(person.group) === group
+    let series;
+
+    if (state.groupTrendMode === 'districts') {
+      const selectedGroup = selectedGroups[0];
+      const basePeople = getPopulationBase().people.filter(
+        person => normalizeTrendGroup(person.group) === selectedGroup
       );
+      const districts = unique(basePeople.map(person => person.district).filter(Boolean))
+        .sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }));
+      const districtColors = ['#405B4A', '#756B8A', '#A07F45', '#567B78', '#8A5F69', '#6F8793'];
 
-      const weeklyPoints = state.dateColumns.map(dateColumn => {
-        const count = groupPeople.reduce(
-          (sum, person) => {
-            const row = state.rows[person.rowNumber - 1];
-
-            return sum + (
-              row && isAttendance(row[dateColumn.col])
-                ? 1
-                : 0
-            );
-          },
-          0
-        );
-
-        return {
-          date: dateColumn.date,
-          count
-        };
-      });
-
-      return {
+      series = districts.map((district, index) => ({
+        group: district,
+        color: districtColors[index % districtColors.length],
+        points: buildPoints(basePeople.filter(person => person.district === district))
+      }));
+    } else {
+      const people = getPopulationBase().people;
+      series = selectedGroups.map(group => ({
         group,
         color: getTrendGroupColor(group, availableGroups),
-        points: aggregateMonthlyPoints(weeklyPoints)
-      };
-    });
+        points: buildPoints(people.filter(
+          person => normalizeTrendGroup(person.group) === group
+        ))
+      }));
+    }
+
+    if (els.groupTrendDistrictLegend) {
+      if (state.groupTrendMode === 'districts' && series.length) {
+        els.groupTrendDistrictLegend.innerHTML = series.map(item => `
+          <span class="group-trend-district-legend-item">
+            <i style="--district-trend-color:${escapeAttr(item.color)}"></i>
+            ${escapeHtml(item.group)}
+          </span>
+        `).join('');
+        els.groupTrendDistrictLegend.classList.remove('hidden');
+      } else {
+        els.groupTrendDistrictLegend.innerHTML = '';
+        els.groupTrendDistrictLegend.classList.add('hidden');
+      }
+    }
 
     const monthCount = Math.max(
       ...series.map(item => item.points.length),
@@ -3937,6 +3968,10 @@
       );
     }
 
+    if (chartType === 'inactive') {
+      return person.status === STATUS.INACTIVE;
+    }
+
     return true;
   }
 
@@ -4429,7 +4464,9 @@
     const typeLabel =
       state.chartType === 'care'
         ? '需加強牧養'
-        : '穩定聚會';
+        : state.chartType === 'inactive'
+          ? '待關心聖徒'
+          : '穩定聚會';
 
     const description =
       state.chartDistrict
@@ -5055,6 +5092,37 @@
     }
   });
 
+  document.addEventListener('click', e => {
+    const infoButton = e.target.closest('[data-info-target]');
+    if (infoButton) {
+      const target = document.getElementById(infoButton.dataset.infoTarget || '');
+      if (target) {
+        const opening = target.classList.contains('hidden');
+        target.classList.toggle('hidden', !opening);
+        infoButton.setAttribute('aria-expanded', opening ? 'true' : 'false');
+      }
+      return;
+    }
+
+    const modeButton = e.target.closest('[data-group-trend-mode]');
+    if (modeButton) {
+      state.groupTrendMode = modeButton.dataset.groupTrendMode === 'districts' ? 'districts' : 'groups';
+      if (state.groupTrendMode === 'districts') {
+        const groups = getAvailableTrendGroups();
+        const firstSelected = groups.find(group => state.selectedTrendGroups.has(group)) || groups[0];
+        state.selectedTrendGroups = firstSelected ? new Set([firstSelected]) : new Set();
+      }
+      document.querySelectorAll('[data-group-trend-mode]').forEach(button => {
+        const selected = button.dataset.groupTrendMode === state.groupTrendMode;
+        button.classList.toggle('is-selected', selected);
+        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+      buildGroupTrendButtons();
+      renderGroupTrend();
+      return;
+    }
+  });
+
   if (els.groupTrendButtons) {
     els.groupTrendButtons.addEventListener(
       'click',
@@ -5075,18 +5143,12 @@
           return;
         }
 
-        if (
-          state.selectedTrendGroups.has(
-            group
-          )
-        ) {
-          state.selectedTrendGroups.delete(
-            group
-          );
+        if (state.groupTrendMode === 'districts') {
+          state.selectedTrendGroups = new Set([group]);
+        } else if (state.selectedTrendGroups.has(group)) {
+          state.selectedTrendGroups.delete(group);
         } else {
-          state.selectedTrendGroups.add(
-            group
-          );
+          state.selectedTrendGroups.add(group);
         }
 
         buildGroupTrendButtons();
