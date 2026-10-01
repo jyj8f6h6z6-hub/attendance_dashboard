@@ -393,7 +393,14 @@
             </p>
           </div>
 
-          <div class="trend-area-button-panel" aria-label="每週聚會人數區域篩選">
+          <div class="trend-head-actions">
+            <div class="group-trend-mode" aria-label="每週聚會人數顯示模式">
+              <button type="button" class="group-trend-mode-btn is-selected" data-overall-trend-mode="scope" aria-pressed="true">區域查看</button>
+              <button type="button" class="group-trend-mode-btn" data-overall-trend-mode="districts" aria-pressed="false">各大區比較</button>
+            </div>
+          </div>
+
+          <div id="trendAreaFilterPanel" class="trend-area-button-panel" aria-label="每週聚會人數區域篩選">
 
             <div class="area-button-group">
               <input id="trendDistrictFilter" type="hidden" value="" />
@@ -666,7 +673,9 @@
            穩定聚會分析
       ========================== -->
 
-      <section class="age-analysis-grid">
+      <details class="analysis-collapse" data-analysis-collapse>
+        <summary><span>穩定聚會</span><small>點擊展開分析</small></summary>
+        <section class="age-analysis-grid">
 
 
         <!-- 左 -->
@@ -764,6 +773,7 @@
 
 
       </section>
+      </details>
 
 
 
@@ -771,7 +781,9 @@
            需加強牧養分析
       ========================== -->
 
-      <section class="age-analysis-grid">
+      <details class="analysis-collapse" data-analysis-collapse>
+        <summary><span>需加強牧養</span><small>點擊展開分析</small></summary>
+        <section class="age-analysis-grid">
 
 
         <!-- 左 -->
@@ -855,6 +867,7 @@
         </article>
 
       </section>
+      </details>
 
 
 
@@ -862,7 +875,9 @@
            待關心聖徒分析
       ========================== -->
 
-      <section class="age-analysis-grid">
+      <details class="analysis-collapse" data-analysis-collapse>
+        <summary><span>待關心聖徒</span><small>點擊展開分析</small></summary>
+        <section class="age-analysis-grid">
         <article class="panel age-panel">
           <div class="section-head">
             <div>
@@ -887,6 +902,7 @@
           <div id="inactiveStudentShare" class="student-share"></div>
         </article>
       </section>
+      </details>
 
 
       <!-- =========================
@@ -1036,7 +1052,7 @@
       關閉、重新整理或按「清除本次資料」後，
       本次匯入內容不會由本工具保存。
 
-      <span class="footer-version" aria-label="版本資訊">v1.0.3 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.0.4 · J.C</span>
 
     </p>
 

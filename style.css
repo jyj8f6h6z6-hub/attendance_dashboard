@@ -2306,3 +2306,20 @@ select:focus-visible,
 .group-trend-district-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; font-size:12px; font-weight:800; color:#52616a; }
 .group-trend-district-legend-item { display:inline-flex; align-items:center; gap:6px; }
 .group-trend-district-legend-item i { width:18px; height:3px; border-radius:999px; background:var(--district-trend-color); display:inline-block; }
+
+/* v1.0.4：趨勢模式與可收合牧養分析 */
+.trend-head-actions { display:flex; justify-content:flex-end; align-items:flex-start; }
+.district-line-label { font-size:12px; font-weight:800; paint-order:stroke; stroke:#fff; stroke-width:4px; stroke-linejoin:round; }
+.analysis-collapse { margin: 18px 0; }
+.analysis-collapse > summary { list-style:none; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:18px 22px; background:#fff; border:1px solid #d9e2e8; border-radius:18px; box-shadow:0 8px 24px rgba(37,55,70,.05); font-weight:800; font-size:20px; color:#263541; }
+.analysis-collapse > summary::-webkit-details-marker { display:none; }
+.analysis-collapse > summary small { font-size:13px; font-weight:700; color:#748692; }
+.analysis-collapse > summary small::before { content:'＋ '; }
+.analysis-collapse[open] > summary small::before { content:'－ '; }
+.analysis-collapse[open] > summary { margin-bottom:14px; }
+.analysis-collapse > .age-analysis-grid { margin-top:0; }
+@media (max-width: 720px) {
+  .trend-head-actions { width:100%; justify-content:flex-start; }
+  .analysis-collapse > summary { padding:15px 16px; font-size:17px; }
+  .district-line-label { font-size:10px; }
+}

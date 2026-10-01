@@ -54,6 +54,7 @@
     selectedTrendGroups: new Set(),
     trendGroupsInitialized: false,
     groupTrendMode: 'groups',
+    overallTrendMode: 'scope',
 
     /* 季度比較：空白時由實際資料自動帶入「前一季 → 最新季」 */
     quarterFromKey: '',
@@ -115,6 +116,8 @@
 
     trendScopeLabel:
       $('trendScopeLabel'),
+
+    trendAreaFilterPanel: $('trendAreaFilterPanel'),
 
     trendLatestCount:
       $('trendLatestCount'),
@@ -2013,6 +2016,23 @@
     return path;
   }
 
+  function smoothSeriesPoints(points, radius = 2) {
+    return points.map((point, index) => {
+      const start = Math.max(0, index - radius);
+      const end = Math.min(points.length - 1, index + radius);
+      const window = points.slice(start, end + 1);
+      return {
+        ...point,
+        count: window.reduce((sum, item) => sum + item.count, 0) / window.length
+      };
+    });
+  }
+
+  function districtTrendColors(index) {
+    return ['#405B4A', '#756B8A', '#A07F45', '#567B78', '#8A5F69', '#6F8793'][index % 6];
+  }
+
+
 
   const AGE_STRUCTURE_GROUPS = [
     '年長',
@@ -2363,9 +2383,71 @@
   }
 
 
+  function renderOverallDistrictTrend() {
+    const basePeople = getPopulationBase().people;
+    const districts = unique(basePeople.map(person => person.district).filter(Boolean))
+      .sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }));
+
+    const buildPoints = people => aggregateMonthlyPoints(
+      state.dateColumns.map(dateColumn => ({
+        date: dateColumn.date,
+        count: people.reduce((sum, person) => {
+          const row = state.rows[person.rowNumber - 1];
+          return sum + (row && isAttendance(row[dateColumn.col]) ? 1 : 0);
+        }, 0)
+      }))
+    );
+
+    const series = districts.map((district, index) => ({
+      group: district,
+      color: districtTrendColors(index),
+      rawPoints: buildPoints(basePeople.filter(person => person.district === district))
+    })).map(item => ({ ...item, points: smoothSeriesPoints(item.rawPoints, 2) }));
+
+    if (els.trendScopeLabel) els.trendScopeLabel.textContent = `各大區比較｜統計名單${basePeople.length} 人`;
+    if (els.trendLatestCount) els.trendLatestCount.textContent = '—';
+    if (els.trendAverageCount) els.trendAverageCount.textContent = '—';
+    if (els.trendChangeText) els.trendChangeText.textContent = '各大區長期趨勢';
+    renderAgeStructurePanels();
+
+    const monthCount = Math.max(...series.map(item => item.points.length), 0);
+    if (!monthCount) { els.trendChart.innerHTML = '<div class="trend-empty">沒有可繪製的月份資料</div>'; return; }
+
+    const chartWidth = Math.max(320, Math.round(els.trendChart.clientWidth || 760));
+    const chartHeight = chartWidth <= 680 ? 300 : 360;
+    const left = chartWidth <= 420 ? 50 : 66;
+    const right = chartWidth <= 680 ? 58 : 82;
+    const top = 28, bottom = 56;
+    const plotWidth = chartWidth - left - right, plotHeight = chartHeight - top - bottom;
+    const values = series.flatMap(item => item.points.map(p => p.count));
+    const rawMax = Math.max(...values, 1);
+    const step = rawMax <= 20 ? 5 : rawMax <= 60 ? 10 : rawMax <= 150 ? 25 : rawMax <= 300 ? 50 : 100;
+    const yMax = Math.ceil(rawMax / step) * step;
+    const xAt = i => monthCount === 1 ? left + plotWidth/2 : left + i/(monthCount-1)*plotWidth;
+    const yAt = v => top + plotHeight - v/yMax*plotHeight;
+    const grid = Array.from({length:5},(_,i)=>{ const value=Math.round(yMax*(4-i)/4), y=top+i/4*plotHeight; return `<line class="trend-grid-line" x1="${left}" y1="${y}" x2="${chartWidth-right}" y2="${y}"/><text class="trend-y-label" x="${left-12}" y="${y+4}" text-anchor="end">${value}</text>`;}).join('');
+    const ref = series.find(x=>x.points.length)?.points || [];
+    const every=Math.max(1,Math.ceil(ref.length/Math.max(3,Math.floor(plotWidth/62))));
+    const xLabels=ref.map((p,i)=>(i%every===0||i===ref.length-1)?`<text class="trend-x-label" x="${xAt(i)}" y="${chartHeight-20}" text-anchor="middle">${p.date.getFullYear()}/${p.date.getMonth()+1}</text>`:'').join('');
+    const paths=series.map(item=>{
+      const cps=item.points.map((p,i)=>({x:+xAt(i).toFixed(1),y:+yAt(p.count).toFixed(1),point:p}));
+      const path=smoothSvgPath(cps); if(!cps.length) return '';
+      const first=cps[0], last=cps[cps.length-1];
+      const labels=`<text class="district-line-label" x="${first.x+5}" y="${Math.max(14,first.y-8)}" text-anchor="start" style="fill:${item.color}">${escapeHtml(item.group)}</text><text class="district-line-label" x="${last.x+7}" y="${Math.max(14,last.y-8)}" text-anchor="start" style="fill:${item.color}">${escapeHtml(item.group)}</text>`;
+      return `<g><path class="group-trend-line" d="${path}" style="stroke:${item.color}"/>${labels}</g>`;
+    }).join('');
+    els.trendChart.innerHTML=`<svg class="trend-svg" width="100%" height="${chartHeight}" viewBox="0 0 ${chartWidth} ${chartHeight}" aria-hidden="true">${grid}${paths}${xLabels}</svg>`;
+  }
+
+
   function renderTrend() {
 
     if (!els.trendChart) {
+      return;
+    }
+
+    if (state.overallTrendMode === 'districts') {
+      renderOverallDistrictTrend();
       return;
     }
 
@@ -2805,7 +2887,7 @@
       series = districts.map((district, index) => ({
         group: district,
         color: districtColors[index % districtColors.length],
-        points: buildPoints(basePeople.filter(person => person.district === district))
+        points: smoothSeriesPoints(buildPoints(basePeople.filter(person => person.district === district)), 2)
       }));
     } else {
       const people = getPopulationBase().people;
@@ -2933,6 +3015,10 @@
       }));
 
       const path = smoothSvgPath(chartPoints);
+      const endpointLabels = state.groupTrendMode === 'districts' && chartPoints.length
+        ? `<text class="district-line-label" x="${chartPoints[0].x + 5}" y="${Math.max(14, chartPoints[0].y - 8)}" text-anchor="start" style="fill:${escapeAttr(item.color)}">${escapeHtml(item.group)}</text>` +
+          `<text class="district-line-label" x="${chartPoints[chartPoints.length - 1].x + 7}" y="${Math.max(14, chartPoints[chartPoints.length - 1].y - 8)}" text-anchor="start" style="fill:${escapeAttr(item.color)}">${escapeHtml(item.group)}</text>`
+        : '';
 
       const hitPoints = chartPoints.map(({ x, y, point }) => {
         const monthText = `${point.date.getFullYear()}/${point.date.getMonth() + 1}`;
@@ -2968,6 +3054,7 @@
             style="stroke:${escapeAttr(item.color)}"
           />
           ${hitPoints}
+          ${endpointLabels}
         </g>
       `;
     }).join('');
@@ -4987,6 +5074,20 @@
    * 每週趨勢篩選
    * ========================================
    */
+
+  document.querySelectorAll('[data-overall-trend-mode]').forEach(button => {
+    button.addEventListener('click', () => {
+      state.overallTrendMode = button.dataset.overallTrendMode === 'districts' ? 'districts' : 'scope';
+      document.querySelectorAll('[data-overall-trend-mode]').forEach(item => {
+        const selected = item.dataset.overallTrendMode === state.overallTrendMode;
+        item.classList.toggle('is-selected', selected);
+        item.setAttribute('aria-pressed', selected ? 'true' : 'false');
+      });
+      if (els.trendAreaFilterPanel) els.trendAreaFilterPanel.classList.toggle('hidden', state.overallTrendMode === 'districts');
+      renderTrend();
+    });
+  });
+
 
   if (els.trendDistrictButtons) {
 
