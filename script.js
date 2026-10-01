@@ -2029,7 +2029,7 @@
   }
 
   function districtTrendColors(index) {
-    return ['#405B4A', '#756B8A', '#A07F45', '#567B78', '#8A5F69', '#6F8793'][index % 6];
+    return ['#3F6652', '#6D668A', '#9A7435', '#4F7775', '#8A5E6A', '#607F8D'][index % 6];
   }
 
 
@@ -2402,7 +2402,7 @@
       group: district,
       color: districtTrendColors(index),
       rawPoints: buildPoints(basePeople.filter(person => person.district === district))
-    })).map(item => ({ ...item, points: smoothSeriesPoints(item.rawPoints, 2) }));
+    })).map(item => ({ ...item, points: smoothSeriesPoints(item.rawPoints, 3) }));
 
     if (els.trendScopeLabel) els.trendScopeLabel.textContent = `各大區比較｜統計名單${basePeople.length} 人`;
     if (els.trendLatestCount) els.trendLatestCount.textContent = '—';
@@ -2416,7 +2416,7 @@
     const chartWidth = Math.max(320, Math.round(els.trendChart.clientWidth || 760));
     const chartHeight = chartWidth <= 680 ? 300 : 360;
     const left = chartWidth <= 420 ? 50 : 66;
-    const right = chartWidth <= 680 ? 58 : 82;
+    const right = chartWidth <= 680 ? 78 : 108;
     const top = 28, bottom = 56;
     const plotWidth = chartWidth - left - right, plotHeight = chartHeight - top - bottom;
     const values = series.flatMap(item => item.points.map(p => p.count));
@@ -2433,7 +2433,7 @@
       const cps=item.points.map((p,i)=>({x:+xAt(i).toFixed(1),y:+yAt(p.count).toFixed(1),point:p}));
       const path=smoothSvgPath(cps); if(!cps.length) return '';
       const first=cps[0], last=cps[cps.length-1];
-      const labels=`<text class="district-line-label" x="${first.x+5}" y="${Math.max(14,first.y-8)}" text-anchor="start" style="fill:${item.color}">${escapeHtml(item.group)}</text><text class="district-line-label" x="${last.x+7}" y="${Math.max(14,last.y-8)}" text-anchor="start" style="fill:${item.color}">${escapeHtml(item.group)}</text>`;
+      const labels=`<text class="district-line-label" x="${first.x+5}" y="${Math.max(14,first.y-8)}" text-anchor="start" style="fill:${item.color}">${escapeHtml(item.group)}</text><text class="district-line-label" x="${last.x-8}" y="${Math.max(14,last.y-8)}" text-anchor="end" style="fill:${item.color}">${escapeHtml(item.group)}</text>`;
       return `<g><path class="group-trend-line" d="${path}" style="stroke:${item.color}"/>${labels}</g>`;
     }).join('');
     els.trendChart.innerHTML=`<svg class="trend-svg" width="100%" height="${chartHeight}" viewBox="0 0 ${chartWidth} ${chartHeight}" aria-hidden="true">${grid}${paths}${xLabels}</svg>`;
@@ -2502,7 +2502,7 @@
     const chartWidth = Math.max(320, Math.round(els.trendChart.clientWidth || 760));
     const chartHeight = chartWidth <= 680 ? 280 : 350;
     const left = chartWidth <= 420 ? 42 : 58;
-    const right = chartWidth <= 420 ? 12 : 24;
+    const right = state.groupTrendMode === 'districts' ? (chartWidth <= 680 ? 78 : 108) : (chartWidth <= 420 ? 12 : 24);
     const top = 24;
     const bottom = 56;
     const plotWidth = chartWidth - left - right;
@@ -2887,7 +2887,7 @@
       series = districts.map((district, index) => ({
         group: district,
         color: districtColors[index % districtColors.length],
-        points: smoothSeriesPoints(buildPoints(basePeople.filter(person => person.district === district)), 2)
+        points: smoothSeriesPoints(buildPoints(basePeople.filter(person => person.district === district)), 3)
       }));
     } else {
       const people = getPopulationBase().people;
@@ -2930,7 +2930,7 @@
     const chartWidth = Math.max(320, Math.round(els.groupTrendChart.clientWidth || 760));
     const chartHeight = chartWidth <= 680 ? 280 : 350;
     const left = chartWidth <= 420 ? 42 : 58;
-    const right = chartWidth <= 420 ? 12 : 24;
+    const right = state.groupTrendMode === 'districts' ? (chartWidth <= 680 ? 78 : 108) : (chartWidth <= 420 ? 12 : 24);
     const top = 24;
     const bottom = 56;
     const plotWidth = chartWidth - left - right;
@@ -3017,7 +3017,7 @@
       const path = smoothSvgPath(chartPoints);
       const endpointLabels = state.groupTrendMode === 'districts' && chartPoints.length
         ? `<text class="district-line-label" x="${chartPoints[0].x + 5}" y="${Math.max(14, chartPoints[0].y - 8)}" text-anchor="start" style="fill:${escapeAttr(item.color)}">${escapeHtml(item.group)}</text>` +
-          `<text class="district-line-label" x="${chartPoints[chartPoints.length - 1].x + 7}" y="${Math.max(14, chartPoints[chartPoints.length - 1].y - 8)}" text-anchor="start" style="fill:${escapeAttr(item.color)}">${escapeHtml(item.group)}</text>`
+          `<text class="district-line-label" x="${chartPoints[chartPoints.length - 1].x - 8}" y="${Math.max(14, chartPoints[chartPoints.length - 1].y - 8)}" text-anchor="end" style="fill:${escapeAttr(item.color)}">${escapeHtml(item.group)}</text>`
         : '';
 
       const hitPoints = chartPoints.map(({ x, y, point }) => {
@@ -3034,14 +3034,14 @@
             >
               <title>${escapeHtml(item.group)}｜${escapeHtml(monthText)}｜月平均 ${point.count.toFixed(1)} 人｜${point.weeks} 週</title>
             </circle>
-            <circle
+            ${state.groupTrendMode === 'districts' ? '' : `<circle
               class="group-trend-point"
               cx="${x}"
               cy="${y}"
-              r="3.5"
+              r="3.2"
               style="fill:${escapeAttr(item.color)}"
               aria-hidden="true"
-            />
+            />`}
           </g>
         `;
       }).join('');

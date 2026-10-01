@@ -188,181 +188,54 @@
 
 
       <!-- =========================
-           基本資料
+           資料與分析設定（精簡）
       ========================== -->
-
-      <section class="panel info-strip">
-
-        <div>
-          <span>檔案</span>
-          <strong id="infoFile">—</strong>
+      <section class="setup-overview">
+        <div class="panel info-strip setup-info">
+          <div><span>檔案</span><strong id="infoFile">—</strong></div>
+          <div><span>資料期間</span><strong id="infoPeriod">—</strong></div>
+          <div><span>週次</span><strong id="infoWeeks">—</strong></div>
+          <div><span>人數</span><strong id="infoPeople">—</strong></div>
         </div>
 
-        <div>
-          <span>資料期間</span>
-          <strong id="infoPeriod">—</strong>
-        </div>
-
-        <div>
-          <span>週次</span>
-          <strong id="infoWeeks">—</strong>
-        </div>
-
-        <div>
-          <span>人數</span>
-          <strong id="infoPeople">—</strong>
-        </div>
-
-      </section>
-
-
-
-      <!-- =========================
-           分析規則
-      ========================== -->
-
-      <section class="panel rules-panel">
-
-        <div class="rules-copy">
-
+        <section class="panel rules-panel compact-rules-panel">
           <div class="rules-title-row">
             <h2>分析規則</h2>
             <button type="button" class="info-toggle" data-info-target="ruleText" aria-expanded="false" aria-label="查看分析規則說明">ⓘ</button>
           </div>
+          <div id="ruleText" class="collapsible-info compact-info-popover hidden">
+            <p><strong>資料範圍：</strong>以匯入資料中最新的主日為基準，固定觀察最近 12 週。</p>
+            <p><strong>週週聚會：</strong>近 12 週每週都有聚會</p>
+            <p><strong>常聚會：</strong>平均至少每 3 週一次</p>
+            <p><strong>偶聚會：</strong>平均至少每 4 週一次</p>
+            <p><strong>零星聚會：</strong>最近 8 週內仍有出現</p>
+            <p><strong>近期未聚會：</strong>超過 8 週未聚會</p>
+          </div>
+        </section>
 
-          <h3 class="rules-subtitle">資料範圍</h3>
-
-          <p id="ruleText" class="collapsible-info hidden">
-            以匯入資料中最新的主日為基準，固定觀察最近 12 週。
-          </p>
-
-        </div>
-
-
-
-        <div class="rule-legend">
-
-          <span>
-            <i class="dot weekly"></i>
-            <strong>週週聚會</strong>
-            ：近 12 週每週都有聚會
-          </span>
-
-          <span>
-            <i class="dot regular"></i>
-            <strong>常聚會</strong>
-            ：平均至少每 3 週一次
-          </span>
-
-          <span>
-            <i class="dot occasional"></i>
-            <strong>偶聚會</strong>
-            ：平均至少每 4 週一次
-          </span>
-
-          <span>
-            <i class="dot sporadic"></i>
-            <strong>零星聚會</strong>
-            ：最近 8 週內仍有出現
-          </span>
-
-          <span>
-            <i class="dot inactive"></i>
-            <strong>近期未聚會</strong>
-            ：超過 8 週未聚會
-          </span>
-
-        </div>
-
-      </section>
-
-
-
-      <!-- =========================
-           統計名單設定
-      ========================== -->
-
-      <section class="panel population-panel">
-
-        <div class="population-copy">
-
-          <p class="eyebrow">
-            ANALYSIS BASE
-          </p>
-
-          <h2>
-            統計名單設定
-          </h2>
-
-          <p>
-            先排除不納入本次分析的人員；下方總人數、聚會比例、大區比較與群組分析，皆以排除後人數重新計算。
-          </p>
-
-        </div>
-
-        <div class="population-controls">
-
-          <label class="field population-filter">
-
-            <span>
-              排除：總聚會最多
-            </span>
-
-            <select id="totalAttendanceFilter">
-              <option value="">不設定</option>
-              <option value="0">0 次</option>
-              <option value="1">1 次</option>
-              <option value="2">2 次</option>
-              <option value="3">3 次</option>
-              <option value="4">4 次</option>
-              <option value="5">5 次</option>
-              <option value="6">6 次</option>
-              <option value="7">7 次</option>
-              <option value="8">8 次</option>
-              <option value="9">9 次</option>
-              <option value="10">10 次</option>
-            </select>
-
-          </label>
-
-          <label class="field population-filter">
-
-            <span>
-              排除：未聚會達
-            </span>
-
-            <select id="absenceWeeksFilter">
-              <option value="">不設定</option>
-              <option value="4">1 個月</option>
-              <option value="9">2 個月</option>
-              <option value="17">4 個月</option>
-              <option value="35">8 個月</option>
-              <option value="52">1 年</option>
-              <option value="78">1 年半</option>
-              <option value="104">2 年</option>
-              <option value="130">2 年半</option>
-              <option value="156">3 年</option>
-              <option value="182">3 年半</option>
-              <option value="208">4 年</option>
-              <option value="234">4 年半</option>
-              <option value="260">5 年</option>
-            </select>
-
-          </label>
-
-        </div>
-
-        <div class="population-result" aria-live="polite">
-          <span>原始名單 <strong id="populationOriginalCount">—</strong> 人</span>
-          <span class="population-arrow" aria-hidden="true">→</span>
-          <span>統計名單 <strong id="populationActiveCount">—</strong> 人</span>
-          <span class="population-excluded">已排除 <strong id="populationExcludedCount">—</strong> 人</span>
-        </div>
-
-        <div class="exclusion-note population-note">
-          排除條件可單獨使用。只設定「未聚會達」時，排除超過該期間未聚會的人；只設定「總聚會最多」時，排除總出席次數低於或等於設定值的人；兩項都有設定時，只排除同時符合兩項的人。
-        </div>
-
+        <section class="panel population-panel compact-population-panel">
+          <div class="population-title-row">
+            <h2>統計名單設定</h2>
+            <button type="button" class="info-toggle" data-info-target="populationHelp" aria-expanded="false" aria-label="查看統計名單設定說明">ⓘ</button>
+          </div>
+          <div id="populationHelp" class="collapsible-info compact-info-popover hidden">
+            <p>先排除不納入本次分析的人員；下方總人數、聚會比例、大區比較與羣組分析，皆以排除後人數重新計算。</p>
+            <p>排除條件可單獨使用。只設定「未聚會達」時，排除超過該期間未聚會的人；只設定「總聚會最多」時，排除總出席次數低於或等於設定值的人；兩項都有設定時，只排除同時符合兩項的人。</p>
+          </div>
+          <div class="population-controls">
+            <label class="field population-filter"><span>排除：總聚會最多</span><select id="totalAttendanceFilter">
+              <option value="">不設定</option><option value="0">0 次</option><option value="1">1 次</option><option value="2">2 次</option><option value="3">3 次</option><option value="4">4 次</option><option value="5">5 次</option><option value="6">6 次</option><option value="7">7 次</option><option value="8">8 次</option><option value="9">9 次</option><option value="10">10 次</option>
+            </select></label>
+            <label class="field population-filter"><span>排除：未聚會達</span><select id="absenceWeeksFilter">
+              <option value="">不設定</option><option value="4">1 個月</option><option value="9">2 個月</option><option value="17">4 個月</option><option value="35">8 個月</option><option value="52">1 年</option><option value="78">1 年半</option><option value="104">2 年</option><option value="130">2 年半</option><option value="156">3 年</option><option value="182">3 年半</option><option value="208">4 年</option><option value="234">4 年半</option><option value="260">5 年</option>
+            </select></label>
+          </div>
+          <div class="population-result" aria-live="polite">
+            <span>原始名單 <strong id="populationOriginalCount">—</strong> 人</span>
+            <span>統計名單 <strong id="populationActiveCount">—</strong> 人</span>
+            <span class="population-excluded">已排除 <strong id="populationExcludedCount">—</strong> 人</span>
+          </div>
+        </section>
       </section>
 
 
@@ -1052,7 +925,7 @@
       關閉、重新整理或按「清除本次資料」後，
       本次匯入內容不會由本工具保存。
 
-      <span class="footer-version" aria-label="版本資訊">v1.0.4 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.0.5 · J.C</span>
 
     </p>
 

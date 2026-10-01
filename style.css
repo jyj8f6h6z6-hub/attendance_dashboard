@@ -2323,3 +2323,57 @@ select:focus-visible,
   .analysis-collapse > summary { padding:15px 16px; font-size:17px; }
   .district-line-label { font-size:10px; }
 }
+
+/* v1.0.5：頁首資訊精簡、趨勢圖視覺優化 */
+.setup-overview {
+  display: grid;
+  grid-template-columns: minmax(420px, 1.35fr) minmax(180px, .55fr) minmax(520px, 1.55fr);
+  gap: 14px;
+  align-items: stretch;
+}
+.setup-overview > .panel { margin: 0; }
+.setup-info { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.setup-info div { padding: 14px 16px; }
+.setup-info div:nth-child(3) { border-left: 0; border-top: 1px solid var(--line); }
+.setup-info div:nth-child(4) { border-top: 1px solid var(--line); }
+.setup-info strong { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.compact-rules-panel { display:block; position:relative; padding:18px 20px; }
+.compact-rules-panel .rules-title-row { height:100%; align-items:flex-start; }
+.compact-rules-panel h2, .compact-population-panel h2 { font-size:18px; margin:0; }
+.compact-info-popover { position:absolute; z-index:30; top:54px; left:16px; right:16px; padding:14px 16px; border:1px solid var(--line); border-radius:12px; background:#fff; box-shadow:0 12px 32px rgba(32,48,60,.14); color:#53636d; font-size:13px; line-height:1.65; }
+.compact-info-popover p { margin:0; }
+.compact-info-popover p + p { margin-top:4px; }
+.compact-population-panel { position:relative; display:grid; grid-template-columns:auto 1fr auto; gap:14px; align-items:end; padding:16px 18px; }
+.population-title-row { display:flex; align-items:center; gap:6px; align-self:center; white-space:nowrap; }
+.compact-population-panel .population-controls { flex-wrap:nowrap; justify-content:flex-start; }
+.compact-population-panel .population-filter { min-width:145px; }
+.compact-population-panel .population-result { min-width:0; padding:9px 12px; gap:6px 10px; justify-content:flex-start; }
+.compact-population-panel .population-result strong { font-size:16px; }
+.compact-population-panel .population-excluded { flex-basis:auto; text-align:left; }
+.group-trend-line { stroke-width:2.6; opacity:.96; }
+.district-line-label { font-size:12px; font-weight:850; letter-spacing:.01em; paint-order:stroke; stroke:rgba(255,255,255,.96); stroke-width:5px; stroke-linejoin:round; }
+.group-trend-district-legend { color:#65747d; }
+.group-trend-district-legend-item { padding:4px 8px; border-radius:999px; background:#f6f8f9; }
+@media (max-width: 1250px) {
+  .setup-overview { grid-template-columns: 1fr 1fr; }
+  .setup-info { grid-column:1 / -1; grid-template-columns:repeat(4,1fr); }
+  .setup-info div:nth-child(3), .setup-info div:nth-child(4) { border-top:0; }
+  .setup-info div:nth-child(3) { border-left:1px solid var(--line); }
+  .compact-population-panel { grid-template-columns:1fr; align-items:start; }
+  .compact-population-panel .population-controls { flex-wrap:wrap; }
+}
+@media (max-width: 760px) {
+  .setup-overview { grid-template-columns:1fr; }
+  .setup-info { grid-column:auto; grid-template-columns:1fr 1fr; }
+  .setup-info div:nth-child(3), .setup-info div:nth-child(4) { border-top:1px solid var(--line); }
+  .setup-info div:nth-child(3) { border-left:0; }
+  .compact-info-popover { position:static; margin-top:12px !important; box-shadow:none; }
+  .compact-population-panel .population-controls { display:grid; grid-template-columns:1fr 1fr; width:100%; }
+  .compact-population-panel .population-filter { min-width:0; }
+  .district-line-label { font-size:10px; }
+}
+@media (max-width: 480px) {
+  .compact-population-panel .population-controls { grid-template-columns:1fr; }
+  .setup-info { grid-template-columns:1fr; }
+  .setup-info div + div { border-left:0; border-top:1px solid var(--line); }
+}
