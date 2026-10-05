@@ -29,6 +29,18 @@
     7 * 24 * 60 * 60 * 1000;
 
 
+  /* 本機保存：資料只留在目前瀏覽器，不會上傳。 */
+  const LOCAL_DB_NAME = 'attendance-dashboard-local-v1';
+  const LOCAL_DB_STORE = 'files';
+  const LOCAL_SETTINGS_KEY = 'attendance-dashboard-settings-v1';
+  let restoringLocalData = false;
+  let settingsSaveTimer = null;
+
+  function openLocalDb() { return new Promise((resolve,reject)=>{ const r=indexedDB.open(LOCAL_DB_NAME,1); r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(LOCAL_DB_STORE))db.createObjectStore(LOCAL_DB_STORE);}; r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error); }); }
+  async function putLocalFile(key,value){const db=await openLocalDb();await new Promise((resolve,reject)=>{const tx=db.transaction(LOCAL_DB_STORE,'readwrite');tx.objectStore(LOCAL_DB_STORE).put(value,key);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}
+  async function getLocalFile(key){const db=await openLocalDb();const value=await new Promise((resolve,reject)=>{const tx=db.transaction(LOCAL_DB_STORE,'readonly');const r=tx.objectStore(LOCAL_DB_STORE).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});db.close();return value;}
+  async function clearLocalFiles(){const db=await openLocalDb();await new Promise((resolve,reject)=>{const tx=db.transaction(LOCAL_DB_STORE,'readwrite');tx.objectStore(LOCAL_DB_STORE).clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}
+
   const state = {
     fileName: '',
     rows: [],
@@ -4682,6 +4694,13 @@
   }
 
 
+  function collectAnalysisSettings(){return{totalAttendance:els.totalAttendanceFilter?.value||'',absenceWeeks:els.absenceWeeksFilter?.value||'',district:els.districtFilter?.value||'',smallDistricts:[...state.selectedAnalysisSmallDistricts],groups:[...state.selectedGroups],statuses:[...state.selectedStatuses],newBeliever:els.newBelieverFilter?.value||'',search:els.searchInput?.value||'',trendDistrict:els.trendDistrictFilter?.value||'',trendSmallDistrict:els.trendSmallDistrictFilter?.value||'',trendGroups:[...state.selectedTrendGroups],groupTrendMode:state.groupTrendMode,quarterFromKey:state.quarterFromKey,quarterToKey:state.quarterToKey,peopleDistricts:[...state.selectedPeopleDistricts],peopleSmallDistricts:[...state.selectedPeopleSmallDistricts]};}
+  function saveAnalysisSettings(){if(restoringLocalData||!state.rows.length)return;try{localStorage.setItem(LOCAL_SETTINGS_KEY,JSON.stringify(collectAnalysisSettings()));}catch(err){console.warn('無法保存分析選項',err);}}
+  function scheduleSaveAnalysisSettings(){clearTimeout(settingsSaveTimer);settingsSaveTimer=setTimeout(saveAnalysisSettings,80);}
+  function readAnalysisSettings(){try{return JSON.parse(localStorage.getItem(LOCAL_SETTINGS_KEY)||'null');}catch(_){return null;}}
+  function applyAnalysisSettings(saved){if(!saved||!state.rows.length)return;if(els.totalAttendanceFilter)els.totalAttendanceFilter.value=saved.totalAttendance||'';if(els.absenceWeeksFilter)els.absenceWeeksFilter.value=saved.absenceWeeks||'';if(els.districtFilter)els.districtFilter.value=saved.district||'';updateSmallDistrictOptions();state.selectedAnalysisSmallDistricts=new Set(saved.smallDistricts||[]);state.selectedGroups=new Set(saved.groups||[]);state.selectedStatuses=new Set(saved.statuses||[]);if(els.newBelieverFilter)els.newBelieverFilter.value=saved.newBeliever||'';if(els.searchInput)els.searchInput.value=saved.search||'';if(els.trendDistrictFilter)els.trendDistrictFilter.value=saved.trendDistrict||'';if(els.trendSmallDistrictFilter)els.trendSmallDistrictFilter.value=saved.trendSmallDistrict||'';state.selectedTrendGroups=new Set(saved.trendGroups||[]);state.trendGroupsInitialized=state.selectedTrendGroups.size>0;state.groupTrendMode=saved.groupTrendMode==='districts'?'districts':'groups';state.quarterFromKey=saved.quarterFromKey||'';state.quarterToKey=saved.quarterToKey||'';state.selectedPeopleDistricts=new Set(saved.peopleDistricts||[]);state.selectedPeopleSmallDistricts=new Set(saved.peopleSmallDistricts||[]);document.querySelectorAll('[data-group-trend-mode]').forEach(button=>{const selected=button.dataset.groupTrendMode===state.groupTrendMode;button.classList.toggle('is-selected',selected);button.setAttribute('aria-pressed',selected?'true':'false');});renderAll();}
+  async function restoreLocalData(){if(!globalThis.indexedDB||!globalThis.XLSX)return;restoringLocalData=true;try{const attendance=await getLocalFile('attendance');const baptism=await getLocalFile('baptism');if(!attendance?.buffer)return;analyzeWorkbook(attendance.buffer,attendance.name||'本機點名資料');els.fileName.textContent=`${attendance.name||'本機點名資料'}｜已從本機載入`;if(baptism?.buffer)analyzeBaptismWorkbook(baptism.buffer,baptism.name||'本機受浸資料');applyAnalysisSettings(readAnalysisSettings());}catch(err){console.warn('本機資料載入失敗',err);els.error.textContent='本機保存資料無法載入，請重新匯入報表。';}finally{restoringLocalData=false;}}
+
   async function onAttendanceFile(file) {
 
     els.error.textContent =
@@ -4712,6 +4731,10 @@
         buffer,
         file.name
       );
+
+      await putLocalFile('attendance',{name:file.name,buffer,savedAt:Date.now()});
+      applyAnalysisSettings(readAnalysisSettings());
+      saveAnalysisSettings();
 
 
     } catch (err) {
@@ -4762,6 +4785,9 @@
         file.name
       );
 
+      await putLocalFile('baptism',{name:file.name,buffer,savedAt:Date.now()});
+      saveAnalysisSettings();
+
 
     } catch (err) {
 
@@ -4776,6 +4802,9 @@
 
 
   function clearData() {
+
+    clearLocalFiles().catch(err=>console.warn('清除本機資料失敗',err));
+    try{localStorage.removeItem(LOCAL_SETTINGS_KEY);}catch(_){}
 
     state.fileName = '';
 
@@ -5775,6 +5804,14 @@
     'click',
     clearData
   );
+
+  // 分析選項有變動時，自動保存上次狀態。
+  document.addEventListener('change',scheduleSaveAnalysisSettings);
+  document.addEventListener('input',e=>{if(e.target===els.searchInput)scheduleSaveAnalysisSettings();});
+  document.addEventListener('click',e=>{if(e.target.closest('button, .ios-filter-btn, [data-trend-group], [data-analysis-group], [data-analysis-status], [data-analysis-district], [data-analysis-small], [data-analysis-believer]'))setTimeout(scheduleSaveAnalysisSettings,0);});
+
+  // 開啟網頁時自動恢復同一瀏覽器上次保存的資料與分析選項。
+  restoreLocalData();
 
   // 桌機視窗縮放或手機旋轉時，依新的可用寬度重畫兩張趨勢圖。
   let trendResizeTimer = null;

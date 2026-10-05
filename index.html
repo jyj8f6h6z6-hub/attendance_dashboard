@@ -56,7 +56,7 @@
       </h1>
 
       <p class="subtitle">
-        匯入當次點名報表與受浸報表，在瀏覽器本機完成分析；重新整理或清除後即移除資料。
+        匯入點名報表與受浸報表後，資料會保存在目前瀏覽器；下次開啟可自動接續分析。
       </p>
 
       <button
@@ -65,7 +65,7 @@
         type="button"
         disabled
       >
-        清除本次資料
+        清除本機資料
       </button>
 
     </div>
@@ -97,7 +97,7 @@
           <strong>點名報表</strong>；
           如需顯示受浸日期與判斷初信，再匯入
           <strong>受浸報表</strong>。
-          網頁只讀取你當次選擇的檔案。
+          第一次匯入後會保存在目前瀏覽器；之後開啟可自動載入，也可隨時匯入新檔更新。
         </p>
 
         <p class="privacy">
@@ -105,7 +105,7 @@
             🔒
           </span>
 
-          本工具不使用 localStorage / IndexedDB，也沒有資料上傳程式。
+          資料使用瀏覽器本機儲存（IndexedDB / localStorage），不會上傳至 GitHub 或其他伺服器。
         </p>
 
       </div>
@@ -1033,10 +1033,10 @@
 
       資料僅存在本頁記憶體中。
 
-      關閉、重新整理或按「清除本次資料」後，
+      關閉、重新整理或按「清除本機資料」後，
       本次匯入內容不會由本工具保存。
 
-      <span class="footer-version" aria-label="版本資訊">v1.0.3 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.0.4 · J.C</span>
 
     </p>
 
