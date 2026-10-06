@@ -2306,3 +2306,75 @@ select:focus-visible,
 .group-trend-district-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; font-size:12px; font-weight:800; color:#52616a; }
 .group-trend-district-legend-item { display:inline-flex; align-items:center; gap:6px; }
 .group-trend-district-legend-item i { width:18px; height:3px; border-radius:999px; background:var(--district-trend-color); display:inline-block; }
+
+/* =========================================
+   v1.1.0｜名單模式 / 完整模式 + 分析區塊收合
+========================================= */
+.view-mode-switch {
+  display: inline-flex;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 4px;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 12px;
+  background: rgba(255,255,255,.16);
+  backdrop-filter: blur(4px);
+}
+.view-mode-btn {
+  appearance: none;
+  border: 0;
+  border-radius: 9px;
+  padding: 8px 14px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.view-mode-btn.is-selected {
+  background: #fff;
+  color: var(--accent);
+  box-shadow: 0 1px 5px rgba(31,41,51,.15);
+}
+body.list-mode .full-mode-only { display: none !important; }
+body.list-mode .analysis-filter-panel { margin-top: 0; }
+
+.collapsible-analysis { position: relative; }
+.analysis-collapse-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.analysis-collapse-title { font-size: 18px; font-weight: 800; }
+.analysis-collapse-icon { color: var(--muted); font-size: 18px; line-height: 1; transition: transform .18s ease; }
+.collapsible-analysis:not(.analysis-collapsed) .analysis-collapse-icon { transform: rotate(180deg); }
+.collapsible-analysis .section-head h2 { display: none; }
+.collapsible-analysis.analysis-collapsed > :not(.analysis-collapse-toggle) { display: none !important; }
+.collapsible-analysis.analysis-collapsed { padding-top: 18px; padding-bottom: 18px; }
+
+@media (max-width: 680px) {
+  .view-mode-switch { margin-top: 10px; }
+  .view-mode-btn { padding: 7px 11px; font-size: 12px; }
+  .analysis-collapse-title { font-size: 16px; }
+}
+
+/* =========================================
+   v1.1.1｜修正分析卡片收合高度
+   收合時取消 age-panel 原有 min-height，只保留標題列。
+========================================= */
+.collapsible-analysis.analysis-collapsed {
+  min-height: 0 !important;
+  height: auto !important;
+  padding-top: 18px;
+  padding-bottom: 18px;
+}

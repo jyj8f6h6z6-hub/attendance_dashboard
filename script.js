@@ -33,6 +33,7 @@
   const LOCAL_DB_NAME = 'attendance-dashboard-local-v1';
   const LOCAL_DB_STORE = 'files';
   const LOCAL_SETTINGS_KEY = 'attendance-dashboard-settings-v1';
+  const LOCAL_VIEW_MODE_KEY = 'attendance-dashboard-view-mode-v1';
   let restoringLocalData = false;
   let settingsSaveTimer = null;
 
@@ -4804,7 +4805,7 @@
   function clearData() {
 
     clearLocalFiles().catch(err=>console.warn('清除本機資料失敗',err));
-    try{localStorage.removeItem(LOCAL_SETTINGS_KEY);}catch(_){}
+    try{localStorage.removeItem(LOCAL_SETTINGS_KEY);localStorage.removeItem(LOCAL_VIEW_MODE_KEY);}catch(_){}
 
     state.fileName = '';
 
@@ -5793,6 +5794,44 @@
     );
   }
 
+
+  /* v1.1.0：名單模式 / 完整模式 */
+  function setViewMode(mode, persist = true) {
+    const next = mode === 'list' ? 'list' : 'full';
+    document.body.classList.toggle('list-mode', next === 'list');
+    document.querySelectorAll('[data-view-mode]').forEach(button => {
+      const selected = button.dataset.viewMode === next;
+      button.classList.toggle('is-selected', selected);
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+    if (persist) {
+      try { localStorage.setItem(LOCAL_VIEW_MODE_KEY, next); } catch (_) {}
+    }
+  }
+
+  document.querySelectorAll('[data-view-mode]').forEach(button => {
+    button.addEventListener('click', () => setViewMode(button.dataset.viewMode));
+  });
+
+  try { setViewMode(localStorage.getItem(LOCAL_VIEW_MODE_KEY) || 'full', false); }
+  catch (_) { setViewMode('full', false); }
+
+  /* 六張既有牧養分析卡：預設收合，只顯示分析標題。 */
+  document.querySelectorAll('.age-analysis-grid .age-panel').forEach((panel, index) => {
+    const heading = panel.querySelector('.section-head h2');
+    if (!heading) return;
+    panel.classList.add('collapsible-analysis', 'analysis-collapsed');
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'analysis-collapse-toggle';
+    toggle.setAttribute('aria-expanded', 'false');
+    toggle.innerHTML = `<span class="analysis-collapse-title">${heading.textContent.trim()}</span><span class="analysis-collapse-icon" aria-hidden="true">⌄</span>`;
+    toggle.addEventListener('click', () => {
+      const collapsed = panel.classList.toggle('analysis-collapsed');
+      toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
+    panel.insertBefore(toggle, panel.firstChild);
+  });
 
   /*
    * ========================================

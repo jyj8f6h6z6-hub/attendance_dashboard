@@ -68,6 +68,11 @@
         清除本機資料
       </button>
 
+      <div class="view-mode-switch" aria-label="顯示模式">
+        <button type="button" class="view-mode-btn" data-view-mode="list" aria-pressed="false">名單模式</button>
+        <button type="button" class="view-mode-btn is-selected" data-view-mode="full" aria-pressed="true">完整模式</button>
+      </div>
+
     </div>
 
   </header>
@@ -221,7 +226,7 @@
            分析規則
       ========================== -->
 
-      <section class="panel rules-panel">
+      <section class="panel rules-panel full-mode-only">
 
         <div class="rules-copy">
 
@@ -282,7 +287,7 @@
            統計名單設定
       ========================== -->
 
-      <section class="panel population-panel">
+      <section class="panel population-panel full-mode-only">
 
         <div class="population-copy">
 
@@ -371,7 +376,7 @@
       ========================== -->
 
       <section
-        class="cards"
+        class="cards full-mode-only"
         id="summaryCards"
       ></section>
 
@@ -381,7 +386,7 @@
            每週聚會人數 / 羣組成長趨勢
       ========================== -->
 
-      <section class="panel trend-panel">
+      <section class="panel trend-panel full-mode-only">
 
         <div class="trend-head">
 
@@ -514,7 +519,7 @@
            整體分析
       ========================== -->
 
-      <section class="grid two-col">
+      <section class="grid two-col full-mode-only">
 
 
         <article class="panel">
@@ -1031,12 +1036,11 @@
 
     <p class="footer-copy">
 
-      資料僅存在本頁記憶體中。
+      資料會保存在目前瀏覽器本機。
 
-      關閉、重新整理或按「清除本機資料」後，
-      本次匯入內容不會由本工具保存。
+      下次開啟可自動接續分析；按「清除本機資料」可移除本機保存內容。
 
-      <span class="footer-version" aria-label="版本資訊">v1.0.4 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.1.1 · J.C</span>
 
     </p>
 
