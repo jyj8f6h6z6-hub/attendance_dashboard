@@ -2378,3 +2378,8 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
   padding-top: 18px;
   padding-bottom: 18px;
 }
+
+/* =========================================
+   v1.1.2｜桌機版牧養分析左右成對展開
+   實際連動由 script.js 控制；手機版維持各卡獨立。
+========================================= */

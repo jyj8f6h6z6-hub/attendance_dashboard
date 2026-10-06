@@ -5827,8 +5827,18 @@
     toggle.setAttribute('aria-expanded', 'false');
     toggle.innerHTML = `<span class="analysis-collapse-title">${heading.textContent.trim()}</span><span class="analysis-collapse-icon" aria-hidden="true">⌄</span>`;
     toggle.addEventListener('click', () => {
-      const collapsed = panel.classList.toggle('analysis-collapsed');
-      toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+      const shouldCollapse = !panel.classList.contains('analysis-collapsed');
+      // v1.1.2：桌機雙欄時，同一列左右兩張分析卡成對展開／收合；手機維持獨立。
+      const panels = Array.from(document.querySelectorAll('.age-analysis-grid .age-panel'));
+      const panelIndex = panels.indexOf(panel);
+      const targets = window.matchMedia('(min-width: 681px)').matches
+        ? panels.slice(Math.floor(panelIndex / 2) * 2, Math.floor(panelIndex / 2) * 2 + 2)
+        : [panel];
+      targets.forEach(target => {
+        target.classList.toggle('analysis-collapsed', shouldCollapse);
+        const targetToggle = target.querySelector('.analysis-collapse-toggle');
+        if (targetToggle) targetToggle.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
+      });
     });
     panel.insertBefore(toggle, panel.firstChild);
   });
