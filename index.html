@@ -1038,7 +1038,7 @@
 
       下次開啟可自動接續分析；按「清除本機資料」可移除本機保存內容。
 
-      <span class="footer-version" aria-label="版本資訊">v1.1.7 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.1.8 · J.C</span>
 
     </p>
 
@@ -1055,6 +1055,12 @@
   <script src="age-analysis.js"></script>
 
 
+<div id="update-notice" role="status" aria-live="polite" hidden style="position:fixed;bottom:18px;right:18px;z-index:9999;max-width:350px;padding:16px 18px;background:#fff;border:1px solid #ccd9df;border-radius:12px;box-shadow:0 6px 28px #182f4433;font:14px system-ui,sans-serif;color:#253746">
+  <strong id="update-notice-title">網站有新版本</strong><p style="margin:8px 0 12px">更新網站程式不會主動清除已儲存的報表與設定。</p>
+  <button id="update-now" type="button" style="padding:8px 14px;border:0;border-radius:7px;background:#345c68;color:white;cursor:pointer">立即更新</button>
+  <button id="update-later" type="button" style="padding:8px 14px;border:1px solid #ccd9df;border-radius:7px;background:white;cursor:pointer">稍後更新</button>
+</div>
+<script src="offline-update.js"></script>
 </body>
 
 </html>
