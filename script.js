@@ -4643,6 +4643,20 @@
   }
 
 
+  // v1.1.10：使用者手動操作「人員明細」篩選時，退出圖表鑽取模式。
+  // 使用捕獲階段，確保在各個篩選按鈕原有的 click 處理器之前解除圖表條件。
+  // 不重設已連動的名單選項，讓使用者可接續自行調整。
+  els.peoplePanel?.addEventListener('click', event => {
+    if (!state.chartType) return;
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+    if (!target.closest('[data-people-district], [data-people-small-district], [data-people-group], [data-people-status], #clearPeopleDistrictFilter, #clearPeopleSmallDistrictFilter, #clearPeopleAreaFilter')) return;
+    state.chartType = '';
+    state.chartGroup = '';
+    state.chartDistrict = '';
+    updateChartFilterUI();
+  }, true);
+
   function clearChartFilter() {
 
     state.chartType = '';
