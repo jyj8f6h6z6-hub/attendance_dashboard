@@ -640,6 +640,12 @@
           <button id="clearStatusFilter" type="button"></button><button id="closeStatusFilter" type="button"></button>
         </div>
 
+        <!-- 舊版程式仍會更新這兩個節點；不再顯示於分析篩選。 -->
+        <div class="hidden" aria-hidden="true" style="display:none">
+          <div id="analysisGroupButtons"></div>
+          <div id="analysisStatusButtons"></div>
+        </div>
+
         <div class="analysis-button-filters">
           <div class="analysis-button-row">
             <span class="analysis-button-label">大區</span>
@@ -648,14 +654,6 @@
           <div id="analysisSmallDistrictRow" class="analysis-button-row hidden">
             <span class="analysis-button-label">小區</span>
             <div id="analysisSmallDistrictButtons" class="ios-filter-buttons analysis-ios-buttons"></div>
-          </div>
-          <div class="analysis-button-row">
-            <span class="analysis-button-label">羣組</span>
-            <div id="analysisGroupButtons" class="ios-filter-buttons analysis-ios-buttons analysis-group-buttons"></div>
-          </div>
-          <div class="analysis-button-row">
-            <span class="analysis-button-label">聚會情況</span>
-            <div id="analysisStatusButtons" class="ios-filter-buttons analysis-ios-buttons"></div>
           </div>
           <div id="analysisBelieverRow" class="analysis-button-row hidden">
             <span class="analysis-button-label">初信</span>
@@ -953,12 +951,12 @@
 
             <div class="people-button-group" id="peopleGroupFilterRow">
               <span class="area-button-label">羣組</span>
-              <div id="peopleGroupOptions" class="ios-filter-buttons people-area-button-list" aria-label="人員明細羣組複選，與分析篩選同步"></div>
+              <div id="peopleGroupOptions" class="ios-filter-buttons people-area-button-list" aria-label="人員明細專用羣組複選"></div>
             </div>
 
             <div class="people-button-group" id="peopleStatusFilterRow">
               <span class="area-button-label">聚會情況</span>
-              <div id="peopleStatusOptions" class="ios-filter-buttons people-area-button-list" aria-label="人員明細聚會情況複選，與分析篩選同步"></div>
+              <div id="peopleStatusOptions" class="ios-filter-buttons people-area-button-list" aria-label="人員明細專用聚會情況複選"></div>
             </div>
 
             <button
@@ -1040,7 +1038,7 @@
 
       下次開啟可自動接續分析；按「清除本機資料」可移除本機保存內容。
 
-      <span class="footer-version" aria-label="版本資訊">v1.1.5 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.1.6 · J.C</span>
 
     </p>
 

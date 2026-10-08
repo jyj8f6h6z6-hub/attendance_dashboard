@@ -4362,7 +4362,7 @@
   }
   initPeopleColumnSettings();
 
-  /* v1.1.4：人員明細與上方分析篩選共用 selectedGroups，雙向同步。 */
+  /* v1.1.6：羣組複選僅在人員明細顯示，不再影響牧養圖表。 */
   function renderPeopleGroupButtons() {
     const target = document.getElementById('peopleGroupOptions');
     if (!target) return;
@@ -4382,7 +4382,7 @@
     renderPeople();
   });
 
-  /* v1.1.5：上下聚會情況共用 selectedStatuses，複選雙向同步。 */
+  /* v1.1.6：聚會情況複選僅在人員明細顯示，不再影響牧養圖表。 */
   function renderPeopleStatusButtons() {
     const target = document.getElementById('peopleStatusOptions');
     if (!target) return;
@@ -4490,15 +4490,14 @@
 
   globalThis.AttendanceDashboardAPI = {
     getAnalysisBasePeople() {
-      return getGeneralFilteredPeople()
-        .people
-        .map(
-          p => ({
-            district: p.district,
-            group: p.group,
-            status: p.status
-          })
-        );
+      // v1.1.6: 牧養圖表只受大區／小區與統計名單設定影響。
+      // 人員明細專用的羣組、聚會情況、姓名及初信條件不影響六張圖表。
+      const district = els.districtFilter.value;
+      const smalls = state.selectedAnalysisSmallDistricts;
+      return getPopulationBase().people
+        .filter(p => (!district || p.district === district) &&
+          (!smalls.size || smalls.has(p.smallDistrict)))
+        .map(p => ({district: p.district, group: p.group, status: p.status}));
     }
   };
 
