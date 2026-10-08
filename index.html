@@ -959,13 +959,6 @@
               <div id="peopleStatusOptions" class="ios-filter-buttons people-area-button-list" aria-label="人員明細專用聚會情況複選"></div>
             </div>
 
-            <button
-              type="button"
-              id="clearPeopleAreaFilter"
-              class="people-area-clear hidden"
-            >
-              清除名單篩選
-            </button>
 
           </div>
 
@@ -974,15 +967,16 @@
 
           <div
             id="chartFilterIndicator"
-            class="chart-filter-indicator hidden"
+            class="chart-filter-indicator"
           >
 
-            <span id="chartFilterText"></span>
+            <span id="chartFilterText" class="hidden"></span>
 
             <button
               type="button"
               id="clearChartFilter"
               class="chart-filter-clear"
+              disabled
             >
               清除篩選
             </button>
@@ -1038,7 +1032,7 @@
 
       下次開啟可自動接續分析；按「清除本機資料」可移除本機保存內容。
 
-      <span class="footer-version" aria-label="版本資訊">v1.1.11 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.1.12 · J.C</span>
 
     </p>
 

@@ -4246,14 +4246,6 @@
       );
 
 
-    if (els.clearPeopleAreaFilter) {
-      els.clearPeopleAreaFilter
-        .classList
-        .toggle(
-          'hidden',
-          !localActive
-        );
-    }
   }
 
 
@@ -4516,6 +4508,7 @@
     }
 
     renderPeopleTable(visible);
+    updateChartFilterUI();
 
     document.dispatchEvent(
       new CustomEvent('analysisBaseChanged')
@@ -4543,105 +4536,41 @@
    * ========================================
    */
 
-  function updateChartFilterUI() {
-
-    if (
-      !els.chartFilterIndicator ||
-      !els.chartFilterText
-    ) {
-      return;
-    }
-
-
-    if (
-      !state.chartType ||
-      !state.chartGroup
-    ) {
-
-      els.chartFilterIndicator
-        .classList
-        .add('hidden');
-
-
-      els.chartFilterText.textContent =
-        '';
-
-
-      document
-        .querySelectorAll(
-          '.age-filter-trigger'
-        )
-        .forEach(
-          element =>
-            element.classList.remove(
-              'is-selected'
-            )
-        );
-
-
-      return;
-    }
-
-
-    const typeLabel =
-      state.chartType === 'care'
-        ? '需加強牧養'
-        : state.chartType === 'inactive'
-          ? '待關心聖徒'
-          : '穩定聚會';
-
-    const description =
-      state.chartDistrict
-        ? `${state.chartGroup} × ${state.chartDistrict}`
-        : state.chartGroup;
-
-    els.chartFilterText.textContent =
-      `圖表篩選：${typeLabel}｜${description}`;
-
-
-    els.chartFilterIndicator
-      .classList
-      .remove('hidden');
-
-
-    /*
-     * 更新圖表選取外觀
-     */
-    document
-      .querySelectorAll(
-        '.age-filter-trigger'
-      )
-      .forEach(
-        element => {
-
-          const group =
-            element.dataset.ageGroup ||
-            '';
-
-
-          const district =
-            element.dataset.ageDistrict ||
-            '';
-
-
-          const type =
-            element.dataset.chartType ||
-            'stable';
-
-          const selected =
-            type === state.chartType &&
-            group === state.chartGroup &&
-            district === state.chartDistrict;
-
-
-          element.classList.toggle(
-            'is-selected',
-            selected
-          );
-        }
-      );
+  // v1.1.12：人員明細只有一個清除按鈕，圖表與名單篩選共用。
+  function hasPeopleFilters() {
+    return Boolean(
+      state.chartType || state.chartGroup || state.chartDistrict ||
+      state.selectedPeopleDistricts.size || state.selectedPeopleSmallDistricts.size ||
+      state.selectedGroups.size || state.selectedStatuses.size ||
+      els.searchInput?.value.trim() || els.newBelieverFilter?.value
+    );
   }
 
+  function updateChartFilterUI() {
+    if (!els.chartFilterIndicator || !els.chartFilterText) return;
+    const chartActive = Boolean(state.chartType && state.chartGroup);
+    els.chartFilterIndicator.classList.remove('hidden');
+    els.clearChartFilter.disabled = !hasPeopleFilters();
+    els.chartFilterText.classList.toggle('hidden', !chartActive);
+
+    if (!chartActive) {
+      els.chartFilterText.textContent = '';
+    } else {
+      const typeLabel = state.chartType === 'care' ? '需加強牧養' :
+        state.chartType === 'inactive' ? '待關心聖徒' : '穩定聚會';
+      const description = state.chartDistrict ?
+        `${state.chartGroup} × ${state.chartDistrict}` : state.chartGroup;
+      els.chartFilterText.textContent = `圖表篩選：${typeLabel}｜${description}`;
+    }
+
+    document.querySelectorAll('.age-filter-trigger').forEach(element => {
+      const selected = chartActive &&
+        (element.dataset.chartType || 'stable') === state.chartType &&
+        (element.dataset.ageGroup || '') === state.chartGroup &&
+        (element.dataset.ageDistrict || '') === state.chartDistrict;
+      element.classList.toggle('is-selected', selected);
+    });
+  }
 
   // v1.1.10：使用者手動操作「人員明細」篩選時，退出圖表鑽取模式。
   // 使用捕獲階段，確保在各個篩選按鈕原有的 click 處理器之前解除圖表條件。
@@ -4658,19 +4587,19 @@
   }, true);
 
   function clearChartFilter() {
-
+    // 一次清除所有「人員明細」篩選，不影響匯入資料、統計設定、欄位或排序。
     state.chartType = '';
-
     state.chartGroup = '';
-
     state.chartDistrict = '';
-
-
+    state.selectedPeopleDistricts = new Set();
+    state.selectedPeopleSmallDistricts = new Set();
+    state.selectedGroups = new Set();
+    state.selectedStatuses = new Set();
+    if (els.searchInput) els.searchInput.value = '';
+    if (els.newBelieverFilter) els.newBelieverFilter.value = '';
     renderPeople();
-
     updateChartFilterUI();
   }
-
 
   function applyChartFilter(
     type,

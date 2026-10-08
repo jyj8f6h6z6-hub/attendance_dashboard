@@ -1008,3 +1008,17 @@ button.age-label.is-selected {
     width: 100%;
   }
 }
+
+/* v1.1.12：單一清除按鈕，無圖表篩選時不顯示空白提示膠囊 */
+#peoplePanel .chart-filter-indicator:has(#chartFilterText.hidden) {
+  background: transparent;
+  padding: 0;
+}
+#peoplePanel .chart-filter-clear:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+#peoplePanel .chart-filter-clear:disabled:hover {
+  background: #fff;
+  border-color: rgba(49, 91, 102, .15);
+}
