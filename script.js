@@ -4691,6 +4691,20 @@
     state.chartDistrict =
       district;
 
+    // v1.1.9：點選圖表時，人員明細同步切換到圖表所代表的群組與聚會情況。
+    // 不沿用前一次名單的篩選，避免條件交集為空而看不到圖表對應人員。
+    state.selectedGroups = new Set([group]);
+    const chartStatuses = {
+      stable: [STATUS.WEEKLY, STATUS.REGULAR],
+      care: [STATUS.OCCASIONAL, STATUS.SPORADIC],
+      inactive: [STATUS.INACTIVE]
+    };
+    state.selectedStatuses = new Set(chartStatuses[type] || []);
+    state.selectedPeopleDistricts = district ? new Set([district]) : new Set();
+    state.selectedPeopleSmallDistricts = new Set();
+    // 姓名搜尋與初信選項屬於人員明細的額外限制，也須清除。
+    els.searchInput.value = '';
+    els.newBelieverFilter.value = '';
 
     renderPeople();
 
