@@ -4707,7 +4707,13 @@
 
     // v1.1.9：點選圖表時，人員明細同步切換到圖表所代表的群組與聚會情況。
     // 不沿用前一次名單的篩選，避免條件交集為空而看不到圖表對應人員。
-    state.selectedGroups = new Set([group]);
+    // v1.1.11：學生分布的「高中／國中」屬於原始羣組；
+    // 人員明細按鈕只提供合併後的「青少年」，故先轉換成可見的羣組選項。
+    // state.chartGroup 仍保留原始「高中／國中」，下方 matchesChartGroup
+    // 會再精確篩選，確保點選 7 人時只顯示該 7 人，而非整個青少年羣組。
+    const peopleGroup = ['國中', '高中', '中學'].includes(cleanGroupText(group))
+      ? '青少年' : group;
+    state.selectedGroups = new Set([peopleGroup]);
     const chartStatuses = {
       stable: [STATUS.WEEKLY, STATUS.REGULAR],
       care: [STATUS.OCCASIONAL, STATUS.SPORADIC],
