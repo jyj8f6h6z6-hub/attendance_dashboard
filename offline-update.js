@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const CURRENT='1.1.12';
+const CURRENT='1.1.13';
 if(!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol))return;
 let registration=null, pendingVersion='', dismissed='';
 const notice=document.getElementById('update-notice');
@@ -43,7 +43,6 @@ later.addEventListener('click',()=>{dismissed=pendingVersion;notice.hidden=true;
 window.addEventListener('load',async()=>{
  try{
   registration=await navigator.serviceWorker.register('./service-worker.js');
-  if(registration.waiting)await check();
   await check();
   setInterval(check,30*60*1000);
   window.addEventListener('online',check);

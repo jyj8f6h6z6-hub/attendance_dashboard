@@ -2360,7 +2360,7 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
 .collapsible-analysis:not(.analysis-collapsed) .analysis-collapse-icon { transform: rotate(180deg); }
 .collapsible-analysis .section-head h2 { display: none; }
 .collapsible-analysis.analysis-collapsed > :not(.analysis-collapse-toggle) { display: none !important; }
-.collapsible-analysis.analysis-collapsed { padding-top: 18px; padding-bottom: 18px; }
+
 
 @media (max-width: 680px) {
   .view-mode-switch { margin-top: 10px; }

@@ -277,9 +277,6 @@
     peopleDistrictOptions:
       $('peopleDistrictOptions'),
 
-    clearPeopleDistrictFilter:
-      $('clearPeopleDistrictFilter'),
-
     closePeopleDistrictFilter:
       $('closePeopleDistrictFilter'),
 
@@ -292,14 +289,8 @@
     peopleSmallDistrictOptions:
       $('peopleSmallDistrictOptions'),
 
-    clearPeopleSmallDistrictFilter:
-      $('clearPeopleSmallDistrictFilter'),
-
     closePeopleSmallDistrictFilter:
       $('closePeopleSmallDistrictFilter'),
-
-    clearPeopleAreaFilter:
-      $('clearPeopleAreaFilter'),
 
     chartFilterIndicator:
       $('chartFilterIndicator'),
@@ -4237,27 +4228,6 @@
               )?.smallDistrict || ''
             )}`
           : `小區：已選 ${selectedSmallCount} 項`;
-
-
-    const localActive =
-      Boolean(
-        state.selectedPeopleDistricts.size ||
-        state.selectedPeopleSmallDistricts.size
-      );
-
-
-  }
-
-
-  function clearPeopleAreaFilters() {
-
-    state.selectedPeopleDistricts =
-      new Set();
-
-    state.selectedPeopleSmallDistricts =
-      new Set();
-
-    renderPeople();
   }
 
 
@@ -4579,7 +4549,7 @@
     if (!state.chartType) return;
     const target = event.target;
     if (!(target instanceof Element)) return;
-    if (!target.closest('[data-people-district], [data-people-small-district], [data-people-group], [data-people-status], #clearPeopleDistrictFilter, #clearPeopleSmallDistrictFilter, #clearPeopleAreaFilter')) return;
+    if (!target.closest('[data-people-district], [data-people-small-district], [data-people-group], [data-people-status]')) return;
     state.chartType = '';
     state.chartGroup = '';
     state.chartDistrict = '';
@@ -5686,47 +5656,6 @@
     );
   }
 
-
-  if (els.clearPeopleDistrictFilter) {
-
-    els.clearPeopleDistrictFilter.addEventListener(
-      'click',
-      () => {
-
-        state.selectedPeopleDistricts =
-          new Set();
-
-        state.selectedPeopleSmallDistricts =
-          new Set();
-
-        renderPeople();
-      }
-    );
-  }
-
-
-  if (els.clearPeopleSmallDistrictFilter) {
-
-    els.clearPeopleSmallDistrictFilter.addEventListener(
-      'click',
-      () => {
-
-        state.selectedPeopleSmallDistricts =
-          new Set();
-
-        renderPeople();
-      }
-    );
-  }
-
-
-  if (els.clearPeopleAreaFilter) {
-
-    els.clearPeopleAreaFilter.addEventListener(
-      'click',
-      clearPeopleAreaFilters
-    );
-  }
 
 
   if (els.closePeopleDistrictFilter) {

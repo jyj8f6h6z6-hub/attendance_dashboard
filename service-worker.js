@@ -1,4 +1,4 @@
-const VERSION = '1.1.12';
+const VERSION = '1.1.13';
 const CACHE = 'attendance-static-' + VERSION;
 const CORE = ['./','./index.html','./style.css','./age-analysis.css','./script.js','./age-analysis.js','./offline-update.js','./site.webmanifest','./version.json','./icon-192.png','./icon-512.png'];
 const XLSX_CDN = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
