@@ -4297,6 +4297,71 @@
   }
 
 
+  /* v1.1.3：名單／完整模式共用人員明細欄位設定。 */
+  const PEOPLE_COLUMNS_KEY = 'attendance-dashboard-people-columns-v1';
+  const PEOPLE_COLUMNS = [
+    ['district','大區',p=>escapeHtml(p.district)],
+    ['smallDistrict','小區',p=>escapeHtml(p.smallDistrict)],
+    ['name','姓名',p=>`<strong>${escapeHtml(p.name)}</strong>`],
+    ['group','羣組',p=>escapeHtml(p.group)],
+    ['baptismDate','受浸日期',p=>p.baptismDate ? fmtDate(p.baptismDate) : '—'],
+    ['newBeliever','初信',p=>p.newBelieverStatus === 'yes' ? '<span class="new-believer">初信</span>' : p.newBelieverStatus === 'no' ? '非初信' : '—'],
+    ['status','聚會情況',p=>`<span class="status ${STATUS_CLASS[p.status]}">${escapeHtml(p.status)}</span>`],
+    ['lastAttendanceDate','最近一次聚會日期',p=>p.lastAttendanceDate ? fmtDate(p.lastAttendanceDate) : '—'],
+    ['recentAttendance','近期出席',p=>`${p.recentAttendance} / ${p.recentWeeks}`],
+    ['recentRate','近期出席率',p=>`${(p.recentRate * 100).toFixed(1)}%`],
+    ['totalAttendance','全部出席',p=>p.totalAttendance]
+  ];
+  const defaultPeopleColumnIds = PEOPLE_COLUMNS.map(c=>c[0]);
+  function readPeopleColumns(){
+    try {
+      const saved=JSON.parse(localStorage.getItem(PEOPLE_COLUMNS_KEY)||'null');
+      if(!saved || !Array.isArray(saved.order) || !Array.isArray(saved.visible)) throw Error('invalid');
+      const order=[...new Set(saved.order.filter(id=>defaultPeopleColumnIds.includes(id)))];
+      defaultPeopleColumnIds.forEach(id=>{if(!order.includes(id))order.push(id);});
+      const visible=saved.visible.filter(id=>defaultPeopleColumnIds.includes(id));
+      return {order,visible:visible.length ? visible : [...defaultPeopleColumnIds]};
+    } catch(_){return {order:[...defaultPeopleColumnIds],visible:[...defaultPeopleColumnIds]};}
+  }
+  let peopleColumns=readPeopleColumns();
+  function savePeopleColumns(){try{localStorage.setItem(PEOPLE_COLUMNS_KEY,JSON.stringify(peopleColumns));}catch(_){}}
+  function renderPeopleColumnOptions(){
+    const target=$('peopleColumnsOptions'); if(!target)return;
+    target.innerHTML=peopleColumns.order.map((id,i)=>{
+      const col=PEOPLE_COLUMNS.find(c=>c[0]===id);
+      return `<div class="people-column-item" data-column="${id}"><label><input type="checkbox" data-column-visible="${id}" ${peopleColumns.visible.includes(id)?'checked':''}> ${col[1]}</label><div class="people-column-arrows"><button type="button" data-column-move="up" data-id="${id}" ${i===0?'disabled':''} aria-label="${col[1]}上移">↑</button><button type="button" data-column-move="down" data-id="${id}" ${i===peopleColumns.order.length-1?'disabled':''} aria-label="${col[1]}下移">↓</button></div></div>`;
+    }).join('');
+  }
+  function renderPeopleTable(visible){
+    const columns=peopleColumns.order.filter(id=>peopleColumns.visible.includes(id)).map(id=>PEOPLE_COLUMNS.find(c=>c[0]===id));
+    const head=document.querySelector('#peopleTable thead tr');
+    if(head)head.innerHTML=columns.map(c=>`<th>${c[1]}</th>`).join('');
+    els.peopleBody.innerHTML=visible.map(p=>`<tr>${columns.map(c=>`<td>${c[2](p)}</td>`).join('')}</tr>`).join('');
+  }
+  function initPeopleColumnSettings(){
+    const toggle=$('peopleColumnsToggle'), panel=$('peopleColumnsPanel'), options=$('peopleColumnsOptions');
+    if(!toggle || !panel || !options)return;
+    const setOpen=open=>{panel.classList.toggle('hidden',!open);toggle.setAttribute('aria-expanded',String(open));if(open)renderPeopleColumnOptions();};
+    toggle.addEventListener('click',()=>setOpen(panel.classList.contains('hidden')));
+    $('peopleColumnsClose').addEventListener('click',()=>setOpen(false));
+    $('peopleColumnsReset').addEventListener('click',()=>{peopleColumns={order:[...defaultPeopleColumnIds],visible:[...defaultPeopleColumnIds]};savePeopleColumns();renderPeopleColumnOptions();renderPeople();});
+    options.addEventListener('change',e=>{
+      const id=e.target.dataset.columnVisible;if(!id)return;
+      if(!e.target.checked && peopleColumns.visible.length===1){e.target.checked=true;return;}
+      peopleColumns.visible=e.target.checked ? [...peopleColumns.visible,id] : peopleColumns.visible.filter(x=>x!==id);
+      savePeopleColumns();renderPeople();
+    });
+    options.addEventListener('click',e=>{
+      const btn=e.target.closest('[data-column-move]');if(!btn)return;
+      const i=peopleColumns.order.indexOf(btn.dataset.id), j=i+(btn.dataset.columnMove==='up'?-1:1);
+      if(i<0||j<0||j>=peopleColumns.order.length)return;
+      [peopleColumns.order[i],peopleColumns.order[j]]=[peopleColumns.order[j],peopleColumns.order[i]];
+      savePeopleColumns();renderPeopleColumnOptions();renderPeople();
+    });
+    renderPeopleColumnOptions();
+  }
+  initPeopleColumnSettings();
+
   function renderPeople() {
 
     const base =
@@ -4374,38 +4439,7 @@
         `顯示 ${visible.length} / ${base.populationCount} 人`;
     }
 
-    els.peopleBody.innerHTML =
-      visible
-        .map(
-          p => `
-            <tr>
-              <td>${escapeHtml(p.district)}</td>
-              <td>${escapeHtml(p.smallDistrict)}</td>
-              <td><strong>${escapeHtml(p.name)}</strong></td>
-              <td>${escapeHtml(p.group)}</td>
-              <td>${p.baptismDate ? fmtDate(p.baptismDate) : '—'}</td>
-              <td>
-                ${
-                  p.newBelieverStatus === 'yes'
-                    ? '<span class="new-believer">初信</span>'
-                    : p.newBelieverStatus === 'no'
-                      ? '非初信'
-                      : '—'
-                }
-              </td>
-              <td>
-                <span class="status ${STATUS_CLASS[p.status]}">
-                  ${escapeHtml(p.status)}
-                </span>
-              </td>
-              <td>${p.lastAttendanceDate ? fmtDate(p.lastAttendanceDate) : '—'}</td>
-              <td>${p.recentAttendance} / ${p.recentWeeks}</td>
-              <td>${(p.recentRate * 100).toFixed(1)}%</td>
-              <td>${p.totalAttendance}</td>
-            </tr>
-          `
-        )
-        .join('');
+    renderPeopleTable(visible);
 
     document.dispatchEvent(
       new CustomEvent('analysisBaseChanged')
@@ -4805,7 +4839,7 @@
   function clearData() {
 
     clearLocalFiles().catch(err=>console.warn('清除本機資料失敗',err));
-    try{localStorage.removeItem(LOCAL_SETTINGS_KEY);localStorage.removeItem(LOCAL_VIEW_MODE_KEY);}catch(_){}
+    try{localStorage.removeItem(LOCAL_SETTINGS_KEY);localStorage.removeItem(LOCAL_VIEW_MODE_KEY);localStorage.removeItem(PEOPLE_COLUMNS_KEY);}catch(_){}
 
     state.fileName = '';
 
