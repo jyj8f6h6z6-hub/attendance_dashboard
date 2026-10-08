@@ -2397,3 +2397,11 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
 .people-column-arrows button:disabled {opacity:.3;cursor:default;}
 .people-columns-footer {display:flex;justify-content:space-between;margin-top:12px;gap:10px;}
 #peopleTable th,#peopleTable td {white-space:nowrap;}
+
+/* v1.1.7：人員明細可排序欄位 */
+#peopleTable .people-sort-button { display:inline-flex; align-items:center; gap:5px; padding:2px 0; border:0; background:transparent; color:inherit; font:inherit; font-weight:inherit; cursor:pointer; white-space:nowrap; }
+#peopleTable .people-sort-button span { color:#80939d; font-size:11px; }
+#peopleTable .people-sort-button.is-active { color:#245b69; }
+#peopleTable .people-sort-button.is-active span { color:#245b69; }
+#peopleTable .people-sort-button:hover { text-decoration:underline; }
+#peopleTable .people-sort-button:focus-visible { outline:2px solid #245b69; outline-offset:3px; border-radius:2px; }

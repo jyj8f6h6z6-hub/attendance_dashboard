@@ -4332,12 +4332,47 @@
       return `<div class="people-column-item" data-column="${id}"><label><input type="checkbox" data-column-visible="${id}" ${peopleColumns.visible.includes(id)?'checked':''}> ${col[1]}</label><div class="people-column-arrows"><button type="button" data-column-move="up" data-id="${id}" ${i===0?'disabled':''} aria-label="${col[1]}上移">↑</button><button type="button" data-column-move="down" data-id="${id}" ${i===peopleColumns.order.length-1?'disabled':''} aria-label="${col[1]}下移">↓</button></div></div>`;
     }).join('');
   }
+  // v1.1.7：排序僅影響人員明細，並依欄位 ID 而非畫面位置判斷。
+  const PEOPLE_SORT_FIELDS = new Set(['lastAttendanceDate','recentAttendance','recentRate','totalAttendance']);
+  let peopleSort = {id:null, direction:'desc'};
+  function peopleSortValue(person, id) {
+    if(id === 'lastAttendanceDate') {
+      const date=person.lastAttendanceDate;
+      return date instanceof Date && Number.isFinite(date.getTime()) ? date.getTime() : null;
+    }
+    const value=Number(person[id]);
+    return Number.isFinite(value) ? value : null;
+  }
   function renderPeopleTable(visible){
     const columns=peopleColumns.order.filter(id=>peopleColumns.visible.includes(id)).map(id=>PEOPLE_COLUMNS.find(c=>c[0]===id));
     const head=document.querySelector('#peopleTable thead tr');
-    if(head)head.innerHTML=columns.map(c=>`<th>${c[1]}</th>`).join('');
-    els.peopleBody.innerHTML=visible.map(p=>`<tr>${columns.map(c=>`<td>${c[2](p)}</td>`).join('')}</tr>`).join('');
+    if(head)head.innerHTML=columns.map(c=>{
+      const [id,label]=c;
+      if(!PEOPLE_SORT_FIELDS.has(id))return `<th>${label}</th>`;
+      const active=peopleSort.id===id;
+      const arrow=active ? (peopleSort.direction==='desc'?'▼':'▲') : '↕';
+      return `<th aria-sort="${active?(peopleSort.direction==='desc'?'descending':'ascending'):'none'}"><button type="button" class="people-sort-button${active?' is-active':''}" data-people-sort="${id}" title="點擊排序${label}">${label} <span aria-hidden="true">${arrow}</span></button></th>`;
+    }).join('');
+    const rows=[...visible];
+    if(peopleSort.id){
+      const {id,direction}=peopleSort;
+      rows.sort((a,b)=>{
+        const av=peopleSortValue(a,id),bv=peopleSortValue(b,id);
+        if(av===null)return bv===null?0:1;
+        if(bv===null)return -1;
+        return direction==='desc'?bv-av:av-bv;
+      });
+    }
+    els.peopleBody.innerHTML=rows.map(p=>`<tr>${columns.map(c=>`<td>${c[2](p)}</td>`).join('')}</tr>`).join('');
   }
+  document.querySelector('#peopleTable thead')?.addEventListener('click',event=>{
+    const button=event.target.closest('[data-people-sort]');
+    if(!button)return;
+    const id=button.dataset.peopleSort;
+    if(!PEOPLE_SORT_FIELDS.has(id))return;
+    peopleSort=peopleSort.id===id ? {id,direction:peopleSort.direction==='desc'?'asc':'desc'} : {id,direction:'desc'};
+    renderPeople();
+  });
   function initPeopleColumnSettings(){
     const toggle=$('peopleColumnsToggle'), panel=$('peopleColumnsPanel'), options=$('peopleColumnsOptions');
     if(!toggle || !panel || !options)return;
