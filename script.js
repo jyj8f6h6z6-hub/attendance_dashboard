@@ -4382,8 +4382,28 @@
     renderPeople();
   });
 
+  /* v1.1.5：上下聚會情況共用 selectedStatuses，複選雙向同步。 */
+  function renderPeopleStatusButtons() {
+    const target = document.getElementById('peopleStatusOptions');
+    if (!target) return;
+    target.innerHTML = makeAnalysisButton('', '全部', !state.selectedStatuses.size, 'data-people-status') +
+      STATUS_ORDER.map(status => makeAnalysisButton(status, status, state.selectedStatuses.has(status), 'data-people-status')).join('');
+  }
+  document.getElementById('peopleStatusOptions')?.addEventListener('click', event => {
+    const button = event.target.closest('[data-people-status]');
+    if (!button) return;
+    const status = button.dataset.peopleStatus;
+    if (!status) state.selectedStatuses.clear();
+    else if (state.selectedStatuses.has(status)) state.selectedStatuses.delete(status);
+    else state.selectedStatuses.add(status);
+    buildStatusOptions();
+    renderAnalysisFilterButtons();
+    renderPeople();
+  });
+
   function renderPeople() {
     renderPeopleGroupButtons();
+    renderPeopleStatusButtons();
 
     const base =
       getGeneralFilteredPeople();
