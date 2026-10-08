@@ -4362,7 +4362,28 @@
   }
   initPeopleColumnSettings();
 
+  /* v1.1.4：人員明細與上方分析篩選共用 selectedGroups，雙向同步。 */
+  function renderPeopleGroupButtons() {
+    const target = document.getElementById('peopleGroupOptions');
+    if (!target) return;
+    const groups = analysisFilterGroups();
+    target.innerHTML = makeAnalysisButton('', '全部', !state.selectedGroups.size, 'data-people-group') +
+      groups.map(g => makeAnalysisButton(g, g, state.selectedGroups.has(g), 'data-people-group')).join('');
+  }
+  document.getElementById('peopleGroupOptions')?.addEventListener('click', event => {
+    const button = event.target.closest('[data-people-group]');
+    if (!button) return;
+    const group = button.dataset.peopleGroup;
+    if (!group) state.selectedGroups.clear();
+    else if (state.selectedGroups.has(group)) state.selectedGroups.delete(group);
+    else state.selectedGroups.add(group);
+    buildGroupOptions();
+    renderAnalysisFilterButtons();
+    renderPeople();
+  });
+
   function renderPeople() {
+    renderPeopleGroupButtons();
 
     const base =
       getGeneralFilteredPeople();
