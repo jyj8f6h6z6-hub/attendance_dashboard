@@ -989,6 +989,7 @@
 
 
         <div class="people-columns-toolbar">
+          <button type="button" id="visitationExportButton" class="visitation-export-btn" disabled>⬇ 匯出 Excel 看望報表</button>
           <button type="button" id="peopleColumnsToggle" class="people-columns-toggle" aria-expanded="false" aria-controls="peopleColumnsPanel">⚙ 欄位設定</button>
           <div id="peopleColumnsPanel" class="people-columns-panel hidden">
             <div class="people-columns-title">顯示欄位與排列順序</div>
@@ -1032,7 +1033,7 @@
 
       下次開啟可自動接續分析；按「清除本機資料」可移除本機保存內容。
 
-      <span class="footer-version" aria-label="版本資訊">v1.1.13 · J.C</span>
+      <span class="footer-version" aria-label="版本資訊">v1.1.14 · J.C</span>
 
     </p>
 
@@ -1044,6 +1045,7 @@
     src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"
   ></script>
 
+  <script src="visitation-export.js"></script>
   <script src="script.js"></script>
 
   <script src="age-analysis.js"></script>

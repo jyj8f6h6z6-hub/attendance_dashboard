@@ -621,7 +621,9 @@
       name:
         findHeaderIndex(['姓名']),
       group:
-        findHeaderIndex(['羣組', '群組'])
+        findHeaderIndex(['羣組', '群組']),
+      rank:
+        findHeaderIndex(['排', '排組'])
     };
 
 
@@ -4398,6 +4400,34 @@
     renderPeople();
   });
 
+  // 匯出共用「人員明細」真正顯示的名單；不重做、不擴大任何篩選。
+  document.getElementById('visitationExportButton')?.addEventListener('click', () => {
+    const visible = window.visitationVisiblePeople || [];
+    if (!visible.length) { alert('目前人員明細沒有可匯出的名單。'); return; }
+    if (typeof window.createVisitationWorkbook !== 'function') { alert('報表模組尚未載入，請重新整理。'); return; }
+    try {
+      const districts = [...new Set(visible.map(p => p.district).filter(Boolean))];
+      const smalls = [...new Set(visible.map(p => p.smallDistrict).filter(Boolean))];
+      const areaText = districts.length === 1 ? districts[0] : '多大區';
+      const smallText = smalls.length === 1 ? smalls[0] : smalls.length ? '多小區' : '未指定小區';
+      const filterLabel = `${areaText}／${smallText}；依人員明細當下篩選，共 ${visible.length} 人`;
+      const result = window.createVisitationWorkbook({
+        people: visible, rows: state.rows, indexes: state.indexes,
+        dateColumns: state.dateColumns, attendance: isAttendance, filterLabel
+      });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(result.blob);
+      link.href = url;
+      link.download = `${smalls.length === 1 ? smalls[0].replace(/[\/:*?"<>|]/g,'_') : '人員明細'}_看望名單_${new Date().toISOString().slice(0,10)}.xlsx`;
+      document.body.appendChild(link);
+      link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    } catch (error) {
+      console.error('匯出看望報表失敗', error);
+      alert('匯出失敗，請重新整理後再試。');
+    }
+  });
+
   function renderPeople() {
     renderPeopleGroupButtons();
     renderPeopleStatusButtons();
@@ -4477,6 +4507,9 @@
         `顯示 ${visible.length} / ${base.populationCount} 人`;
     }
 
+    window.visitationVisiblePeople = visible;
+    const exportButton = document.getElementById('visitationExportButton');
+    if (exportButton) exportButton.disabled = !visible.length;
     renderPeopleTable(visible);
     updateChartFilterUI();
 

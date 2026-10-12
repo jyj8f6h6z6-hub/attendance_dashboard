@@ -2405,3 +2405,9 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
 #peopleTable .people-sort-button.is-active span { color:#245b69; }
 #peopleTable .people-sort-button:hover { text-decoration:underline; }
 #peopleTable .people-sort-button:focus-visible { outline:2px solid #245b69; outline-offset:3px; border-radius:2px; }
+
+/* v1.1.14：人員明細匯出按鈕 */
+.people-columns-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+.visitation-export-btn { border:1px solid #4e786c; border-radius:9px; background:#e4f1e9; color:#225546; font:inherit; font-weight:700; padding:9px 15px; cursor:pointer; }
+.visitation-export-btn:hover:not(:disabled) { background:#cde6da; }
+.visitation-export-btn:disabled { opacity:.48; cursor:not-allowed; }
