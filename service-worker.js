@@ -1,7 +1,7 @@
 // Version is defined only in version.json. Cache refresh occurs when the user confirms an update.
 const CACHE = 'attendance-static';
 const STAGING = 'attendance-staging';
-const CORE = ['./','./index.html','./style.css','./age-analysis.css','./script.js','./visitation-export.js','./age-analysis.js','./offline-update.js','./site.webmanifest','./version.json','./icon-192.png','./icon-512.png'];
+const CORE = ['./','./index.html','./style.css','./age-analysis.css','./script.js','./visitation-export.js','./age-analysis.js','./offline-update.js','./site.webmanifest','./version.json','./xlsx.full.min.js','./icon-192.png','./icon-512.png'];
 async function downloadAssets(){
   const stage = await caches.open(STAGING);
   await Promise.all(CORE.map(async path => {
