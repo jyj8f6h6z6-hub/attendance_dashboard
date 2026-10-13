@@ -74,7 +74,7 @@
 
     /*
      * 人員明細區域複選篩選
-     * 只影響人員明細，不影響四張分析圖。
+     * 只影響人員明細，不影響牧養分析圖。
      */
     selectedPeopleDistricts: new Set(),
     selectedPeopleSmallDistricts: new Set(),
@@ -153,15 +153,6 @@
     currentAgeQuarterLabel:
       $('currentAgeQuarterLabel'),
 
-    quarterComparePeriodLabel:
-      $('quarterComparePeriodLabel'),
-
-    quarterCompareFromLegend:
-      $('quarterCompareFromLegend'),
-
-    quarterCompareToLegend:
-      $('quarterCompareToLegend'),
-
     trendChart:
       $('trendChart'),
 
@@ -185,12 +176,6 @@
 
     currentAgeStructureMeta:
       $('currentAgeStructureMeta'),
-
-    quarterAgePyramid:
-      $('quarterAgePyramid'),
-
-    ageStructureSignal:
-      $('ageStructureSignal'),
 
     overallBar: $('overallBar'),
     overallLegend: $('overallLegend'),
@@ -268,17 +253,11 @@
         '#peopleTable tbody'
       ),
 
-    peopleDistrictMultiSelect:
-      $('peopleDistrictMultiSelect'),
-
     peopleDistrictSummary:
       $('peopleDistrictSummary'),
 
     peopleDistrictOptions:
       $('peopleDistrictOptions'),
-
-    closePeopleDistrictFilter:
-      $('closePeopleDistrictFilter'),
 
     peopleSmallDistrictMultiSelect:
       $('peopleSmallDistrictMultiSelect'),
@@ -288,9 +267,6 @@
 
     peopleSmallDistrictOptions:
       $('peopleSmallDistrictOptions'),
-
-    closePeopleSmallDistrictFilter:
-      $('closePeopleSmallDistrictFilter'),
 
     chartFilterIndicator:
       $('chartFilterIndicator'),
@@ -1685,9 +1661,6 @@
     if (els.trendFromQuarterLabel) els.trendFromQuarterLabel.textContent = fromLabel;
     if (els.trendToQuarterLabel) els.trendToQuarterLabel.textContent = toLabel;
     if (els.currentAgeQuarterLabel) els.currentAgeQuarterLabel.textContent = toLabel;
-    if (els.quarterComparePeriodLabel) els.quarterComparePeriodLabel.textContent = `${fromLabel} → ${toLabel}`;
-    if (els.quarterCompareFromLegend) els.quarterCompareFromLegend.textContent = fromLabel;
-    if (els.quarterCompareToLegend) els.quarterCompareToLegend.textContent = toLabel;
   }
 
 
@@ -2024,6 +1997,39 @@
   }
 
 
+  /*
+   * v1.1.21：決定 X 軸要顯示哪些月份標籤。
+   * 依固定間隔顯示，且一定顯示最後一個月；
+   * 若最後一個月與前一個標籤距離不足一個間隔，
+   * 就略過前一個標籤，避免文字重疊（例如「2026/72026/10」）。
+   */
+  function getXLabelIndexes(count, every) {
+    const indexes = new Set();
+
+    if (count <= 0) {
+      return indexes;
+    }
+
+    for (let i = 0; i < count; i += every) {
+      indexes.add(i);
+    }
+
+    const last = count - 1;
+
+    if (!indexes.has(last)) {
+      const previous = [...indexes].pop();
+
+      if (previous !== undefined && last - previous < every) {
+        indexes.delete(previous);
+      }
+
+      indexes.add(last);
+    }
+
+    return indexes;
+  }
+
+
   const AGE_STRUCTURE_GROUPS = [
     '年長',
     '中壯',
@@ -2046,15 +2052,6 @@
     '大學': '#756B8A',
     '青少年': '#A07F45'
   };
-
-  const AGE_ASCENDING_GROUPS = [
-    '青少年',
-    '大學',
-    '青職',
-    '青壯',
-    '中壯',
-    '年長'
-  ];
 
 
   function normalizeAgeStructureGroup(value) {
@@ -2149,26 +2146,6 @@
   }
 
 
-  function medianAgeGroup(stats) {
-    if (!stats.total) {
-      return '—';
-    }
-
-    const midpoint = stats.total / 2;
-    let cumulative = 0;
-
-    for (const group of AGE_ASCENDING_GROUPS) {
-      cumulative += stats.averages[group] || 0;
-
-      if (cumulative >= midpoint) {
-        return group;
-      }
-    }
-
-    return AGE_ASCENDING_GROUPS[AGE_ASCENDING_GROUPS.length - 1];
-  }
-
-
   function renderCurrentAgePyramid() {
     if (!els.currentAgePyramid) {
       return;
@@ -2222,157 +2199,6 @@
   }
 
 
-  function renderQuarterAgePyramid() {
-    if (!els.quarterAgePyramid || !state.dateColumns.length) {
-      return;
-    }
-
-    const people = getTrendPeople();
-    const { from: previousPeriod, to: latestPeriod } =
-      getSelectedQuarterPeriods();
-
-    if (!previousPeriod || !latestPeriod) {
-      els.quarterAgePyramid.innerHTML = '<div class="trend-empty compact">沒有足夠季度可比較</div>';
-      return;
-    }
-
-    const latest = getQuarterGroupAverages(people, latestPeriod);
-    const previous = getQuarterGroupAverages(people, previousPeriod);
-
-    if (!previous.weeks) {
-      els.quarterAgePyramid.innerHTML = '<div class="trend-empty compact">所選基準季沒有足夠資料可比較</div>';
-      if (els.ageStructureSignal) {
-        els.ageStructureSignal.innerHTML = `
-          <div class="age-structure-highlight is-neutral">
-            <span>中位數年齡層</span>
-            <strong>資料不足</strong>
-          </div>
-          <div class="age-structure-highlight is-neutral">
-            <span>結構趨勢</span>
-            <strong>資料不足</strong>
-          </div>
-        `;
-      }
-      return;
-    }
-
-    /*
-     * 兩個所選季度共用「比較季」的排序。
-     * 比較季占比高的羣組在最上，基準季只跟著對齊比較。
-     */
-    const sortedGroups = groupsSortedByLatestShare(latest);
-
-    const maxShare = Math.max(
-      ...sortedGroups.flatMap(group => [
-        groupShare(previous, group),
-        groupShare(latest, group)
-      ]),
-      1
-    );
-
-    els.quarterAgePyramid.innerHTML = sortedGroups.map(group => {
-      const prevShare = groupShare(previous, group);
-      const latestShare = groupShare(latest, group);
-      const prevWidth = prevShare / maxShare * 100;
-      const latestWidth = latestShare / maxShare * 100;
-      const diff = latestShare - prevShare;
-      const diffClass = diff > .05 ? 'is-up' : diff < -.05 ? 'is-down' : 'is-flat';
-      const sign = diff > 0 ? '+' : '';
-      const color = ageStructureColor(group);
-
-      return `
-        <div class="pyramid-compare-row" style="--age-group-color:${escapeAttr(color)}">
-          <div class="pyramid-half pyramid-half-left">
-            <span class="pyramid-side-value">${prevShare.toFixed(1)}%</span>
-            <div class="pyramid-compare-track">
-              <div class="pyramid-compare-bar previous" style="width:${prevWidth.toFixed(1)}%"></div>
-            </div>
-          </div>
-          <div class="pyramid-center-label">
-            <strong><i class="pyramid-label-dot" aria-hidden="true"></i>${escapeHtml(group)}</strong>
-            <small class="${diffClass}">${sign}${diff.toFixed(1)}</small>
-          </div>
-          <div class="pyramid-half pyramid-half-right">
-            <div class="pyramid-compare-track">
-              <div class="pyramid-compare-bar latest" style="width:${latestWidth.toFixed(1)}%"></div>
-            </div>
-            <span class="pyramid-side-value">${latestShare.toFixed(1)}%</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-
-    if (els.ageStructureSignal) {
-      const olderGroups = ['年長', '中壯'];
-      const youngerGroups = ['青職', '大學', '青少年'];
-      const sumShares = (stats, groups) => groups.reduce(
-        (sum, group) => sum + groupShare(stats, group),
-        0
-      );
-
-      const olderPrev = sumShares(previous, olderGroups);
-      const olderLatest = sumShares(latest, olderGroups);
-      const youngerPrev = sumShares(previous, youngerGroups);
-      const youngerLatest = sumShares(latest, youngerGroups);
-      const olderDiff = olderLatest - olderPrev;
-      const youngerDiff = youngerLatest - youngerPrev;
-
-      const previousMedian = medianAgeGroup(previous);
-      const latestMedian = medianAgeGroup(latest);
-      const previousMedianIndex = AGE_ASCENDING_GROUPS.indexOf(previousMedian);
-      const latestMedianIndex = AGE_ASCENDING_GROUPS.indexOf(latestMedian);
-
-      let label = '大致穩定';
-      let signalClass = 'is-stable';
-
-      /*
-       * 中位數年齡層跨層時視為強訊號；
-       * 若中位數未跨層，再以年長端與年輕端占比 ±2 個百分點判讀。
-       */
-      if (latestMedianIndex > previousMedianIndex) {
-        label = '年齡重心上移';
-        signalClass = 'is-aging';
-      } else if (latestMedianIndex < previousMedianIndex) {
-        label = '年齡重心下移';
-        signalClass = 'is-younger';
-      } else if (olderDiff >= 2 && youngerDiff <= -2) {
-        label = '年齡重心上移';
-        signalClass = 'is-aging';
-      } else if (olderDiff <= -2 && youngerDiff >= 2) {
-        label = '年齡重心下移';
-        signalClass = 'is-younger';
-      }
-
-      const smallSample = people.length < 30;
-      const signOlder = olderDiff > 0 ? '+' : '';
-      const signYounger = youngerDiff > 0 ? '+' : '';
-
-      els.ageStructureSignal.innerHTML = `
-        <span>年長＋中壯 ${olderLatest.toFixed(1)}%（${signOlder}${olderDiff.toFixed(1)} 個百分點）</span>
-        <span>青職＋大學＋青少年 ${youngerLatest.toFixed(1)}%（${signYounger}${youngerDiff.toFixed(1)} 個百分點）</span>
-
-        <div class="age-structure-highlight median-highlight">
-          <span>中位數年齡層</span>
-          <strong>${escapeHtml(previousMedian)} <b aria-hidden="true">→</b> ${escapeHtml(latestMedian)}</strong>
-        </div>
-
-        <div class="age-structure-highlight trend-highlight ${signalClass}">
-          <span>結構趨勢</span>
-          <strong>${escapeHtml(label)}</strong>
-        </div>
-
-        ${smallSample ? '<small>此範圍人數較少，結構變化請搭配實際人數判讀。</small>' : ''}
-      `;
-    }
-  }
-
-
-  function renderAgeStructurePanels() {
-    renderCurrentAgePyramid();
-    renderQuarterAgePyramid();
-  }
-
-
   function renderTrend() {
 
     if (!els.trendChart) {
@@ -2387,7 +2213,7 @@
     const quarter = getQuarterComparison(people);
 
     updateQuarterCompareLabels();
-    renderAgeStructurePanels();
+    renderCurrentAgePyramid();
 
     if (els.trendScopeLabel) {
       els.trendScopeLabel.textContent = `${scopeLabel}｜統計名單${people.length} 人`;
@@ -2495,8 +2321,9 @@
     // 小螢幕只降低 X 軸文字密度；所有月份資料點仍完整保留。
     const maxXLabels = Math.max(3, Math.floor((chartWidth - left - right) / 62));
     const xLabelEvery = Math.max(1, Math.ceil(points.length / maxXLabels));
+    const xLabelIndexes = getXLabelIndexes(points.length, xLabelEvery);
     const xLabels = points.map((point, index) => {
-      if (index % xLabelEvery !== 0 && index !== points.length - 1) return '';
+      if (!xLabelIndexes.has(index)) return '';
       const date = point.date;
       const label = `${date.getFullYear()}/${date.getMonth() + 1}`;
 
@@ -2611,9 +2438,7 @@
 
   function getAvailableTrendGroups() {
     const sourcePeople =
-      state.groupTrendMode === 'districts'
-        ? getPopulationBase().people
-        : getPopulationBase().people;
+      getPopulationBase().people;
 
     const found =
       unique(
@@ -2920,8 +2745,9 @@
 
     const maxXLabels = Math.max(3, Math.floor((chartWidth - left - right) / 62));
     const xLabelEvery = Math.max(1, Math.ceil(referencePoints.length / maxXLabels));
+    const xLabelIndexes = getXLabelIndexes(referencePoints.length, xLabelEvery);
     const xLabels = referencePoints.map((point, index) => {
-      if (index % xLabelEvery !== 0 && index !== referencePoints.length - 1) return '';
+      if (!xLabelIndexes.has(index)) return '';
       const label = `${point.date.getFullYear()}/${point.date.getMonth() + 1}`;
 
       return `
@@ -2996,9 +2822,7 @@
       </svg>
     `;
   }
-
-
-  function renderOverall() {
+    function renderOverall() {
 
     const people =
       getPopulationBase().people;
@@ -3217,12 +3041,6 @@
       els.analysisSmallDistrictButtons.innerHTML = '';
     }
 
-    const areaPeople = basePeople.filter(p =>
-      (!d || p.district === d) &&
-      (!state.selectedAnalysisSmallDistricts.size ||
-        state.selectedAnalysisSmallDistricts.has(p.smallDistrict))
-    );
-
     /* 羣組只顯示名稱；青少年仍代表 國中＋高中＋中學，但不顯示拆分統計。 */
     els.analysisGroupButtons.innerHTML = analysisFilterGroups()
       .map(g => makeAnalysisButton(
@@ -3384,111 +3202,6 @@
       els.groupFilterSummary.textContent =
         `已選 ${selected.length} 組`;
     }
-  }
-
-
-  function setSelectedGroups(
-    groups
-  ) {
-
-    const available =
-      availableGroups();
-
-
-    const aliases = {
-
-      college: [
-        '大專',
-        '大學'
-      ],
-
-      youth: [
-        '青職'
-      ],
-
-      junior: [
-        '國中'
-      ],
-
-      senior: [
-        '高中'
-      ],
-
-      child: [
-        '國小'
-      ]
-    };
-
-
-    const resolve =
-      key =>
-        aliases[key]
-          .filter(
-            x =>
-              available.includes(x)
-          );
-
-
-    let wanted = [];
-
-
-    if (
-      groups === 'all'
-    ) {
-      wanted = [];
-    }
-
-
-    if (
-      groups ===
-      'college-youth'
-    ) {
-
-      wanted = [
-        ...resolve('college'),
-        ...resolve('youth')
-      ];
-    }
-
-
-    if (
-      groups === 'teen'
-    ) {
-
-      wanted = ['青少年'];
-    }
-
-
-    if (
-      groups === 'student'
-    ) {
-
-      wanted = [
-        ...resolve('college'),
-        ...resolve('junior'),
-        ...resolve('senior')
-      ];
-    }
-
-
-    if (
-      groups === 'child'
-    ) {
-
-      wanted = [
-        ...resolve('child')
-      ];
-    }
-
-
-    state.selectedGroups =
-      new Set(wanted);
-
-
-    buildGroupOptions();
-    renderAnalysisFilterButtons();
-
-    renderPeople();
   }
 
 
@@ -3786,7 +3499,7 @@
    *
    * 這兩個排除條件不是一般「分析篩選」，
    * 而是先決定整份報表要分析哪些人。
-   * 上方摘要、比例、大區比較與四張群組圖，
+   * 上方摘要、比例、大區比較與牧養分析圖，
    * 都以這裡排除後的統計名單為準。
    */
 
@@ -4182,10 +3895,6 @@
           'hidden',
           !selectedDistricts.length
         );
-
-      if (!selectedDistricts.length) {
-        els.peopleSmallDistrictMultiSelect.open = false;
-      }
     }
 
 
@@ -4318,15 +4027,18 @@
     const value=Number(person[id]);
     return Number.isFinite(value) ? value : null;
   }
+  // v1.1.21：每個儲存格加上欄位類別（例如 col-name），
+  // 讓「手機固定姓名欄」「數字靠右」依欄位判斷，而非依第幾欄。
+  // 因此新增欄位或拖曳調整順序後，仍會套用在正確的欄位上。
   function renderPeopleTable(visible){
     const columns=peopleColumns.order.filter(id=>peopleColumns.visible.includes(id)).map(id=>PEOPLE_COLUMNS.find(c=>c[0]===id));
     const head=document.querySelector('#peopleTable thead tr');
     if(head)head.innerHTML=columns.map(c=>{
       const [id,label]=c;
-      if(!PEOPLE_SORT_FIELDS.has(id))return `<th>${label}</th>`;
+      if(!PEOPLE_SORT_FIELDS.has(id))return `<th class="col-${id}">${label}</th>`;
       const active=peopleSort.id===id;
       const arrow=active ? (peopleSort.direction==='desc'?'▼':'▲') : '↕';
-      return `<th aria-sort="${active?(peopleSort.direction==='desc'?'descending':'ascending'):'none'}"><button type="button" class="people-sort-button${active?' is-active':''}" data-people-sort="${id}" title="點擊排序${label}">${label} <span aria-hidden="true">${arrow}</span></button></th>`;
+      return `<th class="col-${id}" aria-sort="${active?(peopleSort.direction==='desc'?'descending':'ascending'):'none'}"><button type="button" class="people-sort-button${active?' is-active':''}" data-people-sort="${id}" title="點擊排序${label}">${label} <span aria-hidden="true">${arrow}</span></button></th>`;
     }).join('');
     const rows=[...visible];
     if(peopleSort.id){
@@ -4342,7 +4054,7 @@
         return direction==='desc'?bv-av:av-bv;
       });
     }
-    els.peopleBody.innerHTML=rows.map(p=>`<tr>${columns.map(c=>`<td>${c[2](p)}</td>`).join('')}</tr>`).join('');
+    els.peopleBody.innerHTML=rows.map(p=>`<tr>${columns.map(c=>`<td class="col-${c[0]}">${c[2](p)}</td>`).join('')}</tr>`).join('');
   }
   document.querySelector('#peopleTable thead')?.addEventListener('click',event=>{
     const button=event.target.closest('[data-people-sort]');
@@ -4736,15 +4448,14 @@
   }
 
 
+  // 隱藏的舊版羣組／聚會情況下拉選單（保留作為程式狀態）。
   function closeMultiSelects(
     except = null
   ) {
 
     [
       els.groupMultiSelect,
-      els.statusMultiSelect,
-      els.peopleDistrictMultiSelect,
-      els.peopleSmallDistrictMultiSelect
+      els.statusMultiSelect
     ].forEach(
       details => {
 
@@ -5202,7 +4913,7 @@
 
   /*
    * ========================================
-   * 羣組成長趨勢：iPhone App 式複選按鈕
+   * 分析篩選：iPhone App 式直接點選按鈕
    * ========================================
    */
 
@@ -5285,6 +4996,12 @@
       return;
     }
   });
+
+  /*
+   * ========================================
+   * 羣組成長趨勢：iPhone App 式複選按鈕
+   * ========================================
+   */
 
   if (els.groupTrendButtons) {
     els.groupTrendButtons.addEventListener(
@@ -5427,7 +5144,7 @@
 
   /*
    * ========================================
-   * 羣組
+   * 羣組（隱藏的舊版下拉選單，保留作為程式狀態）
    * ========================================
    */
 
@@ -5468,30 +5185,18 @@
   );
 
 
-  document
-    .querySelectorAll(
-      '[data-group-preset]'
-    )
-    .forEach(
-      btn => {
-
-        btn.addEventListener(
-          'click',
-          () =>
-            setSelectedGroups(
-              btn.dataset.groupPreset
-            )
-        );
-      }
-    );
-
-
   els.clearGroupFilter.addEventListener(
     'click',
-    () =>
-      setSelectedGroups(
-        'all'
-      )
+    () => {
+
+      state.selectedGroups =
+        new Set();
+
+      buildGroupOptions();
+      renderAnalysisFilterButtons();
+
+      renderPeople();
+    }
   );
 
 
@@ -5507,7 +5212,7 @@
 
   /*
    * ========================================
-   * 聚會情況
+   * 聚會情況（隱藏的舊版下拉選單，保留作為程式狀態）
    * ========================================
    */
 
@@ -5642,25 +5347,9 @@
         );
 
 
-      const insidePeopleDistrict =
-        els.peopleDistrictMultiSelect &&
-        els.peopleDistrictMultiSelect.contains(
-          e.target
-        );
-
-
-      const insidePeopleSmallDistrict =
-        els.peopleSmallDistrictMultiSelect &&
-        els.peopleSmallDistrictMultiSelect.contains(
-          e.target
-        );
-
-
       if (
         !insideGroup &&
-        !insideStatus &&
-        !insidePeopleDistrict &&
-        !insidePeopleSmallDistrict
+        !insideStatus
       ) {
 
         closeMultiSelects();
@@ -5748,61 +5437,6 @@
   }
 
 
-
-  if (els.closePeopleDistrictFilter) {
-
-    els.closePeopleDistrictFilter.addEventListener(
-      'click',
-      () => {
-        els.peopleDistrictMultiSelect.open = false;
-      }
-    );
-  }
-
-
-  if (els.closePeopleSmallDistrictFilter) {
-
-    els.closePeopleSmallDistrictFilter.addEventListener(
-      'click',
-      () => {
-        els.peopleSmallDistrictMultiSelect.open = false;
-      }
-    );
-  }
-
-
-  if (els.peopleDistrictMultiSelect) {
-
-    els.peopleDistrictMultiSelect.addEventListener(
-      'toggle',
-      () => {
-
-        if (els.peopleDistrictMultiSelect.open) {
-          closeMultiSelects(
-            els.peopleDistrictMultiSelect
-          );
-        }
-      }
-    );
-  }
-
-
-  if (els.peopleSmallDistrictMultiSelect) {
-
-    els.peopleSmallDistrictMultiSelect.addEventListener(
-      'toggle',
-      () => {
-
-        if (els.peopleSmallDistrictMultiSelect.open) {
-          closeMultiSelects(
-            els.peopleSmallDistrictMultiSelect
-          );
-        }
-      }
-    );
-  }
-
-
   /*
    * ========================================
    * 圖表 → 人員明細
@@ -5861,7 +5495,7 @@
 
 
   /*
-   * 四張分析圖重新產生 DOM 後，
+   * 牧養分析圖重新產生 DOM 後，
    * 恢復目前圖表篩選的選取外觀。
    */
 
@@ -5873,7 +5507,7 @@
 
   /*
    * 人員明細右上角：
-   * 清除圖表篩選
+   * 清除篩選
    */
 
   if (

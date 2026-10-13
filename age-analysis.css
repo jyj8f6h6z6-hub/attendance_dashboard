@@ -1,5 +1,5 @@
 /* =========================================
-   四張分析圖
+   牧養分析圖（六張）
 ========================================= */
 
 .age-analysis-grid {
@@ -673,8 +673,8 @@ button.age-label.is-selected {
 }
 
 /* =========================================
-   人員明細：大區 / 小區複選篩選
-   桌機：標題 → 大區/小區 → 圖表篩選
+   人員明細：大區 / 小區 / 羣組 / 聚會情況按鈕
+   桌機：標題 → 篩選按鈕 → 清除篩選
    手機：改為上下排列
 ========================================= */
 
@@ -687,7 +687,7 @@ button.age-label.is-selected {
 
 
 /* =========================================
-   大區 / 小區篩選群組
+   篩選按鈕群組
 ========================================= */
 
 .people-area-filters {
@@ -708,91 +708,7 @@ button.age-label.is-selected {
 }
 
 
-.people-area-multi {
-  flex: 0 1 190px;
-  min-width: 150px;
-}
-
-
-.people-area-multi > summary {
-  width: 100%;
-  max-width: none;
-  font-size: 13px;
-}
-
-
-/* 下拉選單由按鈕左側對齊 */
-.people-area-panel {
-  left: 0;
-  right: auto;
-  transform: none;
-  width: 280px;
-}
-
-
-.people-filter-caption {
-  padding: 1px 2px 8px;
-
-  color: var(--muted);
-
-  font-size: 12px;
-  line-height: 1.5;
-
-  border-bottom: 1px solid #edf1f3;
-}
-
-
-.people-area-options {
-  max-height: 260px;
-}
-
-
-.people-area-option {
-  display: grid;
-
-  grid-template-columns:
-    18px
-    minmax(0, 1fr)
-    auto;
-
-  align-items: center;
-
-  gap: 8px;
-}
-
-
-.people-area-option span {
-  min-width: 0;
-
-  color: var(--text);
-
-  font-size: 13px;
-  font-weight: 700;
-}
-
-
-.people-area-option span em {
-  display: block;
-
-  margin-top: 2px;
-
-  color: var(--muted);
-
-  font-size: 11px;
-  font-style: normal;
-  font-weight: 600;
-}
-
-
-.people-area-option small {
-  color: var(--muted);
-
-  font-size: 11px;
-
-  white-space: nowrap;
-}
-
-
+/* 沒有可選大區 / 小區時的提示文字 */
 .people-filter-empty {
   padding: 12px 4px;
 
@@ -805,47 +721,7 @@ button.age-label.is-selected {
 
 
 /* =========================================
-   清除名單篩選
-========================================= */
-
-.people-area-clear {
-  appearance: none;
-
-  min-height: 38px;
-
-  border:
-    1px solid
-    rgba(49, 91, 102, .18);
-
-  border-radius: 999px;
-
-  padding: 7px 12px;
-
-  background: #fff;
-
-  color: var(--accent);
-
-  font-family: inherit;
-
-  font-size: 12px;
-  font-weight: 750;
-
-  cursor: pointer;
-}
-
-
-.people-area-clear:hover {
-  background: var(--accent-soft);
-}
-
-
-.people-area-clear.hidden {
-  display: none;
-}
-
-
-/* =========================================
-   圖表篩選提示固定靠右
+   清除篩選提示固定靠右
 ========================================= */
 
 #peoplePanel .chart-filter-indicator {
@@ -867,7 +743,7 @@ button.age-label.is-selected {
 
   /*
    * 平板空間不足時，
-   * 大區 / 小區改到標題下方。
+   * 篩選按鈕改到標題下方。
    */
   .people-area-filters {
     order: 3;
@@ -881,18 +757,10 @@ button.age-label.is-selected {
 
 
   /*
-   * 圖表篩選仍維持右上方。
+   * 清除篩選仍維持右上方。
    */
   #peoplePanel .chart-filter-indicator {
     margin-left: auto;
-  }
-
-
-  .people-area-panel {
-    left: 0;
-    right: auto;
-
-    transform: none;
   }
 
 }
@@ -917,7 +785,7 @@ button.age-label.is-selected {
 
   /*
    * 手機：
-   * 大區、小區、清除按鈕全部一行一個。
+   * 篩選按鈕群組一行一個。
    */
   .people-area-filters {
     order: 2;
@@ -932,21 +800,8 @@ button.age-label.is-selected {
   }
 
 
-  .people-area-multi,
-  .people-area-clear {
-    width: 100%;
-
-    min-width: 0;
-  }
-
-
-  .people-area-panel {
-    width: min(88vw, 310px);
-  }
-
-
   /*
-   * 圖表連動提示放在大區 / 小區下面。
+   * 清除篩選放在篩選按鈕下面。
    */
   #peoplePanel .chart-filter-indicator {
     order: 3;
@@ -965,7 +820,6 @@ button.age-label.is-selected {
 }
 /* =========================================
    v2：人員明細改為 iOS 風格直接按鈕
-   覆蓋舊版下拉式區域篩選排版
 ========================================= */
 
 #peoplePanel > .section-head {
@@ -992,20 +846,10 @@ button.age-label.is-selected {
   padding: 0;
 }
 
-#peoplePanel .people-area-clear {
-  justify-self: start;
-  min-height: 36px;
-  border-radius: 12px;
-}
-
 @media (max-width: 680px) {
   #peoplePanel .people-area-button-list {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  #peoplePanel .people-area-clear {
-    width: 100%;
   }
 }
 

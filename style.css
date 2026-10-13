@@ -124,32 +124,17 @@ main {
 .info-strip span { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
 .info-strip strong { font-size: 15px; }
 
-/* 分析規則：左側文字更寬，右側判定說明更醒目 */
+/* 分析規則：左側文字，右側判定說明
+   v1.1.21：移除為已刪除「週數切換」保留的中間 150px 空欄。 */
 .rules-panel {
   display: grid;
-  grid-template-columns: minmax(410px, 1.55fr) 150px minmax(430px, 1.8fr);
+  grid-template-columns: minmax(320px, 1fr) minmax(430px, 1.6fr);
   gap: 28px;
   align-items: center;
 }
 
 .rules-copy p { margin: 0; color: var(--muted); }
 .rules-copy h2 { margin-bottom: 10px; }
-.period-controls { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; }
-
-
-.fixed-window-badge {
-  min-height: 38px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 7px 14px;
-  border: 1px solid #b9c8ce;
-  border-radius: 10px;
-  background: #eef3f5;
-  color: var(--accent);
-  font-weight: 800;
-  white-space: nowrap;
-}
 
 .rule-legend {
   display: grid;
@@ -295,10 +280,13 @@ th {
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover td { background: #fafcfc; }
 
+/* v1.1.21：人員明細的數字欄依欄位名稱靠右，
+   不再依「第幾欄」判斷，新增欄位或調整順序都不會對錯欄。 */
 #districtTable th:not(:first-child),
 #districtTable td:not(:first-child),
-#peopleTable th:nth-child(n+9),
-#peopleTable td:nth-child(n+9) {
+#peopleTable .col-recentAttendance,
+#peopleTable .col-recentRate,
+#peopleTable .col-totalAttendance {
   text-align: right;
 }
 
@@ -316,15 +304,6 @@ tbody tr:hover td { background: #fafcfc; }
 .status.occasional { background: #edf2f3; color: #58757b; }
 .status.sporadic { background: #f3f0e6; color: #75683f; }
 .status.inactive { background: #eef0f1; color: #667078; }
-
-.filters-head { align-items: flex-end; }
-
-.filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: flex-end;
-}
 
 .field {
   display: grid;
@@ -349,10 +328,6 @@ tbody tr:hover td { background: #fafcfc; }
   font: inherit;
 }
 
-.field.compact { min-width: 130px; }
-.group-field { min-width: 170px; }
-.status-field { min-width: 170px; }
-
 .result-count { margin: 4px 0 10px; color: var(--muted); font-size: 13px; }
 .people-table-wrap { max-height: 540px; }
 
@@ -375,90 +350,7 @@ footer {
   white-space: nowrap;
 }
 
-/* 羣組 / 聚會情況複選 */
-.multi-select { position: relative; }
-
-.multi-select > summary {
-  min-height: 38px;
-  border: 1px solid #ccd5da;
-  border-radius: 9px;
-  background: #fff;
-  color: var(--text);
-  padding: 8px 34px 8px 10px;
-  font: inherit;
-  cursor: pointer;
-  list-style: none;
-  position: relative;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 220px;
-}
-
-.multi-select > summary::-webkit-details-marker { display: none; }
-
-.multi-select > summary::after {
-  content: '▾';
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.multi-select[open] > summary {
-  border-color: #8aa7b5;
-  box-shadow: 0 0 0 2px rgba(76,122,144,.10);
-}
-
-.multi-panel {
-  position: absolute;
-  z-index: 30;
-  top: calc(100% + 6px);
-  right: 0;
-  width: 310px;
-  max-width: min(90vw, 310px);
-  background: #fff;
-  border: 1px solid #d7e0e4;
-  border-radius: 12px;
-  box-shadow: 0 14px 35px rgba(31,49,59,.16);
-  padding: 12px;
-}
-
-.status-panel { width: 250px; }
-
-.group-presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #edf1f3;
-}
-
-.preset-btn {
-  border: 1px solid #cbd7dc;
-  background: #f7fafb;
-  color: var(--text);
-  border-radius: 999px;
-  padding: 6px 9px;
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.preset-btn:hover { background: #eef4f6; }
-
-.group-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 7px 12px;
-  padding: 11px 2px;
-  max-height: 220px;
-  overflow: auto;
-}
-
-.group-options.single-col { grid-template-columns: 1fr; }
-
+/* 隱藏的舊版羣組 / 聚會情況勾選項（保留作為程式狀態） */
 .group-option {
   display: flex;
   align-items: center;
@@ -473,38 +365,11 @@ footer {
   accent-color: #3f7083;
 }
 
-.multi-actions {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 9px;
-  border-top: 1px solid #edf1f3;
-}
-
-.link-btn {
-  border: 0;
-  background: transparent;
-  color: #557783;
-  cursor: pointer;
-  padding: 6px 2px;
-  font-size: 12px;
-}
-
-.primary-small {
-  border: 0;
-  background: #315f71;
-  color: white;
-  border-radius: 8px;
-  padding: 7px 12px;
-  cursor: pointer;
-}
-
 /* 鍵盤操作 */
 button:focus-visible,
 .file-button:focus-visible,
 input:focus-visible,
-select:focus-visible,
-.multi-select > summary:focus-visible {
+select:focus-visible {
   outline: 3px solid rgba(49, 91, 102, .22);
   outline-offset: 2px;
   border-color: var(--accent);
@@ -512,26 +377,16 @@ select:focus-visible,
 
 @media (max-width: 1180px) {
   .rules-panel {
-    grid-template-columns: 1fr 150px;
-  }
-  .rule-legend {
-    grid-column: 1 / -1;
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 1050px) {
   .cards { grid-template-columns: repeat(2, 1fr); }
   .grid.two-col { grid-template-columns: 1fr; }
-  .rules-panel { grid-template-columns: 1fr; }
-  .rule-legend { grid-column: auto; }
-  .filters-head { display: block; }
-  .filters { justify-content: flex-start; margin-top: 12px; }
 }
 
 @media (max-width: 760px) {
-  .period-controls { width: 100%; }
-  .period-controls .field { flex: 1 1 140px; }
-  .multi-panel { left: 0; right: auto; }
   .rule-legend { grid-template-columns: 1fr; }
 }
 
@@ -548,58 +403,27 @@ select:focus-visible,
   .info-strip div:nth-last-child(-n+2) { border-bottom: 0; }
 
   .cards { grid-template-columns: 1fr 1fr; }
-  .filters { display: grid; grid-template-columns: 1fr 1fr; }
   .field { min-width: 0; }
-  .multi-select > summary { max-width: none; width: 100%; }
 }
 
 /* ========================================
    手機版：人員明細只凍結「姓名」
-   大區與小區會跟著表格左右捲動。
+   v1.1.21：改為依欄位名稱判斷（col-name），
+   不論「排」或其他欄位如何插入、拖曳順序，固定的都是姓名。
 ======================================== */
 @media (max-width: 680px) {
 
-  /* 第1欄：大區不做左右凍結；表頭仍維持上下凍結 */
-  #peopleTable td:nth-child(1) {
-    position: static;
+  /* 大區、小區：固定寬度，跟著表格左右捲動 */
+  #peopleTable .col-district,
+  #peopleTable .col-smallDistrict {
     width: 58px;
     min-width: 58px;
     max-width: 58px;
   }
 
-  #peopleTable th:nth-child(1) {
-    position: sticky;
-    top: 0;
-    left: auto;
-    width: 58px;
-    min-width: 58px;
-    max-width: 58px;
-    background: #f7f9fa;
-    z-index: 1;
-  }
-
-  /* 第2欄：小區不做左右凍結 */
-  #peopleTable td:nth-child(2) {
-    position: static;
-    width: 58px;
-    min-width: 58px;
-    max-width: 58px;
-  }
-
-  #peopleTable th:nth-child(2) {
-    position: sticky;
-    top: 0;
-    left: auto;
-    width: 58px;
-    min-width: 58px;
-    max-width: 58px;
-    background: #f7f9fa;
-    z-index: 1;
-  }
-
-  /* 第3欄：只凍結姓名；約三個中文字寬，超過就換行 */
-  #peopleTable th:nth-child(3),
-  #peopleTable td:nth-child(3) {
+  /* 只凍結姓名；約三個中文字寬，超過就換行 */
+  #peopleTable th.col-name,
+  #peopleTable td.col-name {
     position: sticky;
     left: 0;
     width: calc(3em + 24px);
@@ -614,14 +438,14 @@ select:focus-visible,
     box-shadow: 5px 0 7px -6px rgba(0, 0, 0, .35);
   }
 
-  #peopleTable th:nth-child(3) {
+  #peopleTable th.col-name {
     top: 0;
     background: #f7f9fa;
     z-index: 5;
   }
 
   /* 避免 hover 改掉固定姓名欄的背景 */
-  #peopleTable tbody tr:hover td:nth-child(3) {
+  #peopleTable tbody tr:hover td.col-name {
     background: #fafcfc;
   }
 }
@@ -774,17 +598,6 @@ select:focus-visible,
   line-height: 1.6;
 }
 
-.trend-controls {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  flex: 0 0 auto;
-}
-
-.trend-controls .field {
-  min-width: 150px;
-}
-
 .trend-summary {
   display: flex;
   flex-wrap: wrap;
@@ -886,23 +699,9 @@ select:focus-visible,
   .trend-head {
     flex-direction: column;
   }
-
-  .trend-controls {
-    width: 100%;
-  }
-
-  .trend-controls .field {
-    flex: 1 1 0;
-    min-width: 0;
-  }
 }
 
 @media (max-width: 560px) {
-  .trend-controls {
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-
   .trend-summary {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1444,7 +1243,7 @@ select:focus-visible,
 }
 
 /* =========================================
-   趨勢區：人口結構 / 季度結構變化
+   趨勢區：目前羣組結構（左）＋每週聚會人數圖（右）
 ========================================= */
 .trend-chart-layout {
   display: grid;
@@ -1563,168 +1362,6 @@ select:focus-visible,
   line-height: 1.5;
 }
 
-.pyramid-compare-legend {
-  display: grid;
-  grid-template-columns: 1fr 66px 1fr;
-  margin: -2px 0 8px;
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.pyramid-compare-legend span:first-child { text-align: right; }
-.pyramid-compare-legend span:last-child { grid-column: 3; text-align: left; }
-
-.age-pyramid-compare { gap: 8px; }
-
-.pyramid-compare-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 66px minmax(0, 1fr);
-  gap: 5px;
-  align-items: center;
-}
-
-.pyramid-half {
-  display: grid;
-  align-items: center;
-  gap: 5px;
-}
-
-.pyramid-half-left { grid-template-columns: 38px minmax(0, 1fr); }
-.pyramid-half-right { grid-template-columns: minmax(0, 1fr) 38px; }
-
-.pyramid-compare-track {
-  display: flex;
-  align-items: center;
-  height: 15px;
-  overflow: hidden;
-  border-radius: 4px;
-  background: #edf1f3;
-}
-
-.pyramid-half-left .pyramid-compare-track { justify-content: flex-end; }
-.pyramid-half-right .pyramid-compare-track { justify-content: flex-start; }
-
-.pyramid-compare-bar { height: 100%; }
-.pyramid-compare-bar.previous {
-  background: color-mix(in srgb, var(--age-group-color, #6F8793) 42%, #ffffff);
-  border-radius: 4px 0 0 4px;
-}
-.pyramid-compare-bar.latest {
-  background: var(--age-group-color, #6F8793);
-  border-radius: 0 4px 4px 0;
-}
-
-.pyramid-side-value {
-  color: var(--muted);
-  font-size: 10px;
-  font-variant-numeric: tabular-nums;
-}
-
-.pyramid-half-left .pyramid-side-value { text-align: right; }
-
-.pyramid-center-label {
-  display: grid;
-  justify-items: center;
-  line-height: 1.05;
-}
-
-.pyramid-center-label strong {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  font-size: 11px;
-}
-.pyramid-center-label small { margin-top: 3px; font-size: 9px; font-weight: 800; }
-.pyramid-center-label small.is-up { color: #9b3d3d; }
-.pyramid-center-label small.is-down { color: #246b50; }
-.pyramid-center-label small.is-flat { color: var(--muted); }
-
-.age-structure-signal {
-  display: grid;
-  gap: 5px;
-  margin-top: 13px;
-  padding-top: 11px;
-  border-top: 1px solid #e7ecef;
-  font-size: 10px;
-  line-height: 1.45;
-  color: var(--muted);
-}
-
-.age-structure-highlight {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 8px;
-  margin-top: 5px;
-  padding: 8px 9px;
-  border: 1px solid #d9e2e6;
-  border-radius: 10px;
-  background: #f7fafb;
-}
-
-.age-structure-highlight > span {
-  color: #6d7a82;
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: .03em;
-  white-space: nowrap;
-}
-
-.age-structure-highlight strong {
-  justify-self: end;
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: -.01em;
-}
-
-.age-structure-highlight strong b {
-  margin: 0 3px;
-  color: #7a8791;
-  font-weight: 800;
-}
-
-.median-highlight {
-  border-color: #BFD0D7;
-  background: #EEF4F6;
-}
-
-.trend-highlight.is-aging {
-  border-color: #E8C0BE;
-  background: #FBEDEC;
-}
-
-.trend-highlight.is-aging strong {
-  color: #B65350;
-}
-
-.trend-highlight.is-younger {
-  border-color: #B9D7CB;
-  background: #ECF6F1;
-}
-
-.trend-highlight.is-younger strong {
-  color: #3A8D75;
-}
-
-.trend-highlight.is-stable,
-.age-structure-highlight.is-neutral {
-  border-color: #CAD8DE;
-  background: #F1F5F7;
-}
-
-.trend-highlight.is-stable strong,
-.age-structure-highlight.is-neutral strong {
-  color: #526D78;
-}
-
-.age-structure-signal small {
-  margin-top: 2px;
-  color: #8a6b38;
-}
-
 .trend-empty.compact { min-height: 120px; font-size: 11px; }
 
 @media (max-width: 1050px) {
@@ -1740,33 +1377,24 @@ select:focus-visible,
     grid-template-columns: repeat(2, minmax(0, 1fr));
     column-gap: 18px;
   }
-
-  .age-pyramid-compare {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 560px) {
   .trend-chart-layout { gap: 12px; }
   .age-pyramid { grid-template-columns: 1fr; }
   .age-structure-card { padding: 13px 12px; }
-  .pyramid-compare-row { grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr); }
-  .pyramid-compare-legend { grid-template-columns: 1fr 58px 1fr; }
-  .pyramid-half-left { grid-template-columns: 34px minmax(0, 1fr); }
-  .pyramid-half-right { grid-template-columns: minmax(0, 1fr) 34px; }
 }
 
 /* =========================================
-   2026-09-11：羣組成長趨勢控制列位置
-   桌機維持原本順序：篩選 → 季度結構變化 / 趨勢圖。
-   手機改為：季度結構變化 → 羣組篩選 → 趨勢圖，
-   讓點選年長／中壯／青壯／青職／大學／青少年後，
-   下方折線變化可立即看見。
+   羣組成長趨勢：按鈕列在上、趨勢圖在下
+   v1.1.21：移除為已刪除「季度結構變化」卡片保留的左側欄位，
+   趨勢圖改為佔滿整個寬度。
 ========================================= */
 .group-trend-layout {
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
-    "group-controls group-controls"
-    "group-structure group-chart";
+    "group-controls"
+    "group-chart";
 }
 
 .group-trend-controls {
@@ -1774,44 +1402,16 @@ select:focus-visible,
   min-width: 0;
 }
 
-.group-trend-layout > .age-structure-compare-card {
-  grid-area: group-structure;
-}
-
 .group-trend-layout > .group-trend-scroller {
   grid-area: group-chart;
 }
 
-/* 因控制列現在位於 layout 內，保留原本桌機視覺間距 */
+/* 因控制列位於 layout 內，保留原本視覺間距 */
 .group-trend-controls .group-trend-buttons {
   margin-top: 0;
 }
 
-@media (max-width: 1050px) {
-  .group-trend-layout {
-    grid-template-areas:
-      "group-controls"
-      "group-structure"
-      "group-chart";
-  }
-}
-
 @media (max-width: 680px) {
-  .group-trend-layout {
-    grid-template-areas:
-      "group-structure"
-      "group-controls"
-      "group-chart";
-  }
-
-  .group-trend-controls {
-    margin-top: 0;
-  }
-
-  .group-trend-controls .group-trend-buttons {
-    margin-top: 0;
-  }
-
   .group-trend-controls .group-trend-meta {
     margin-top: 10px;
   }
@@ -2067,23 +1667,6 @@ select:focus-visible,
   max-width: min(700px, 49vw);
 }
 
-.release-meta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin: 9px 0 0;
-  padding: 4px 8px;
-  border: 1px solid rgba(23, 55, 68, .10);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, .38);
-  color: rgba(23, 55, 68, .70);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: .04em;
-  line-height: 1;
-  backdrop-filter: blur(3px);
-}
-
 @media (max-width: 900px) {
   .topbar {
     min-height: 238px;
@@ -2130,11 +1713,6 @@ select:focus-visible,
   .topbar .subtitle {
     max-width: 92%;
     font-size: 13px;
-  }
-
-  .release-meta {
-    margin-top: 8px;
-    background: rgba(255, 255, 255, .46);
   }
 
   .topbar .btn.ghost {
@@ -2184,11 +1762,6 @@ select:focus-visible,
   justify-content: center;
   margin: 14px 0 0;
   margin-left: 0;
-}
-
-/* v1.0.0 頁首版本標籤不再使用；版本移到 footer */
-.topbar .release-meta {
-  display: none !important;
 }
 
 .footer-copy {
@@ -2386,15 +1959,12 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
 
 /* v1.1.3 人員明細欄位設定 */
 .people-columns-toolbar {position:relative;display:flex;justify-content:flex-end;margin:0 0 12px;}
-.people-columns-toggle,.people-columns-footer button,.people-column-arrows button {border:1px solid #d7e0e5;border-radius:9px;background:#fff;color:#354c59;padding:8px 12px;cursor:pointer;font:inherit;}
+.people-columns-toggle,.people-columns-footer button {border:1px solid #d7e0e5;border-radius:9px;background:#fff;color:#354c59;padding:8px 12px;cursor:pointer;font:inherit;}
 .people-columns-panel {position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:min(350px,calc(100vw - 40px));max-height:65vh;overflow:auto;background:#fff;border:1px solid #d7e0e5;border-radius:14px;box-shadow:0 12px 32px #273b4a24;padding:15px;}
 .people-columns-panel.hidden {display:none!important;}
 .people-columns-title {font-weight:700;margin-bottom:10px;}
 .people-column-item {display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #eef1f3;padding:6px 0;}
 .people-column-item label {display:flex;align-items:center;gap:8px;cursor:pointer;flex:1;}
-.people-column-arrows {display:flex;gap:4px;}
-.people-column-arrows button {padding:4px 10px;}
-.people-column-arrows button:disabled {opacity:.3;cursor:default;}
 .people-columns-footer {display:flex;justify-content:space-between;margin-top:12px;gap:10px;}
 #peopleTable th,#peopleTable td {white-space:nowrap;}
 
