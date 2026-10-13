@@ -2208,7 +2208,16 @@
     const people = getTrendPeople();
 
     const weeklyPoints = getWeeklyAttendancePoints(people);
-    const points = aggregateMonthlyPoints(weeklyPoints);
+    // v1.1.24：折線圖只顯示「基準季」到「比較季」之間的月份
+    const allPoints = aggregateMonthlyPoints(weeklyPoints);
+    const { from: rangeFrom, to: rangeTo } = getSelectedQuarterPeriods();
+    const points = rangeFrom && rangeTo
+      ? allPoints.filter(point => {
+          const value = quarterOrderValue(getCustomQuarter(point.date));
+          return value >= quarterOrderValue(rangeFrom) &&
+            value <= quarterOrderValue(rangeTo);
+        })
+      : allPoints;
     const scopeLabel = getTrendScopeLabel();
     const quarter = getQuarterComparison(people);
 
