@@ -1991,3 +1991,97 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
 .people-column-item.is-drag-source {opacity:.6;}
 .people-column-item.is-drag-target {outline:2px dashed #4c7d89;outline-offset:-2px;border-radius:6px;background:#eaf3f5;}
 .people-columns-title::after {content:'　按住 ☰ 拖曳排序';font-size:11px;font-weight:400;color:#667f89;}
+
+
+/* =========================================
+   v1.1.22｜羣組季度比較
+========================================= */
+.gq-tables {
+  display: grid;
+  gap: 20px;
+  margin-top: 12px;
+}
+
+.gq-block-title {
+  margin: 0 0 8px;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.gq-table th,
+.gq-table td {
+  text-align: right;
+}
+
+.gq-table th:first-child,
+.gq-table td:first-child {
+  text-align: left;
+}
+
+.gq-table thead th small {
+  display: block;
+  margin-top: 2px;
+  color: #7a8791;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.gq-table tbody th {
+  position: static;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gq-table tbody tr.gq-total th,
+.gq-table tbody tr.gq-total td {
+  background: #f7f9fa;
+  border-top: 2px solid var(--line);
+  font-weight: 800;
+}
+
+.gq-diff.is-up { color: #3A8D75; font-weight: 800; }
+.gq-diff.is-down { color: #D95C59; font-weight: 800; }
+.gq-diff.is-flat,
+.gq-diff.is-na { color: #7a8791; }
+.gq-diff.is-small { color: #a3aeb4; }
+
+.gq-mark {
+  margin-left: 3px;
+  color: #A07F45;
+  font-size: 11px;
+}
+
+.gq-flow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  margin-top: 8px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  background: #f8fafb;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.gq-flow > span:first-child {
+  color: var(--text);
+  font-weight: 800;
+}
+
+.gq-flow strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.gq-notes {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.gq-notes p {
+  margin: 0;
+}

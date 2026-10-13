@@ -465,8 +465,36 @@
           </div>
         </div>
 
-        <div class="group-trend-section">
+        <div class="group-trend-section group-quarter-section">
 
+          <div class="group-trend-head">
+            <div>
+              <p class="eyebrow">GROUP BY QUARTER</p>
+              <h3>羣組季度比較</h3>
+              <p class="group-trend-description">
+                比較各羣組「平均每週聚會人數」：與上季比看短期變化；與去年同季比可排除暑假、開學等季節影響，較能看出整體方向。國小以下不納入，國中＋高中＋中學合併為「青少年」。
+              </p>
+            </div>
+
+            <div class="group-trend-head-actions">
+              <div class="group-trend-mode" aria-label="羣組季度比較範圍">
+                <button type="button" class="group-trend-mode-btn is-selected" data-gq-mode="all" aria-pressed="true">全會所</button>
+                <button type="button" class="group-trend-mode-btn" data-gq-mode="districts" aria-pressed="false">各大區</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="groupQuarterMeta" class="group-trend-meta" aria-live="polite"></div>
+
+          <div id="groupQuarterTables" class="gq-tables"></div>
+
+          <div class="gq-notes">
+            <p>※ 大學、青少年依目前名冊判定羣組；9 月升學交界前後的比較僅供參考。</p>
+            <p>灰色數字：平均少於 10 人，一兩人的差異就會造成明顯變化，因此不標示升降。</p>
+            <p>人員流動：新出現＝本季第一次有出席紀錄；恢復聚會＝連續超過 8 週未聚會後，本季再次出席；轉為近期未聚會＝本季內開始超過 8 週未聚會。</p>
+          </div>
+
+        </div>
           <div class="group-trend-head">
             <div>
               <p class="eyebrow">GROUP TREND</p>

@@ -565,3 +565,349 @@
     install();
   }
 })();
+
+/* =========================================================
+   v1.1.22｜羣組季度比較（取代原「羣組成長趨勢」折線圖）
+   - 比較各羣組「平均每週聚會人數」：本季、上季、去年同季
+   - 本季尚未結束時，去年同季只取相同的前幾週，條件才公平
+   - 平均少於 10 人時只顯示數字，不標示升降
+   - 附本季人員流動：新出現、恢復聚會、轉為近期未聚會
+========================================================= */
+(() => {
+  'use strict';
+
+  const GROUPS = ['年長', '中壯', '青壯', '青職', '大學', '青少年'];
+  const STUDENT_GROUPS = new Set(['大學', '青少年']);
+  const PREFERRED_DISTRICTS = ['一大區', '二大區', '三大區'];
+  const SMALL_THRESHOLD = 10;
+  const FLAT_THRESHOLD = 0.05;
+  const INACTIVE_WEEKS = 8;
+  const MS_WEEK = 7 * 24 * 60 * 60 * 1000;
+  const MODE_KEY = 'attendance-dashboard-group-quarter-mode-v1';
+
+  let mode = 'all';
+  try {
+    if (localStorage.getItem(MODE_KEY) === 'districts') mode = 'districts';
+  } catch (_) {}
+
+  let cache = { rows: null, key: '', persons: [] };
+
+  const $ = id => document.getElementById(id);
+
+  function esc(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    }[c]));
+  }
+
+  function normalizeGroup(value) {
+    const g = String(value ?? '').trim().replace(/\s+/g, '');
+    if (['國中', '高中', '中學'].includes(g)) return '青少年';
+    if (g === '大專') return '大學';
+    return GROUPS.includes(g) ? g : '';
+  }
+
+  /* 季度：1–4 月＝Q1、5–8 月＝Q2、9–12 月＝Q3 */
+  function quarterOf(date) {
+    const m = date.getMonth() + 1;
+    return { year: date.getFullYear(), quarter: m <= 4 ? 1 : m <= 8 ? 2 : 3 };
+  }
+
+  function previousQuarter(p) {
+    return p.quarter > 1
+      ? { year: p.year, quarter: p.quarter - 1 }
+      : { year: p.year - 1, quarter: 3 };
+  }
+
+  function quarterKey(p) {
+    return `${p.year}Q${p.quarter}`;
+  }
+
+  function firstSunday(p) {
+    const d = new Date(p.year, (p.quarter - 1) * 4, 1);
+    d.setDate(d.getDate() + (7 - d.getDay()) % 7);
+    return d;
+  }
+
+  function quarterEnd(p) {
+    return new Date(p.year, (p.quarter - 1) * 4 + 4, 0);
+  }
+
+  function weekOrdinal(date, p) {
+    return Math.round((date - firstSunday(p)) / MS_WEEK);
+  }
+
+  function totalSundays(p) {
+    return Math.floor((quarterEnd(p) - firstSunday(p)) / MS_WEEK) + 1;
+  }
+
+  function columnIndexes(dateColumns, p) {
+    const key = quarterKey(p);
+    const list = [];
+    dateColumns.forEach((c, i) => {
+      if (quarterKey(quarterOf(c.date)) === key) list.push(i);
+    });
+    return list;
+  }
+
+  function getPeriods(dateColumns) {
+    const latestDate = dateColumns[dateColumns.length - 1].date;
+    const current = quarterOf(latestDate);
+    const previous = previousQuarter(current);
+    const lastYear = { year: current.year - 1, quarter: current.quarter };
+    const total = totalSundays(current);
+    const elapsed = Math.min(total, weekOrdinal(latestDate, current) + 1);
+    const inProgress = elapsed < total;
+    const lastYearAll = columnIndexes(dateColumns, lastYear);
+
+    return {
+      current,
+      previous,
+      lastYear,
+      total,
+      elapsed,
+      inProgress,
+      latestDate,
+      currentIdx: columnIndexes(dateColumns, current),
+      previousIdx: columnIndexes(dateColumns, previous),
+      lastYearIdx: inProgress
+        ? lastYearAll.filter(i => weekOrdinal(dateColumns[i].date, lastYear) < elapsed)
+        : lastYearAll
+    };
+  }
+
+  function getPersons(data) {
+    const key = `${data.dateColumns.length}|${data.people.map(p => p.rowNumber).join(',')}`;
+    if (cache.rows === data.rows && cache.key === key) return cache.persons;
+
+    const persons = [];
+    data.people.forEach(p => {
+      const group = normalizeGroup(p.group);
+      if (!group) return;
+      const row = data.rows[p.rowNumber - 1] || [];
+      const att = new Uint8Array(data.dateColumns.length);
+      data.dateColumns.forEach((c, i) => {
+        if (data.isAttendance(row[c.col])) att[i] = 1;
+      });
+      persons.push({ district: String(p.district ?? '').trim(), group, att });
+    });
+
+    cache = { rows: data.rows, key, persons };
+    return persons;
+  }
+
+  function average(persons, idxs) {
+    if (!idxs.length) return null;
+    let sum = 0;
+    persons.forEach(p => idxs.forEach(i => { sum += p.att[i]; }));
+    return sum / idxs.length;
+  }
+
+  function getFlows(persons, dateColumns, periods) {
+    const idxs = periods.currentIdx;
+    if (!idxs.length) return null;
+
+    const start = idxs[0];
+    const quarterStart = dateColumns[start].date;
+    let newcomers = 0;
+    let returned = 0;
+    let lapsed = 0;
+
+    persons.forEach(p => {
+      const firstThis = idxs.find(i => p.att[i]);
+
+      if (firstThis !== undefined) {
+        let before = -1;
+        for (let i = start - 1; i >= 0; i--) {
+          if (p.att[i]) { before = i; break; }
+        }
+
+        if (before < 0) {
+          newcomers++;
+        } else {
+          const missed = Math.round(
+            (dateColumns[firstThis].date - dateColumns[before].date) / MS_WEEK
+          ) - 1;
+          if (missed > INACTIVE_WEEKS) returned++;
+        }
+      }
+
+      let last = -1;
+      for (let i = p.att.length - 1; i >= 0; i--) {
+        if (p.att[i]) { last = i; break; }
+      }
+
+      if (last >= 0) {
+        const lapseDate = new Date(
+          dateColumns[last].date.getTime() + (INACTIVE_WEEKS + 1) * MS_WEEK
+        );
+        if (lapseDate >= quarterStart && lapseDate <= periods.latestDate) lapsed++;
+      }
+    });
+
+    return { newcomers, returned, lapsed };
+  }
+
+  function fmt(value) {
+    return value === null ? '—' : value.toFixed(1);
+  }
+
+  function diffCell(cur, base) {
+    if (cur === null || base === null) {
+      return '<td class="gq-diff is-na">—</td>';
+    }
+
+    const d = cur - base;
+    const abs = Math.abs(d).toFixed(1);
+
+    if (Math.max(cur, base) < SMALL_THRESHOLD) {
+      return `<td class="gq-diff is-small" title="人數少，增減僅供參考">${d > 0 ? '+' : d < 0 ? '−' : ''}${abs}</td>`;
+    }
+
+    if (Math.abs(d) < FLAT_THRESHOLD) {
+      return '<td class="gq-diff is-flat">― 0.0</td>';
+    }
+
+    return d > 0
+      ? `<td class="gq-diff is-up">▲ ${abs}</td>`
+      : `<td class="gq-diff is-down">▼ ${abs}</td>`;
+  }
+
+  function buildTable(persons, periods, dateColumns, title) {
+    const items = GROUPS
+      .map(g => ({
+        label: g,
+        people: persons.filter(p => p.group === g),
+        student: STUDENT_GROUPS.has(g)
+      }))
+      .filter(item => item.people.length);
+
+    if (!items.length) return '';
+
+    items.push({ label: '合計', people: persons, total: true });
+
+    const body = items.map(item => {
+      const cur = average(item.people, periods.currentIdx);
+      const prev = average(item.people, periods.previousIdx);
+      const ly = average(item.people, periods.lastYearIdx);
+
+      return `
+        <tr${item.total ? ' class="gq-total"' : ''}>
+          <th scope="row">${esc(item.label)}${item.student ? '<span class="gq-mark" title="依目前名冊判定，僅供參考">※</span>' : ''}</th>
+          <td>${fmt(cur)}</td>
+          <td>${fmt(prev)}</td>
+          ${diffCell(cur, prev)}
+          <td>${fmt(ly)}</td>
+          ${diffCell(cur, ly)}
+        </tr>
+      `;
+    }).join('');
+
+    const lyNote = periods.inProgress ? `・前 ${periods.elapsed} 週` : '';
+    const f = getFlows(persons, dateColumns, periods);
+
+    const flowHtml = f
+      ? `
+        <div class="gq-flow">
+          <span>本季人員流動</span>
+          <span>新出現 <strong>${f.newcomers}</strong> 人</span>
+          <span>恢復聚會 <strong>${f.returned}</strong> 人</span>
+          <span>轉為近期未聚會 <strong>${f.lapsed}</strong> 人</span>
+        </div>
+      `
+      : '';
+
+    return `
+      <div class="gq-block">
+        ${title ? `<h4 class="gq-block-title">${esc(title)}</h4>` : ''}
+        <div class="table-wrap">
+          <table class="gq-table">
+            <thead>
+              <tr>
+                <th>羣組</th>
+                <th>本季平均<small>${quarterKey(periods.current)}</small></th>
+                <th>上季<small>${quarterKey(periods.previous)}</small></th>
+                <th>較上季</th>
+                <th>去年同季<small>${quarterKey(periods.lastYear)}${lyNote}</small></th>
+                <th>較去年同季</th>
+              </tr>
+            </thead>
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+        ${flowHtml}
+      </div>
+    `;
+  }
+
+  function updateModeButtons() {
+    document.querySelectorAll('[data-gq-mode]').forEach(button => {
+      const selected = button.dataset.gqMode === mode;
+      button.classList.toggle('is-selected', selected);
+      button.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+  }
+
+  function render() {
+    const container = $('groupQuarterTables');
+    if (!container) return;
+
+    updateModeButtons();
+
+    const api = globalThis.AttendanceDashboardAPI;
+    const data = api && typeof api.getGroupQuarterData === 'function'
+      ? api.getGroupQuarterData()
+      : null;
+    const meta = $('groupQuarterMeta');
+
+    if (!data || !data.dateColumns.length) {
+      container.innerHTML = '<div class="trend-empty compact">沒有可分析資料</div>';
+      if (meta) meta.innerHTML = '';
+      return;
+    }
+
+    const persons = getPersons(data);
+    const periods = getPeriods(data.dateColumns);
+
+    if (meta) {
+      meta.innerHTML = `
+        <span>本季 ${quarterKey(periods.current)}${periods.inProgress ? `：進行中（已 ${periods.elapsed}／${periods.total} 週）` : '：已完整'}</span>
+        <span>${periods.inProgress ? `去年同季取相同的前 ${periods.elapsed} 週比較` : '去年同季取整季比較'}</span>
+      `;
+    }
+
+    if (mode === 'districts') {
+      const found = [...new Set(persons.map(p => p.district).filter(Boolean))];
+      const districts = [
+        ...PREFERRED_DISTRICTS.filter(d => found.includes(d)),
+        ...found
+          .filter(d => !PREFERRED_DISTRICTS.includes(d))
+          .sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }))
+      ];
+
+      container.innerHTML = districts
+        .map(d => buildTable(persons.filter(p => p.district === d), periods, data.dateColumns, d))
+        .join('') || '<div class="trend-empty compact">沒有大區資料</div>';
+    } else {
+      container.innerHTML =
+        buildTable(persons, periods, data.dateColumns, '') ||
+        '<div class="trend-empty compact">沒有可分析的羣組</div>';
+    }
+  }
+
+  document.addEventListener('click', e => {
+    const button = e.target.closest('[data-gq-mode]');
+    if (!button) return;
+    mode = button.dataset.gqMode === 'districts' ? 'districts' : 'all';
+    try { localStorage.setItem(MODE_KEY, mode); } catch (_) {}
+    render();
+  });
+
+  document.addEventListener('analysisBaseChanged', render);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', render);
+  } else {
+    render();
+  }
+})();

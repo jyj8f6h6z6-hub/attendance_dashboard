@@ -4309,6 +4309,20 @@
    * ========================================
    */
 
+    // v1.1.22：提供「羣組季度比較」所需資料（統計名單＋逐週出席）。
+  globalThis.AttendanceDashboardAPI.getGroupQuarterData = function () {
+    if (!state.rows.length || !state.dateColumns.length) return null;
+    return {
+      rows: state.rows,
+      dateColumns: state.dateColumns,
+      isAttendance,
+      people: getPopulationBase().people.map(p => ({
+        rowNumber: p.rowNumber,
+        district: p.district,
+        group: p.group
+      }))
+    };
+  };
   // v1.1.12：人員明細只有一個清除按鈕，圖表與名單篩選共用。
   function hasPeopleFilters() {
     return Boolean(
