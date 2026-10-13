@@ -2085,3 +2085,145 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
 .gq-notes p {
   margin: 0;
 }
+
+/* =========================================
+   v1.1.23｜羣組季度比較：人員對照名單
+========================================= */
+.gq-row-btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.gq-row-btn:hover,
+.gq-row-btn.is-open {
+  color: var(--accent);
+}
+
+.gq-row-btn:hover {
+  text-decoration: underline;
+}
+
+.gq-caret {
+  margin-left: 6px;
+  color: #7a8791;
+  font-size: 11px;
+}
+
+.gq-detail {
+  margin-top: 10px;
+  padding: 14px;
+  border: 1px solid #cfdde2;
+  border-radius: 12px;
+  background: #fbfdfd;
+}
+
+.gq-detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gq-detail-head strong {
+  display: block;
+  font-size: 15px;
+}
+
+.gq-detail-head span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.gq-detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.gq-detail-close {
+  padding: 6px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: #fff;
+  color: #52616a;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.gq-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.gq-detail-col {
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.gq-detail-col h5 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.gq-detail-col.is-lost h5 { color: #D95C59; }
+.gq-detail-col.is-added h5 { color: #3A8D75; }
+.gq-detail-col.is-kept h5 { color: #52616a; }
+
+.gq-detail-col ul {
+  max-height: 300px;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+  font-size: 13px;
+}
+
+.gq-detail-col li {
+  display: flex;
+  gap: 10px;
+  padding: 4px 0;
+  border-bottom: 1px solid #f0f3f5;
+}
+
+.gq-detail-col li span {
+  flex: 0 0 auto;
+  min-width: 4.5em;
+  color: var(--muted);
+}
+
+.gq-detail-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.gq-detail-note {
+  margin: 10px 0 0;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+@media (max-width: 760px) {
+  .gq-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}

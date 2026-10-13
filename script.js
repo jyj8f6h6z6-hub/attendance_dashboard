@@ -4318,6 +4318,8 @@
       isAttendance,
       people: getPopulationBase().people.map(p => ({
         rowNumber: p.rowNumber,
+        name: p.name,
+        smallDistrict: p.smallDistrict,
         district: p.district,
         group: p.group
       }))

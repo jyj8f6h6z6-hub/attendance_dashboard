@@ -567,10 +567,11 @@
 })();
 
 /* =========================================================
-   v1.1.22｜羣組季度比較（取代原「羣組成長趨勢」折線圖）
+   v1.1.23｜羣組季度比較＋人員對照
    - 比較各羣組「平均每週聚會人數」：本季、上季、去年同季
    - 本季尚未結束時，去年同季只取相同的前幾週，條件才公平
    - 平均少於 10 人時只顯示數字，不標示升降
+   - 點羣組名稱：在表格下方展開「消失／新增／持續」名單（小區＋姓名）
    - 附本季人員流動：新出現、恢復聚會、轉為近期未聚會
 ========================================================= */
 (() => {
@@ -589,6 +590,10 @@
   try {
     if (localStorage.getItem(MODE_KEY) === 'districts') mode = 'districts';
   } catch (_) {}
+
+  /* 目前展開的名單：{ scope, group }；compareTo：lastYear／previous */
+  let openDetail = null;
+  let compareTo = 'lastYear';
 
   let cache = { rows: null, key: '', persons: [] };
 
@@ -689,7 +694,13 @@
       data.dateColumns.forEach((c, i) => {
         if (data.isAttendance(row[c.col])) att[i] = 1;
       });
-      persons.push({ district: String(p.district ?? '').trim(), group, att });
+      persons.push({
+        name: String(p.name ?? '').trim(),
+        smallDistrict: String(p.smallDistrict ?? '').trim(),
+        district: String(p.district ?? '').trim(),
+        group,
+        att
+      });
     });
 
     cache = { rows: data.rows, key, persons };
@@ -773,7 +784,75 @@
       : `<td class="gq-diff is-down">▼ ${abs}</td>`;
   }
 
-  function buildTable(persons, periods, dateColumns, title) {
+  function sortPeople(list) {
+    return list.sort((a, b) =>
+      a.smallDistrict.localeCompare(b.smallDistrict, 'zh-Hant', { numeric: true }) ||
+      a.name.localeCompare(b.name, 'zh-Hant')
+    );
+  }
+
+  function buildDetail(groupPeople, periods, scopeLabel, group) {
+    const cmpIdx = compareTo === 'previous' ? periods.previousIdx : periods.lastYearIdx;
+    const cmpLabel = compareTo === 'previous'
+      ? `上季 ${quarterKey(periods.previous)}（${cmpIdx.length} 週）`
+      : `去年同季 ${quarterKey(periods.lastYear)}（${periods.inProgress ? '前 ' : ''}${cmpIdx.length} 週）`;
+
+    const curAvg = average(groupPeople, periods.currentIdx);
+    const cmpAvg = average(groupPeople, cmpIdx);
+
+    const lost = [];
+    const added = [];
+    const kept = [];
+
+    groupPeople.forEach(p => {
+      const now = periods.currentIdx.some(i => p.att[i]);
+      const then = cmpIdx.some(i => p.att[i]);
+      if (now && !then) added.push(p);
+      else if (!now && then) lost.push(p);
+      else if (now && then) kept.push(p);
+    });
+
+    const column = (title, cls, list) => `
+      <div class="gq-detail-col ${cls}">
+        <h5>${title} <strong>${list.length}</strong> 人</h5>
+        ${list.length
+          ? `<ul>${sortPeople(list).map(p => `<li><span>${esc(p.smallDistrict || '—')}</span>${esc(p.name)}</li>`).join('')}</ul>`
+          : '<p class="gq-detail-empty">無</p>'}
+      </div>
+    `;
+
+    const compareButton = (value, label) => `
+      <button type="button" class="group-trend-mode-btn${compareTo === value ? ' is-selected' : ''}" data-gq-compare="${value}" aria-pressed="${compareTo === value}">${label}</button>
+    `;
+
+    return `
+      <div class="gq-detail">
+        <div class="gq-detail-head">
+          <div>
+            <strong>${esc(scopeLabel)}｜${esc(group)}</strong>
+            <span>本季 ${quarterKey(periods.current)}（${periods.currentIdx.length} 週）對比 ${cmpLabel}；平均 ${fmt(cmpAvg)} → ${fmt(curAvg)} 人</span>
+          </div>
+          <div class="gq-detail-actions">
+            <div class="group-trend-mode">
+              ${compareButton('lastYear', '對去年同季')}
+              ${compareButton('previous', '對上季')}
+            </div>
+            <button type="button" class="gq-detail-close" data-gq-close>收起 ✕</button>
+          </div>
+        </div>
+        ${cmpIdx.length
+          ? `<div class="gq-detail-grid">
+              ${column('消失', 'is-lost', lost)}
+              ${column('新增', 'is-added', added)}
+              ${column('持續', 'is-kept', kept)}
+            </div>`
+          : '<p class="gq-detail-empty">比較期間沒有資料。</p>'}
+        <p class="gq-detail-note">消失＝比較期間有出席、本季尚未出席；新增＝本季有出席、比較期間未出席；持續＝兩段期間都有出席。已從名冊移除或被統計名單設定排除的人不會列出。</p>
+      </div>
+    `;
+  }
+
+  function buildTable(persons, periods, dateColumns, title, scopeKey) {
     const items = GROUPS
       .map(g => ({
         label: g,
@@ -790,10 +869,20 @@
       const cur = average(item.people, periods.currentIdx);
       const prev = average(item.people, periods.previousIdx);
       const ly = average(item.people, periods.lastYearIdx);
+      const mark = item.student
+        ? '<span class="gq-mark" title="依目前名冊判定，僅供參考">※</span>'
+        : '';
+      const isOpen = Boolean(
+        openDetail && openDetail.scope === scopeKey && openDetail.group === item.label
+      );
+
+      const label = item.total
+        ? esc(item.label)
+        : `<button type="button" class="gq-row-btn${isOpen ? ' is-open' : ''}" data-gq-open="${esc(scopeKey)}" data-gq-group="${esc(item.label)}" aria-expanded="${isOpen}" title="查看名單">${esc(item.label)}${mark}<span class="gq-caret" aria-hidden="true">${isOpen ? '▾' : '▸'}</span></button>`;
 
       return `
         <tr${item.total ? ' class="gq-total"' : ''}>
-          <th scope="row">${esc(item.label)}${item.student ? '<span class="gq-mark" title="依目前名冊判定，僅供參考">※</span>' : ''}</th>
+          <th scope="row">${label}</th>
           <td>${fmt(cur)}</td>
           <td>${fmt(prev)}</td>
           ${diffCell(cur, prev)}
@@ -802,6 +891,14 @@
         </tr>
       `;
     }).join('');
+
+    const openItem = openDetail && openDetail.scope === scopeKey
+      ? items.find(item => !item.total && item.label === openDetail.group)
+      : null;
+
+    const detailHtml = openItem
+      ? buildDetail(openItem.people, periods, title || '全會所', openItem.label)
+      : '';
 
     const lyNote = periods.inProgress ? `・前 ${periods.elapsed} 週` : '';
     const f = getFlows(persons, dateColumns, periods);
@@ -835,6 +932,7 @@
             <tbody>${body}</tbody>
           </table>
         </div>
+        ${detailHtml}
         ${flowHtml}
       </div>
     `;
@@ -871,7 +969,7 @@
 
     if (meta) {
       meta.innerHTML = `
-        <span>本季 ${quarterKey(periods.current)}${periods.inProgress ? `：進行中（已 ${periods.elapsed}／${periods.total} 週）` : '：已完整'}</span>
+        <span>本季 ${quarterKey(periods.current)}${periods.inProgress ? `：進行中（已 ${periods.elapsed}／${periods.total} 週）` : '：已完整'}｜點羣組名稱可查看名單</span>
         <span>${periods.inProgress ? `去年同季取相同的前 ${periods.elapsed} 週比較` : '去年同季取整季比較'}</span>
       `;
     }
@@ -886,21 +984,47 @@
       ];
 
       container.innerHTML = districts
-        .map(d => buildTable(persons.filter(p => p.district === d), periods, data.dateColumns, d))
+        .map(d => buildTable(persons.filter(p => p.district === d), periods, data.dateColumns, d, d))
         .join('') || '<div class="trend-empty compact">沒有大區資料</div>';
     } else {
       container.innerHTML =
-        buildTable(persons, periods, data.dateColumns, '') ||
+        buildTable(persons, periods, data.dateColumns, '', 'all') ||
         '<div class="trend-empty compact">沒有可分析的羣組</div>';
     }
   }
 
   document.addEventListener('click', e => {
-    const button = e.target.closest('[data-gq-mode]');
-    if (!button) return;
-    mode = button.dataset.gqMode === 'districts' ? 'districts' : 'all';
-    try { localStorage.setItem(MODE_KEY, mode); } catch (_) {}
-    render();
+    const modeButton = e.target.closest('[data-gq-mode]');
+    if (modeButton) {
+      mode = modeButton.dataset.gqMode === 'districts' ? 'districts' : 'all';
+      openDetail = null;
+      try { localStorage.setItem(MODE_KEY, mode); } catch (_) {}
+      render();
+      return;
+    }
+
+    const openButton = e.target.closest('[data-gq-open]');
+    if (openButton) {
+      const scope = openButton.dataset.gqOpen || '';
+      const group = openButton.dataset.gqGroup || '';
+      openDetail = openDetail && openDetail.scope === scope && openDetail.group === group
+        ? null
+        : { scope, group };
+      render();
+      return;
+    }
+
+    const compareButton = e.target.closest('[data-gq-compare]');
+    if (compareButton) {
+      compareTo = compareButton.dataset.gqCompare === 'previous' ? 'previous' : 'lastYear';
+      render();
+      return;
+    }
+
+    if (e.target.closest('[data-gq-close]')) {
+      openDetail = null;
+      render();
+    }
   });
 
   document.addEventListener('analysisBaseChanged', render);
