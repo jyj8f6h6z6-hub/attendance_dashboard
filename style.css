@@ -2411,3 +2411,13 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
 .visitation-export-btn { border:1px solid #4e786c; border-radius:9px; background:#e4f1e9; color:#225546; font:inherit; font-weight:700; padding:9px 15px; cursor:pointer; }
 .visitation-export-btn:hover:not(:disabled) { background:#cde6da; }
 .visitation-export-btn:disabled { opacity:.48; cursor:not-allowed; }
+
+/* v1.1.19: reorder columns with touch/mouse drag handle */
+.people-column-item {min-height:43px;}
+.people-column-name {flex:1;font-weight:600;}
+.people-column-handle {border:1px solid #c8d6dc;border-radius:8px;background:#f2f6f8;color:#456474;padding:7px 12px;cursor:grab;font:inherit;touch-action:none;user-select:none;-webkit-user-select:none;}
+.people-column-handle:active {cursor:grabbing;}
+.people-column-visibility {flex:0 0 auto!important;font-size:12px;color:#627580;}
+.people-column-item.is-drag-source {opacity:.6;}
+.people-column-item.is-drag-target {outline:2px dashed #4c7d89;outline-offset:-2px;border-radius:6px;background:#eaf3f5;}
+.people-columns-title::after {content:'　按住 ☰ 拖曳排序';font-size:11px;font-weight:400;color:#667f89;}

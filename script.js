@@ -4301,19 +4301,20 @@
   function savePeopleColumns(){try{localStorage.setItem(PEOPLE_COLUMNS_KEY,JSON.stringify(peopleColumns));}catch(_){}}
   function renderPeopleColumnOptions(){
     const target=$('peopleColumnsOptions'); if(!target)return;
-    target.innerHTML=peopleColumns.order.map((id,i)=>{
+    target.innerHTML=peopleColumns.order.map(id=>{
       const col=PEOPLE_COLUMNS.find(c=>c[0]===id);
-      return `<div class="people-column-item" data-column="${id}"><label><input type="checkbox" data-column-visible="${id}" ${peopleColumns.visible.includes(id)?'checked':''}> ${col[1]}</label><div class="people-column-arrows"><button type="button" data-column-move="up" data-id="${id}" ${i===0?'disabled':''} aria-label="${col[1]}上移">↑</button><button type="button" data-column-move="down" data-id="${id}" ${i===peopleColumns.order.length-1?'disabled':''} aria-label="${col[1]}下移">↓</button></div></div>`;
+      return `<div class="people-column-item" data-column="${id}"><button type="button" class="people-column-handle" data-column-handle="${id}" aria-label="拖曳調整${col[1]}順序" title="按住拖曳以調整順序">☰</button><span class="people-column-name">${col[1]}</span><label class="people-column-visibility"><input type="checkbox" data-column-visible="${id}" ${peopleColumns.visible.includes(id)?'checked':''}> 顯示</label></div>`;
     }).join('');
   }
   // v1.1.7：排序僅影響人員明細，並依欄位 ID 而非畫面位置判斷。
-  const PEOPLE_SORT_FIELDS = new Set(['lastAttendanceDate','recentAttendance','recentRate','totalAttendance']);
+  const PEOPLE_SORT_FIELDS = new Set(['rank','lastAttendanceDate','recentAttendance','recentRate','totalAttendance']);
   let peopleSort = {id:null, direction:'desc'};
   function peopleSortValue(person, id) {
     if(id === 'lastAttendanceDate') {
       const date=person.lastAttendanceDate;
       return date instanceof Date && Number.isFinite(date.getTime()) ? date.getTime() : null;
     }
+    if(id === 'rank') return String(person.rank || '').trim() || null;
     const value=Number(person[id]);
     return Number.isFinite(value) ? value : null;
   }
@@ -4334,6 +4335,10 @@
         const av=peopleSortValue(a,id),bv=peopleSortValue(b,id);
         if(av===null)return bv===null?0:1;
         if(bv===null)return -1;
+        if(id === 'rank'){
+          const compare=av.localeCompare(bv,'zh-Hant-TW',{numeric:true,sensitivity:'base'});
+          return (direction==='desc'?-compare:compare) || String(a.smallDistrict||'').localeCompare(String(b.smallDistrict||''),'zh-Hant-TW',{numeric:true}) || String(a.name||'').localeCompare(String(b.name||''),'zh-Hant-TW');
+        }
         return direction==='desc'?bv-av:av-bv;
       });
     }
@@ -4344,7 +4349,7 @@
     if(!button)return;
     const id=button.dataset.peopleSort;
     if(!PEOPLE_SORT_FIELDS.has(id))return;
-    peopleSort=peopleSort.id===id ? {id,direction:peopleSort.direction==='desc'?'asc':'desc'} : {id,direction:'desc'};
+    peopleSort=peopleSort.id===id ? {id,direction:peopleSort.direction==='desc'?'asc':'desc'} : {id,direction:id==='rank'?'asc':'desc'};
     renderPeople();
   });
   function initPeopleColumnSettings(){
@@ -4360,12 +4365,55 @@
       peopleColumns.visible=e.target.checked ? [...peopleColumns.visible,id] : peopleColumns.visible.filter(x=>x!==id);
       savePeopleColumns();renderPeople();
     });
-    options.addEventListener('click',e=>{
-      const btn=e.target.closest('[data-column-move]');if(!btn)return;
-      const i=peopleColumns.order.indexOf(btn.dataset.id), j=i+(btn.dataset.columnMove==='up'?-1:1);
-      if(i<0||j<0||j>=peopleColumns.order.length)return;
+    // Pointer Events support both touch and mouse without an external drag library.
+    // Only commit the new order (and rebuild the people table) on release.
+    let dragging=null;
+    function finishDrag(commit){
+      if(!dragging)return;
+      const d=dragging;dragging=null;
+      options.classList.remove('is-dragging');
+      options.querySelectorAll('.people-column-item').forEach(el=>el.classList.remove('is-drag-source','is-drag-target'));
+      if(!commit || !d.target || d.target===d.id)return;
+      const order=[...peopleColumns.order];
+      const from=order.indexOf(d.id),to=order.indexOf(d.target);
+      if(from<0||to<0)return;
+      order.splice(from,1);order.splice(to,0,d.id);
+      peopleColumns.order=order;
+      savePeopleColumns();renderPeopleColumnOptions();renderPeople();
+    }
+    options.addEventListener('pointerdown',event=>{
+      const handle=event.target.closest('[data-column-handle]');
+      if(!handle || event.button!==0)return;
+      dragging={id:handle.dataset.columnHandle,target:handle.dataset.columnHandle};
+      handle.setPointerCapture(event.pointerId);
+      options.classList.add('is-dragging');
+      handle.closest('.people-column-item').classList.add('is-drag-source');
+      event.preventDefault();
+    });
+    options.addEventListener('pointermove',event=>{
+      if(!dragging)return;
+      const element=document.elementFromPoint(event.clientX,event.clientY)?.closest('.people-column-item');
+      if(!element || !options.contains(element))return;
+      dragging.target=element.dataset.column;
+      options.querySelectorAll('.people-column-item').forEach(el=>el.classList.toggle('is-drag-target',el===element));
+      // Auto-scroll near the panel edges when dragging on a small mobile screen.
+      const bounds=panel.getBoundingClientRect();
+      if(event.clientY>bounds.bottom-35)panel.scrollTop+=12;
+      else if(event.clientY<bounds.top+35)panel.scrollTop-=12;
+    });
+    options.addEventListener('pointerup',()=>finishDrag(true));
+    options.addEventListener('pointercancel',()=>finishDrag(false));
+    // Keyboard accessible reorder controls: focus the handle and use Alt + arrows.
+    options.addEventListener('keydown',event=>{
+      const handle=event.target.closest('[data-column-handle]');
+      if(!handle || !event.altKey || !['ArrowUp','ArrowDown'].includes(event.key))return;
+      event.preventDefault();
+      const id=handle.dataset.columnHandle;
+      const i=peopleColumns.order.indexOf(id),j=i+(event.key==='ArrowUp'?-1:1);
+      if(j<0||j>=peopleColumns.order.length)return;
       [peopleColumns.order[i],peopleColumns.order[j]]=[peopleColumns.order[j],peopleColumns.order[i]];
       savePeopleColumns();renderPeopleColumnOptions();renderPeople();
+      options.querySelector(`[data-column-handle="${id}"]`)?.focus();
     });
     renderPeopleColumnOptions();
   }

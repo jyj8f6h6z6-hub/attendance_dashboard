@@ -47,20 +47,40 @@
     for(const status of order){
       const matches=normalized.filter(p=>p.status===status);
       if(!matches.length)continue;
-      const groupsFound=[...new Set(matches.map(p=>p.reportGroup))].sort((a,b)=>{
-        const ai=groups.indexOf(a),bi=groups.indexOf(b);
-        return (ai<0?999:ai)-(bi<0?999:bi)||compareText(a,b);
-      });
       blocks.push({kind:'status',value:`${status}（${matches.length} 人）`});
-      for(const group of groupsFound){
-        const peopleInGroup=matches.filter(p=>p.reportGroup===group).sort((a,b)=>{
-          const at=dateTime(a),bt=dateTime(b);
-          if(at===null&&bt!==null)return -1;
-          if(bt===null&&at!==null)return 1;
-          return (at??0)-(bt??0)||compareText(a.name,b.name)||a.rowNumber-b.rowNumber;
+      // A rank name is only meaningful within its small district.
+      const areas=new Map();
+      for(const person of matches){
+        const small=String(person.smallDistrict||'').trim()||'未分小區';
+        const rank=String(person.rank||'').trim()||'未分排';
+        const key=JSON.stringify([person.district||'',small,rank]);
+        if(!areas.has(key))areas.set(key,{small,rank,district:person.district||'',people:[]});
+        areas.get(key).people.push(person);
+      }
+      const compareNatural=(a,b)=>compareText(a,b);
+      const sortedAreas=[...areas.values()].sort((a,b)=>
+        compareNatural(a.district,b.district) ||
+        a.small.localeCompare(b.small,'zh-Hant-TW',{numeric:true}) ||
+        (a.rank==='未分排'?1:0)-(b.rank==='未分排'?1:0) ||
+        a.rank.localeCompare(b.rank,'zh-Hant-TW',{numeric:true})
+      );
+      for(const area of sortedAreas){
+        const inArea=area.people;
+        blocks.push({kind:'rank',value:`${area.district ? area.district+'／' : ''}${area.small}／${area.rank}（${inArea.length} 人）`});
+        const groupsFound=[...new Set(inArea.map(p=>p.reportGroup))].sort((a,b)=>{
+          const ai=groups.indexOf(a),bi=groups.indexOf(b);
+          return (ai<0?999:ai)-(bi<0?999:bi)||compareText(a,b);
         });
-        blocks.push({kind:'group',value:`${group}（${peopleInGroup.length} 人）`});
-        for(const person of peopleInGroup)blocks.push({kind:'person',person});
+        for(const group of groupsFound){
+          const peopleInGroup=inArea.filter(p=>p.reportGroup===group).sort((a,b)=>{
+            const at=dateTime(a),bt=dateTime(b);
+            if(at===null&&bt!==null)return -1;
+            if(bt===null&&at!==null)return 1;
+            return (at??0)-(bt??0)||compareText(a.name,b.name)||a.rowNumber-b.rowNumber;
+          });
+          blocks.push({kind:'group',value:`${group}（${peopleInGroup.length} 人）`});
+          for(const person of peopleInGroup)blocks.push({kind:'person',person});
+        }
       }
     }
     const r=[];const merges=[];const breaks=[];let n=0, usedHeight=0;
@@ -75,17 +95,18 @@
     const repeatedHeight=104;
     let currentHeight=usedHeight;
     for(let i=0;i<blocks.length;i++){
-      const item=blocks[i]; const h=item.kind==='person'?24:item.kind==='status'?22:19;
+      const item=blocks[i]; const h=item.kind==='person'?24:item.kind==='status'?22:item.kind==='rank'?21:19;
       let needed=h;
       if(item.kind!=='person'){
-        for(let j=i+1;j<blocks.length && blocks[j].kind!=='person';j++)needed+=blocks[j].kind==='status'?22:19;
+        for(let j=i+1;j<blocks.length && blocks[j].kind!=='person';j++)needed+=blocks[j].kind==='status'?22:blocks[j].kind==='rank'?21:19;
         if(blocks.slice(i+1).some(x=>x.kind==='person'))needed+=24;
       }
       if(currentHeight+needed>pageHeight && currentHeight>repeatedHeight){breaks.push(n);currentHeight=repeatedHeight;}
       if(item.kind==='person'){
         const p=item.person;
-        add([p.name,p.smallDistrict,indexes.rank >= 0 ? String((rows[p.rowNumber-1] || [])[indexes.rank] ?? '') : '',printableDate(p.lastAttendanceDate),`${p.count12}/${weeks12.length}`,`${p.count52}/${weeks52.length}`,''],4,24,false,[4,4,4,4,5,5,6]);
+        add([p.name,p.smallDistrict,String(p.rank || ''),printableDate(p.lastAttendanceDate),`${p.count12}/${weeks12.length}`,`${p.count52}/${weeks52.length}`,''],4,24,false,[4,4,4,4,5,5,6]);
       }else if(item.kind==='status')add([item.value],7,22,true);
+      else if(item.kind==='rank')add([item.value],8,21,true);
       else add([item.value],8,19,true);
       currentHeight+=h;
     }
