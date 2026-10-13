@@ -1,6 +1,6 @@
 (()=>{
 'use strict';
-const CURRENT='1.1.15';
+const CURRENT='1.1.16';
 if(!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol))return;
 let registration=null, pendingVersion='', dismissed='';
 const notice=document.getElementById('update-notice');

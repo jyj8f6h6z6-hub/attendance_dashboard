@@ -1188,6 +1188,10 @@
 
               name,
 
+              rank: indexes.rank >= 0
+                ? String(row[indexes.rank] ?? '').trim()
+                : '',
+
               group:
                 String(
                   row[
@@ -4266,6 +4270,7 @@
   const PEOPLE_COLUMNS = [
     ['district','大區',p=>escapeHtml(p.district)],
     ['smallDistrict','小區',p=>escapeHtml(p.smallDistrict)],
+    ['rank','排',p=>escapeHtml(p.rank || '—')],
     ['name','姓名',p=>`<strong>${escapeHtml(p.name)}</strong>`],
     ['group','羣組',p=>escapeHtml(p.group)],
     ['baptismDate','受浸日期',p=>p.baptismDate ? fmtDate(p.baptismDate) : '—'],
@@ -4282,8 +4287,13 @@
       const saved=JSON.parse(localStorage.getItem(PEOPLE_COLUMNS_KEY)||'null');
       if(!saved || !Array.isArray(saved.order) || !Array.isArray(saved.visible)) throw Error('invalid');
       const order=[...new Set(saved.order.filter(id=>defaultPeopleColumnIds.includes(id)))];
-      defaultPeopleColumnIds.forEach(id=>{if(!order.includes(id))order.push(id);});
+      defaultPeopleColumnIds.forEach(id=>{if(!order.includes(id)){
+        if(id==='rank' && order.includes('smallDistrict')) order.splice(order.indexOf('smallDistrict')+1,0,id);
+        else order.push(id);
+      }});
       const visible=saved.visible.filter(id=>defaultPeopleColumnIds.includes(id));
+      // 新增欄位在舊版已儲存的欄位偏好中也預設顯示，其他偏好不變。
+      if (!saved.order.includes('rank') && !visible.includes('rank')) visible.splice(Math.min(2,visible.length),0,'rank');
       return {order,visible:visible.length ? visible : [...defaultPeopleColumnIds]};
     } catch(_){return {order:[...defaultPeopleColumnIds],visible:[...defaultPeopleColumnIds]};}
   }
