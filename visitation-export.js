@@ -1,4 +1,4 @@
-/* v1.1.14 — 單一工作表的看望報表；本機產生 OOXML，不上傳個人資料。 */
+/* v1.1.20 — 單一工作表的看望報表；本機產生 OOXML，不上傳個人資料。 */
 (function (root) {
   'use strict';
   const encoder = new TextEncoder();
@@ -83,36 +83,86 @@
         }
       }
     }
-    const r=[];const merges=[];const breaks=[];let n=0, usedHeight=0;
-    const add=(vals,style,height,merge=false,special)=>{n++;r.push(row(n,vals,style,height,special));if(merge)merges.push(`<mergeCell ref="A${n}:G${n}"/>`);usedHeight+=height;return n;};
-    add(['召會生活看望名單'],1,30,true);
-    add([`篩選：${filterLabel || '人員明細目前條件'}　｜　人數：${normalized.length} 人`],2,24,true);
-    add([`資料截止週次：${lastDate}　｜　匯出日期：${testDate || today()}　｜　近12週：${weeks12.length} 週／近1年：${weeks52.length} 週`],2,24,true);
+    // v1.1.20: 真正逐頁編排。每個人工頁面都寫入自己的標題，
+    // 不依賴 Excel 固定的 Print_Titles 來顯示動態聚會情況。
+    const r=[];const merges=[];const breaks=[];let n=0;
+    const add=(vals,style,height,merge=false,special)=>{n++;r.push(row(n,vals,style,height,special));if(merge)merges.push(`<mergeCell ref="A${n}:G${n}"/>`);return n;};
     const header=['姓名','小區','排組','最近出席','近12週','近1年','看望紀錄／備註'];
-    add(header,3,26);
-    // 使用硬分頁避免標題孤立在上一頁；並保留每頁第 1–4 列重複列印。
-    const pageHeight=710; // A4 直式、上下各 0.35 英吋的保守可用高度（pt）
-    const repeatedHeight=104;
-    let currentHeight=usedHeight;
-    for(let i=0;i<blocks.length;i++){
-      const item=blocks[i]; const h=item.kind==='person'?24:item.kind==='status'?22:item.kind==='rank'?21:19;
-      let needed=h;
-      if(item.kind!=='person'){
-        for(let j=i+1;j<blocks.length && blocks[j].kind!=='person';j++)needed+=blocks[j].kind==='status'?22:blocks[j].kind==='rank'?21:19;
-        if(blocks.slice(i+1).some(x=>x.kind==='person'))needed+=24;
+    const pageHeight=700; // 可用列高估算；由 Excel A4 直式實際列印預覽再校對。
+    const commonHeaderHeight=30+24+24+34+26;
+    let pageHeightUsed=0, pageNo=0, currentStatus=null;
+    let currentRank=null,currentGroup=null;
+    const heights={status:34,rank:21,group:19,person:24};
+    const startPage=(status,continued=false)=>{
+      if(pageNo>0)breaks.push(n);
+      pageNo++;
+      add(['召會生活看望名單'],1,30,true);
+      add([`篩選：${filterLabel || '人員明細目前條件'}　｜　人數：${normalized.length} 人`],2,24,true);
+      add([`資料截止週次：${lastDate}　｜　匯出日期：${testDate || today()}　｜　近12週：${weeks12.length} 週／近1年：${weeks52.length} 週`],2,24,true);
+      add([`${status.value}${continued ? '（續）' : ''}`],9,34,true);
+      add(header,3,26);
+      pageHeightUsed=commonHeaderHeight;
+    };
+    const contentCapacity=pageHeight-commonHeaderHeight;
+    const writeRank=(block,continued=false)=>{
+      add([continued?block.value.replace(/（\d+ 人）$/,'（續）'):block.value],8,21,true);
+      pageHeightUsed+=21;
+    };
+    const writeGroup=(block,continued=false)=>{
+      add([continued?block.value.replace(/（\d+ 人）$/,'（續）'):block.value],8,19,true);
+      pageHeightUsed+=19;
+    };
+    const writePerson=block=>{
+      const person=block.person;
+      add([person.name,person.smallDistrict,String(person.rank || ''),printableDate(person.lastAttendanceDate),`${person.count12}/${weeks12.length}`,`${person.count52}/${weeks52.length}`,''],4,24,false,[4,4,4,4,5,5,6]);
+      pageHeightUsed+=24;
+    };
+    let i=0;
+    while(i<blocks.length){
+      const block=blocks[i];
+      if(block.kind==='status'){
+        currentStatus=block;currentRank=null;currentGroup=null;
+        startPage(currentStatus,false);
+        i++;continue;
       }
-      if(currentHeight+needed>pageHeight && currentHeight>repeatedHeight){breaks.push(n);currentHeight=repeatedHeight;}
-      if(item.kind==='person'){
-        const p=item.person;
-        add([p.name,p.smallDistrict,String(p.rank || ''),printableDate(p.lastAttendanceDate),`${p.count12}/${weeks12.length}`,`${p.count52}/${weeks52.length}`,''],4,24,false,[4,4,4,4,5,5,6]);
-      }else if(item.kind==='status')add([item.value],7,22,true);
-      else if(item.kind==='rank')add([item.value],8,21,true);
-      else add([item.value],8,19,true);
-      currentHeight+=h;
+      if(block.kind==='rank'){
+        currentRank=block;currentGroup=null;
+        // 如果整排能裝進一頁，優先避免拆排。
+        let total=0;
+        for(let j=i;j<blocks.length&&blocks[j].kind!=='rank'&&blocks[j].kind!=='status';j++)total+=heights[blocks[j].kind];
+        if(pageHeightUsed+total>pageHeight && total<=contentCapacity){
+          startPage(currentStatus,true);
+        } else if(pageHeightUsed+21+19+24>pageHeight){
+          startPage(currentStatus,true);
+        }
+        writeRank(block);i++;continue;
+      }
+      if(block.kind==='group'){
+        currentGroup=block;
+        // 不讓羣組標題落單在頁尾。
+        if(pageHeightUsed+19+24>pageHeight){
+          startPage(currentStatus,true);
+          if(currentRank)writeRank(currentRank,true);
+        }
+        writeGroup(block);i++;continue;
+      }
+      if(block.kind==='person'){
+        if(pageHeightUsed+24>pageHeight){
+          startPage(currentStatus,true);
+          if(currentRank)writeRank(currentRank,true);
+          if(currentGroup)writeGroup(currentGroup,true);
+        }
+        writePerson(block);i++;continue;
+      }
+      i++;
+    }
+    // 無資料時也產生可辨識的空白報表。
+    if(pageNo===0){
+      startPage({value:'無符合條件人員（0 人）'},false);
     }
     const sheet=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetPr><pageSetUpPr fitToPage="1"/></sheetPr><dimension ref="A1:G${n}"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="4" topLeftCell="A5" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="24"/><cols><col min="1" max="1" width="12" customWidth="1"/><col min="2" max="2" width="9" customWidth="1"/><col min="3" max="3" width="9" customWidth="1"/><col min="4" max="4" width="15" customWidth="1"/><col min="5" max="5" width="9" customWidth="1"/><col min="6" max="6" width="9" customWidth="1"/><col min="7" max="7" width="29" customWidth="1"/></cols><sheetData>${r.join('')}</sheetData><mergeCells count="${merges.length}">${merges.join('')}</mergeCells><printOptions horizontalCentered="1"/><pageMargins left="0.25" right="0.25" top="0.35" bottom="0.35" header="0.15" footer="0.15"/><pageSetup paperSize="9" orientation="portrait" fitToWidth="1" fitToHeight="0"/><rowBreaks count="${breaks.length}" manualBreakCount="${breaks.length}">${breaks.map(x=>`<brk id="${x}" man="1" max="16383"/>`).join('')}</rowBreaks></worksheet>`;
-    const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="3"><font><sz val="10"/><name val="Microsoft JhengHei"/></font><font><b/><sz val="16"/><name val="Microsoft JhengHei"/></font><font><b/><sz val="10"/><name val="Microsoft JhengHei"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDCE9EE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1F4F6"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD4DCE0"/></left><right style="thin"><color rgb="FFD4DCE0"/></right><top style="thin"><color rgb="FFD4DCE0"/></top><bottom style="thin"><color rgb="FFD4DCE0"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="9"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
-    const wb=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="看望名單" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm.Print_Titles" localSheetId="0">'看望名單'!$1:$4</definedName><definedName name="_xlnm.Print_Area" localSheetId="0">'看望名單'!$A$1:$G$${n}</definedName></definedNames></workbook>`;
+    const styles=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="4"><font><sz val="10"/><name val="Microsoft JhengHei"/></font><font><b/><sz val="16"/><name val="Microsoft JhengHei"/></font><font><b/><sz val="10"/><name val="Microsoft JhengHei"/></font><font><b/><sz val="15"/><name val="Microsoft JhengHei"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFDCE9EE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1F4F6"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFD4DCE0"/></left><right style="thin"><color rgb="FFD4DCE0"/></right><top style="thin"><color rgb="FFD4DCE0"/></top><bottom style="thin"><color rgb="FFD4DCE0"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="10"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyFont="1"/><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="2" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"><alignment vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="3" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="center" vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+    const wb=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><bookViews><workbookView/></bookViews><sheets><sheet name="看望名單" sheetId="1" r:id="rId1"/></sheets><definedNames><definedName name="_xlnm.Print_Area" localSheetId="0">'看望名單'!$A$1:$G$${n}</definedName></definedNames></workbook>`;
     const entries=[
       ['[Content_Types].xml','<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
       ['_rels/.rels','<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'],
