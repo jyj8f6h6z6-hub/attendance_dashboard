@@ -2227,3 +2227,62 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================================
+   v1.1.25｜羣組季度比較：手機直式不再被截斷
+   grid 子項目預設 min-width:auto 會被表格撐寬，
+   再被 .trend-panel 的 overflow:hidden 剪掉；
+   改為可縮小，讓 .table-wrap 的左右捲動生效。
+========================================= */
+.gq-tables > *,
+.gq-block {
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  /* 縮小字級與間距，393px 寬大多能一眼看完 */
+  .gq-table {
+    font-size: 12px;
+  }
+
+  .gq-table th,
+  .gq-table td {
+    padding: 9px 6px;
+  }
+
+  .gq-table thead th {
+    white-space: normal;
+    line-height: 1.3;
+    vertical-align: bottom;
+  }
+
+  .gq-table thead th small {
+    font-size: 10px;
+  }
+
+  .gq-mark { margin-left: 1px; }
+  .gq-caret { margin-left: 3px; }
+
+  /* 仍放不下時：羣組欄固定在左側，左右滑動數字欄時看得到是哪一組 */
+  .gq-table th:first-child,
+  .gq-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #fff;
+    box-shadow: 4px 0 6px -5px rgba(0, 0, 0, .3);
+  }
+
+  .gq-table thead th:first-child {
+    background: #f7f9fa;
+    z-index: 3;
+  }
+
+  .gq-table tbody tr.gq-total th {
+    background: #f7f9fa;
+  }
+
+  .gq-flow {
+    gap: 4px 12px;
+  }
+}
