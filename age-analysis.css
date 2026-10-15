@@ -866,3 +866,35 @@ button.age-label.is-selected {
   background: #fff;
   border-color: rgba(49, 91, 102, .15);
 }
+
+/* =========================================
+   v1.1.26｜桌機版：清除篩選移到篩選按鈕下方並放大
+   手機版（680px 以下）不受影響
+========================================= */
+@media (min-width: 681px) {
+  #peoplePanel .chart-filter-indicator {
+    order: 4;              /* 排在篩選按鈕群組之後 */
+    flex: 0 0 auto;
+    margin-left: 0;        /* 取消推到最右邊 */
+    margin-top: 2px;
+  }
+
+  #peoplePanel .chart-filter-clear {
+    min-height: 42px;
+    padding: 9px 22px;
+    border: 1px solid #9fb4bc;
+    border-radius: 12px;
+    background: #fff;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 800;
+    box-shadow:
+      0 1px 1px rgba(31, 41, 51, .03),
+      0 5px 14px rgba(31, 41, 51, .05);
+  }
+
+  #peoplePanel .chart-filter-clear:not(:disabled):hover {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+  }
+}
