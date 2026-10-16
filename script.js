@@ -64,14 +64,6 @@
     /* 分析篩選：小區可複選；空集合代表全部小區 */
     selectedAnalysisSmallDistricts: new Set(),
 
-    /*
-     * 羣組成長趨勢：按鈕可複選。
-     * 第一次載入時預設顯示所有可用羣組。
-     */
-    selectedTrendGroups: new Set(),
-    trendGroupsInitialized: false,
-    groupTrendMode: 'groups',
-
     /* 季度比較：空白時由實際資料自動帶入「前一季 → 最新季」 */
     quarterFromKey: '',
     quarterToKey: '',
@@ -160,20 +152,7 @@
     trendChart:
       $('trendChart'),
 
-    groupTrendScopeLabel:
-      $('groupTrendScopeLabel'),
 
-    groupTrendButtons:
-      $('groupTrendButtons'),
-
-    groupTrendSelectedText:
-      $('groupTrendSelectedText'),
-
-    groupTrendDistrictLegend:
-      $('groupTrendDistrictLegend'),
-
-    groupTrendChart:
-      $('groupTrendChart'),
 
     currentAgePyramid:
       $('currentAgePyramid'),
@@ -193,8 +172,6 @@
     analysisDistrictButtons: $('analysisDistrictButtons'),
     analysisSmallDistrictButtons: $('analysisSmallDistrictButtons'),
     analysisSmallDistrictRow: $('analysisSmallDistrictRow'),
-    analysisGroupButtons: $('analysisGroupButtons'),
-    analysisStatusButtons: $('analysisStatusButtons'),
     analysisBelieverButtons: $('analysisBelieverButtons'),
     analysisBelieverRow: $('analysisBelieverRow'),
     districtFilter: $('districtFilter'),
@@ -734,12 +711,6 @@
     state.chartGroup = '';
     state.chartDistrict = '';
 
-    state.selectedTrendGroups =
-      new Set();
-
-    state.trendGroupsInitialized =
-      false;
-
     state.quarterFromKey = '';
     state.quarterToKey = '';
 
@@ -1258,7 +1229,6 @@
     return counts;
   }
 
-
   function renderAll() {
 
     renderInfo();
@@ -1274,10 +1244,6 @@
     buildTrendFilters();
 
     renderTrend();
-
-    buildGroupTrendButtons();
-
-    renderGroupTrend();
 
     renderOverall();
 
@@ -2393,450 +2359,13 @@
     `;
   }
 
-
-  /*
-   * ========================================
-   * 羣組成長趨勢
-   * ========================================
-   *
-   * 1. 使用與上方每週人數相同的「全會所 / 大區 / 小區」範圍。
-   * 2. 國小、學齡前不納入。
-   * 3. 國中、高中、中學統一合併為「青少年」。
-   * 4. 每條線將每週資料彙整為每月平均，再以平滑曲線呈現。
-   */
-
-  const GROUP_TREND_COLORS = {
-    '年長': '#405B4A',
-    '中壯': '#6F8F76',
-    '青壯': '#9A7E62',
-    '青職': '#7FA184',
-    '大學': '#756B8A',
-    '青少年': '#A07F45'
-  };
-
-
+  /* 羣組名稱去除空白；人員明細羣組按鈕、目前羣組結構共用。 */
   function cleanGroupText(value) {
     return String(value ?? '')
       .trim()
       .replace(/\s+/g, '');
   }
 
-
-  function normalizeTrendGroup(group) {
-    const value =
-      cleanGroupText(group);
-
-    if (!value) {
-      return null;
-    }
-
-    if (
-      value === '國小' ||
-      value === '學齡前'
-    ) {
-      return null;
-    }
-
-    if (
-      [
-        '國中',
-        '高中',
-        '中學'
-      ].includes(value)
-    ) {
-      return '青少年';
-    }
-
-    return value;
-  }
-
-
-  function getAvailableTrendGroups() {
-    const sourcePeople =
-      getPopulationBase().people;
-
-    const found =
-      unique(
-        sourcePeople
-          .map(
-            person =>
-              normalizeTrendGroup(
-                person.group
-              )
-          )
-          .filter(Boolean)
-      );
-
-    const preferred = [
-      '年長',
-      '中壯',
-      '青壯',
-      '青職',
-      '大學',
-      '大專',
-      '青少年'
-    ];
-
-    return [
-      ...preferred.filter(
-        group => found.includes(group)
-      ),
-      ...found
-        .filter(
-          group => !preferred.includes(group)
-        )
-        .sort(
-          (a, b) =>
-            a.localeCompare(
-              b,
-              'zh-Hant',
-              { numeric: true }
-            )
-        )
-    ];
-  }
-
-
-  function getTrendGroupColor(
-    group,
-    availableGroups
-  ) {
-    if (GROUP_TREND_COLORS[group]) {
-      return GROUP_TREND_COLORS[group];
-    }
-
-    /*
-     * 若匯入資料出現額外羣組，才使用備援色；
-     * 主要六羣組顏色固定，不會因按鈕順序改變。
-     */
-    const fallback = [
-      '#567B78',
-      '#8A5F69',
-      '#6F8793'
-    ];
-    const index = Math.max(0, availableGroups.indexOf(group));
-
-    return fallback[index % fallback.length];
-  }
-
-
-  function buildGroupTrendButtons() {
-    if (!els.groupTrendButtons) {
-      return;
-    }
-
-    const groups =
-      getAvailableTrendGroups();
-
-    state.selectedTrendGroups =
-      new Set(
-        [...state.selectedTrendGroups]
-          .filter(
-            group => groups.includes(group)
-          )
-      );
-
-    if (
-      !state.trendGroupsInitialized
-    ) {
-      state.selectedTrendGroups =
-        new Set(groups);
-
-      state.trendGroupsInitialized =
-        true;
-    }
-
-    els.groupTrendButtons.innerHTML =
-      groups.length
-        ? groups
-            .map(
-              group => {
-                const selected =
-                  state.selectedTrendGroups.has(
-                    group
-                  );
-
-                const color =
-                  getTrendGroupColor(
-                    group,
-                    groups
-                  );
-
-                return `
-                  <button
-                    type="button"
-                    class="group-trend-btn${selected ? ' is-selected' : ''}"
-                    data-trend-group="${escapeAttr(group)}"
-                    aria-pressed="${selected ? 'true' : 'false'}"
-                    style="--group-trend-color:${escapeAttr(color)}"
-                  >
-                    <span class="group-trend-btn-dot" aria-hidden="true"></span>
-                    <span>${escapeHtml(group)}</span>
-                  </button>
-                `;
-              }
-            )
-            .join('')
-        : '<div class="group-trend-no-groups">目前沒有可分析的羣組</div>';
-
-    updateGroupTrendMeta();
-  }
-
-
-  function updateGroupTrendMeta() {
-    if (els.groupTrendScopeLabel) {
-      els.groupTrendScopeLabel.textContent =
-        state.groupTrendMode === 'districts'
-          ? '各大區比較'
-          : '全會所';
-    }
-
-    if (!els.groupTrendSelectedText) {
-      return;
-    }
-
-    const selected =
-      getAvailableTrendGroups()
-        .filter(
-          group =>
-            state.selectedTrendGroups.has(
-              group
-            )
-        );
-
-    els.groupTrendSelectedText.textContent =
-      selected.length
-        ? state.groupTrendMode === 'districts'
-          ? `比較羣組：${selected[0]}`
-          : `目前顯示：${selected.join('＋')}`
-        : '目前未選擇羣組';
-  }
-
-
-  function renderGroupTrend() {
-    if (!els.groupTrendChart) {
-      return;
-    }
-
-    updateGroupTrendMeta();
-
-    const availableGroups = getAvailableTrendGroups();
-    const selectedGroups = availableGroups.filter(
-      group => state.selectedTrendGroups.has(group)
-    );
-
-    if (!selectedGroups.length) {
-      els.groupTrendChart.innerHTML =
-        '<div class="trend-empty">請點選至少一個羣組查看成長趨勢</div>';
-      return;
-    }
-
-    const buildPoints = people => aggregateMonthlyPoints(
-      state.dateColumns.map(dateColumn => ({
-        date: dateColumn.date,
-        count: people.reduce((sum, person) => {
-          const row = state.rows[person.rowNumber - 1];
-          return sum + (row && isAttendance(row[dateColumn.col]) ? 1 : 0);
-        }, 0)
-      }))
-    );
-
-    let series;
-
-    if (state.groupTrendMode === 'districts') {
-      const selectedGroup = selectedGroups[0];
-      const basePeople = getPopulationBase().people.filter(
-        person => normalizeTrendGroup(person.group) === selectedGroup
-      );
-      const districts = unique(basePeople.map(person => person.district).filter(Boolean))
-        .sort((a, b) => a.localeCompare(b, 'zh-Hant', { numeric: true }));
-      const districtColors = ['#405B4A', '#756B8A', '#A07F45', '#567B78', '#8A5F69', '#6F8793'];
-
-      series = districts.map((district, index) => ({
-        group: district,
-        color: districtColors[index % districtColors.length],
-        points: buildPoints(basePeople.filter(person => person.district === district))
-      }));
-    } else {
-      const people = getPopulationBase().people;
-      series = selectedGroups.map(group => ({
-        group,
-        color: getTrendGroupColor(group, availableGroups),
-        points: buildPoints(people.filter(
-          person => normalizeTrendGroup(person.group) === group
-        ))
-      }));
-    }
-
-    if (els.groupTrendDistrictLegend) {
-      if (state.groupTrendMode === 'districts' && series.length) {
-        els.groupTrendDistrictLegend.innerHTML = series.map(item => `
-          <span class="group-trend-district-legend-item">
-            <i style="--district-trend-color:${escapeAttr(item.color)}"></i>
-            ${escapeHtml(item.group)}
-          </span>
-        `).join('');
-        els.groupTrendDistrictLegend.classList.remove('hidden');
-      } else {
-        els.groupTrendDistrictLegend.innerHTML = '';
-        els.groupTrendDistrictLegend.classList.add('hidden');
-      }
-    }
-
-    const monthCount = Math.max(
-      ...series.map(item => item.points.length),
-      0
-    );
-
-    if (!monthCount) {
-      els.groupTrendChart.innerHTML =
-        '<div class="trend-empty">沒有可繪製的月份資料</div>';
-      return;
-    }
-
-    // 與上方圖表一致：完整縮放到容器寬度，不產生橫向捲動。
-    const chartWidth = Math.max(320, Math.round(els.groupTrendChart.clientWidth || 760));
-    const chartHeight = chartWidth <= 680 ? 280 : 350;
-    const left = chartWidth <= 420 ? 42 : 58;
-    const right = chartWidth <= 420 ? 12 : 24;
-    const top = 24;
-    const bottom = 56;
-    const plotWidth = chartWidth - left - right;
-    const plotHeight = chartHeight - top - bottom;
-
-    const allValues = series.flatMap(
-      item => item.points.map(point => point.count)
-    );
-
-    const rawMax = Math.max(...allValues, 1);
-
-    const step = rawMax <= 20
-      ? 5
-      : rawMax <= 60
-        ? 10
-        : rawMax <= 150
-          ? 25
-          : rawMax <= 300
-            ? 50
-            : 100;
-
-    const yMax = Math.ceil(rawMax / step) * step;
-
-    const xAt = index =>
-      monthCount === 1
-        ? left + plotWidth / 2
-        : left + index / (monthCount - 1) * plotWidth;
-
-    const yAt = value =>
-      top + plotHeight - value / yMax * plotHeight;
-
-    const yTicks = 4;
-
-    const grid = Array.from(
-      { length: yTicks + 1 },
-      (_, i) => {
-        const value = Math.round(yMax * (yTicks - i) / yTicks);
-        const y = top + i / yTicks * plotHeight;
-
-        return `
-          <line
-            class="trend-grid-line"
-            x1="${left}"
-            y1="${y}"
-            x2="${chartWidth - right}"
-            y2="${y}"
-          />
-          <text
-            class="trend-y-label"
-            x="${left - 12}"
-            y="${y + 4}"
-            text-anchor="end"
-          >${value}</text>
-        `;
-      }
-    ).join('');
-
-    const referencePoints = series.find(item => item.points.length)?.points || [];
-
-    const maxXLabels = Math.max(3, Math.floor((chartWidth - left - right) / 62));
-    const xLabelEvery = Math.max(1, Math.ceil(referencePoints.length / maxXLabels));
-    const xLabelIndexes = getXLabelIndexes(referencePoints.length, xLabelEvery);
-    const xLabels = referencePoints.map((point, index) => {
-      if (!xLabelIndexes.has(index)) return '';
-      const label = `${point.date.getFullYear()}/${point.date.getMonth() + 1}`;
-
-      return `
-        <text
-          class="trend-x-label"
-          x="${xAt(index)}"
-          y="${chartHeight - 20}"
-          text-anchor="middle"
-        >${label}</text>
-      `;
-    }).join('');
-
-    const paths = series.map(item => {
-      const chartPoints = item.points.map((point, index) => ({
-        x: Number(xAt(index).toFixed(1)),
-        y: Number(yAt(point.count).toFixed(1)),
-        point,
-        index
-      }));
-
-      const path = smoothSvgPath(chartPoints);
-
-      const hitPoints = chartPoints.map(({ x, y, point }) => {
-        const monthText = `${point.date.getFullYear()}/${point.date.getMonth() + 1}`;
-
-        return `
-          <g class="group-trend-point-group">
-            <circle
-              class="group-trend-hit"
-              cx="${x}"
-              cy="${y}"
-              r="10"
-              tabindex="0"
-            >
-              <title>${escapeHtml(item.group)}｜${escapeHtml(monthText)}｜月平均 ${point.count.toFixed(1)} 人｜${point.weeks} 週</title>
-            </circle>
-            <circle
-              class="group-trend-point"
-              cx="${x}"
-              cy="${y}"
-              r="3.5"
-              style="fill:${escapeAttr(item.color)}"
-              aria-hidden="true"
-            />
-          </g>
-        `;
-      }).join('');
-
-      return `
-        <g class="group-trend-series">
-          <path
-            class="group-trend-line"
-            d="${path}"
-            style="stroke:${escapeAttr(item.color)}"
-          />
-          ${hitPoints}
-        </g>
-      `;
-    }).join('');
-
-    els.groupTrendChart.innerHTML = `
-      <svg
-        class="trend-svg"
-        width="100%"
-        height="${chartHeight}"
-        viewBox="0 0 ${chartWidth} ${chartHeight}"
-        aria-hidden="true"
-      >
-        ${grid}
-        ${paths}
-        ${xLabels}
-      </svg>
-    `;
-  }
     function renderOverall() {
 
     const people =
@@ -3055,25 +2584,6 @@
     } else {
       els.analysisSmallDistrictButtons.innerHTML = '';
     }
-
-    /* 羣組只顯示名稱；青少年仍代表 國中＋高中＋中學，但不顯示拆分統計。 */
-    els.analysisGroupButtons.innerHTML = analysisFilterGroups()
-      .map(g => makeAnalysisButton(
-        g,
-        g,
-        state.selectedGroups.has(g),
-        'data-analysis-group'
-      ))
-      .join('');
-
-    els.analysisStatusButtons.innerHTML = STATUS_ORDER
-      .map(x => makeAnalysisButton(
-        x,
-        x,
-        state.selectedStatuses.has(x),
-        'data-analysis-status'
-      ))
-      .join('');
 
     /*
      * 初信只保留一顆按鈕：
@@ -4581,12 +4091,11 @@
     return escapeHtml(v);
   }
 
-
-  function collectAnalysisSettings(){return{totalAttendance:els.totalAttendanceFilter?.value||'',absenceWeeks:els.absenceWeeksFilter?.value||'',district:els.districtFilter?.value||'',smallDistricts:[...state.selectedAnalysisSmallDistricts],groups:[...state.selectedGroups],statuses:[...state.selectedStatuses],newBeliever:els.newBelieverFilter?.value||'',search:els.searchInput?.value||'',trendDistrict:els.trendDistrictFilter?.value||'',trendSmallDistrict:els.trendSmallDistrictFilter?.value||'',trendGroups:[...state.selectedTrendGroups],groupTrendMode:state.groupTrendMode,quarterFromKey:state.quarterFromKey,quarterToKey:state.quarterToKey,peopleDistricts:[...state.selectedPeopleDistricts],peopleSmallDistricts:[...state.selectedPeopleSmallDistricts]};}
+  function collectAnalysisSettings(){return{totalAttendance:els.totalAttendanceFilter?.value||'',absenceWeeks:els.absenceWeeksFilter?.value||'',district:els.districtFilter?.value||'',smallDistricts:[...state.selectedAnalysisSmallDistricts],groups:[...state.selectedGroups],statuses:[...state.selectedStatuses],newBeliever:els.newBelieverFilter?.value||'',search:els.searchInput?.value||'',trendDistrict:els.trendDistrictFilter?.value||'',trendSmallDistrict:els.trendSmallDistrictFilter?.value||'',quarterFromKey:state.quarterFromKey,quarterToKey:state.quarterToKey,peopleDistricts:[...state.selectedPeopleDistricts],peopleSmallDistricts:[...state.selectedPeopleSmallDistricts]};}
   function saveAnalysisSettings(){if(restoringLocalData||!state.rows.length)return;try{localStorage.setItem(LOCAL_SETTINGS_KEY,JSON.stringify(collectAnalysisSettings()));}catch(err){console.warn('無法保存分析選項',err);}}
   function scheduleSaveAnalysisSettings(){clearTimeout(settingsSaveTimer);settingsSaveTimer=setTimeout(saveAnalysisSettings,80);}
   function readAnalysisSettings(){try{return JSON.parse(localStorage.getItem(LOCAL_SETTINGS_KEY)||'null');}catch(_){return null;}}
-  function applyAnalysisSettings(saved){if(!saved||!state.rows.length)return;if(els.totalAttendanceFilter)els.totalAttendanceFilter.value=saved.totalAttendance||'';if(els.absenceWeeksFilter)els.absenceWeeksFilter.value=saved.absenceWeeks||'';if(els.districtFilter)els.districtFilter.value=document.body.classList.contains('list-mode')?'':(saved.district||'');updateSmallDistrictOptions();state.selectedAnalysisSmallDistricts=new Set(document.body.classList.contains('list-mode')?[]:(saved.smallDistricts||[]));state.selectedGroups=new Set(saved.groups||[]);state.selectedStatuses=new Set(saved.statuses||[]);if(els.newBelieverFilter)els.newBelieverFilter.value=saved.newBeliever||'';if(els.searchInput)els.searchInput.value=saved.search||'';if(els.trendDistrictFilter)els.trendDistrictFilter.value=saved.trendDistrict||'';if(els.trendSmallDistrictFilter)els.trendSmallDistrictFilter.value=saved.trendSmallDistrict||'';state.selectedTrendGroups=new Set(saved.trendGroups||[]);state.trendGroupsInitialized=state.selectedTrendGroups.size>0;state.groupTrendMode=saved.groupTrendMode==='districts'?'districts':'groups';state.quarterFromKey=saved.quarterFromKey||'';state.quarterToKey=saved.quarterToKey||'';state.selectedPeopleDistricts=new Set(saved.peopleDistricts||[]);state.selectedPeopleSmallDistricts=new Set(saved.peopleSmallDistricts||[]);document.querySelectorAll('[data-group-trend-mode]').forEach(button=>{const selected=button.dataset.groupTrendMode===state.groupTrendMode;button.classList.toggle('is-selected',selected);button.setAttribute('aria-pressed',selected?'true':'false');});renderAll();}
+  function applyAnalysisSettings(saved){if(!saved||!state.rows.length)return;if(els.totalAttendanceFilter)els.totalAttendanceFilter.value=saved.totalAttendance||'';if(els.absenceWeeksFilter)els.absenceWeeksFilter.value=saved.absenceWeeks||'';if(els.districtFilter)els.districtFilter.value=document.body.classList.contains('list-mode')?'':(saved.district||'');updateSmallDistrictOptions();state.selectedAnalysisSmallDistricts=new Set(document.body.classList.contains('list-mode')?[]:(saved.smallDistricts||[]));state.selectedGroups=new Set(saved.groups||[]);state.selectedStatuses=new Set(saved.statuses||[]);if(els.newBelieverFilter)els.newBelieverFilter.value=saved.newBeliever||'';if(els.searchInput)els.searchInput.value=saved.search||'';if(els.trendDistrictFilter)els.trendDistrictFilter.value=saved.trendDistrict||'';if(els.trendSmallDistrictFilter)els.trendSmallDistrictFilter.value=saved.trendSmallDistrict||'';state.quarterFromKey=saved.quarterFromKey||'';state.quarterToKey=saved.quarterToKey||'';state.selectedPeopleDistricts=new Set(saved.peopleDistricts||[]);state.selectedPeopleSmallDistricts=new Set(saved.peopleSmallDistricts||[]);renderAll();}
   async function restoreLocalData(){if(!globalThis.indexedDB||!globalThis.XLSX)return;restoringLocalData=true;try{const attendance=await getLocalFile('attendance');const baptism=await getLocalFile('baptism');if(!attendance?.buffer)return;analyzeWorkbook(attendance.buffer,attendance.name||'本機點名資料');els.fileName.textContent=`${attendance.name||'本機點名資料'}｜已從本機載入`;if(baptism?.buffer)analyzeBaptismWorkbook(baptism.buffer,baptism.name||'本機受浸資料');applyAnalysisSettings(readAnalysisSettings());}catch(err){console.warn('本機資料載入失敗',err);els.error.textContent='本機保存資料無法載入，請重新匯入報表。';}finally{restoringLocalData=false;}}
 
   async function onAttendanceFile(file) {
@@ -4737,13 +4246,6 @@
 
     state.chartDistrict = '';
 
-
-    state.selectedTrendGroups =
-      new Set();
-
-    state.trendGroupsInitialized =
-      false;
-
     state.quarterFromKey = '';
     state.quarterToKey = '';
 
@@ -4855,7 +4357,6 @@
     }
   );
 
-
   /*
    * ========================================
    * 季度比較選擇
@@ -4876,7 +4377,6 @@
       buildQuarterCompareControls();
       buildTrendFilters();
       renderTrend();
-      renderGroupTrend();
     });
   }
 
@@ -4894,7 +4394,6 @@
       buildQuarterCompareControls();
       buildTrendFilters();
       renderTrend();
-      renderGroupTrend();
     });
   }
 
@@ -4925,8 +4424,6 @@
 
         buildTrendFilters();
         renderTrend();
-        buildGroupTrendButtons();
-        renderGroupTrend();
       }
     );
   }
@@ -4947,12 +4444,9 @@
 
         updateTrendSmallDistrictOptions();
         renderTrend();
-        buildGroupTrendButtons();
-        renderGroupTrend();
       }
     );
   }
-
 
   /*
    * ========================================
@@ -4986,18 +4480,7 @@
       renderPeople();
       return;
     }
-    const groupBtn = e.target.closest('[data-analysis-group]');
-    if (groupBtn) {
-      const g=groupBtn.dataset.analysisGroup;
-      if (state.selectedGroups.has(g)) state.selectedGroups.delete(g); else state.selectedGroups.add(g);
-      buildGroupOptions(); renderAnalysisFilterButtons(); renderPeople(); return;
-    }
-    const statusBtn = e.target.closest('[data-analysis-status]');
-    if (statusBtn) {
-      const st=statusBtn.dataset.analysisStatus;
-      if (state.selectedStatuses.has(st)) state.selectedStatuses.delete(st); else state.selectedStatuses.add(st);
-      buildStatusOptions(); renderAnalysisFilterButtons(); renderPeople(); return;
-    }
+
     const believerBtn = e.target.closest('[data-analysis-believer]');
     if (believerBtn) {
       const value = believerBtn.dataset.analysisBeliever || '';
@@ -5021,65 +4504,8 @@
       return;
     }
 
-    const modeButton = e.target.closest('[data-group-trend-mode]');
-    if (modeButton) {
-      state.groupTrendMode = modeButton.dataset.groupTrendMode === 'districts' ? 'districts' : 'groups';
-      if (state.groupTrendMode === 'districts') {
-        const groups = getAvailableTrendGroups();
-        const firstSelected = groups.find(group => state.selectedTrendGroups.has(group)) || groups[0];
-        state.selectedTrendGroups = firstSelected ? new Set([firstSelected]) : new Set();
-      }
-      document.querySelectorAll('[data-group-trend-mode]').forEach(button => {
-        const selected = button.dataset.groupTrendMode === state.groupTrendMode;
-        button.classList.toggle('is-selected', selected);
-        button.setAttribute('aria-pressed', selected ? 'true' : 'false');
-      });
-      buildGroupTrendButtons();
-      renderGroupTrend();
-      return;
-    }
+
   });
-
-  /*
-   * ========================================
-   * 羣組成長趨勢：iPhone App 式複選按鈕
-   * ========================================
-   */
-
-  if (els.groupTrendButtons) {
-    els.groupTrendButtons.addEventListener(
-      'click',
-      e => {
-        const button =
-          e.target.closest(
-            '[data-trend-group]'
-          );
-
-        if (!button) {
-          return;
-        }
-
-        const group =
-          button.dataset.trendGroup || '';
-
-        if (!group) {
-          return;
-        }
-
-        if (state.groupTrendMode === 'districts') {
-          state.selectedTrendGroups = new Set([group]);
-        } else if (state.selectedTrendGroups.has(group)) {
-          state.selectedTrendGroups.delete(group);
-        } else {
-          state.selectedTrendGroups.add(group);
-        }
-
-        buildGroupTrendButtons();
-        renderGroupTrend();
-      }
-    );
-  }
-
 
   /*
    * ========================================
@@ -5643,19 +5069,18 @@
   // 分析選項有變動時，自動保存上次狀態。
   document.addEventListener('change',scheduleSaveAnalysisSettings);
   document.addEventListener('input',e=>{if(e.target===els.searchInput)scheduleSaveAnalysisSettings();});
-  document.addEventListener('click',e=>{if(e.target.closest('button, .ios-filter-btn, [data-trend-group], [data-analysis-group], [data-analysis-status], [data-analysis-district], [data-analysis-small], [data-analysis-believer]'))setTimeout(scheduleSaveAnalysisSettings,0);});
+  document.addEventListener('click',e=>{if(e.target.closest('button'))setTimeout(scheduleSaveAnalysisSettings,0);});
 
   // 開啟網頁時自動恢復同一瀏覽器上次保存的資料與分析選項。
   restoreLocalData();
 
-  // 桌機視窗縮放或手機旋轉時，依新的可用寬度重畫兩張趨勢圖。
+  // 桌機視窗縮放或手機旋轉時，依新的可用寬度重畫趨勢圖。
   let trendResizeTimer = null;
   window.addEventListener('resize', () => {
     clearTimeout(trendResizeTimer);
     trendResizeTimer = setTimeout(() => {
       if (!state.rows.length) return;
       renderTrend();
-      renderGroupTrend();
     }, 120);
   });
 

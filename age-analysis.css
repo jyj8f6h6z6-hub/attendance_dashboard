@@ -1,27 +1,10 @@
 /* =========================================
    牧養分析圖（六張）
 ========================================= */
-
-.age-analysis-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
-.age-analysis-grid > * {
-  min-width: 0;
-}
-
-.age-panel {
-  min-height: 360px;
-}
-
-.age-description {
-  margin: 5px 0 0;
-  color: var(--muted);
-  font-size: 13px;
-}
-
+.age-analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.age-analysis-grid > * { min-width: 0; }
+.age-panel { min-height: 360px; }
+.age-description { margin: 5px 0 0; color: var(--muted); font-size: 13px; }
 .age-total {
   flex: 0 0 auto;
   padding: 8px 12px;
@@ -33,810 +16,161 @@
   white-space: nowrap;
 }
 
-
-/* =========================================
-   長條圖
-========================================= */
-
-.age-bars {
-  display: grid;
-  gap: 14px;
-  margin-top: 20px;
-}
-
+/* 長條圖 */
+.age-bars { display: grid; gap: 14px; margin-top: 20px; }
 .age-row {
   display: grid;
-
-  grid-template-columns:
-    54px
-    minmax(160px, 1fr)
-    96px;
-
+  grid-template-columns: 54px minmax(160px, 1fr) 96px;
   gap: 10px;
   align-items: center;
 }
 
-
-/* =========================================
-   群組名稱
-   現在可以點擊
-========================================= */
-
-.age-label {
-  font-size: 14px;
-  font-weight: 750;
-  color: var(--text);
-  white-space: nowrap;
-}
-
-
+/* 羣組名稱（可點擊） */
+.age-label { font-size: 14px; font-weight: 750; color: var(--text); white-space: nowrap; }
 button.age-label {
   appearance: none;
-
   border: 0;
-
   padding: 5px 6px;
-
   margin: -5px -6px;
-
   background: transparent;
-
   color: var(--text);
-
   font-family: inherit;
   font-size: 14px;
   font-weight: 750;
-
   text-align: left;
-
   border-radius: 7px;
-
   cursor: pointer;
-
-  transition:
-    background .15s ease,
-    color .15s ease,
-    box-shadow .15s ease;
+  transition: background .15s ease, color .15s ease, box-shadow .15s ease;
 }
-
-
-button.age-label:hover {
-  background:
-    var(--accent-soft);
-
-  color:
-    var(--accent);
-}
-
-
-button.age-label:focus-visible {
-  outline:
-    3px solid
-    rgba(49, 91, 102, .20);
-
-  outline-offset: 2px;
-}
-
-
-/* 群組名稱選取 */
-
+button.age-label:hover { background: var(--accent-soft); color: var(--accent); }
+button.age-label:focus-visible { outline: 3px solid rgba(49, 91, 102, .20); outline-offset: 2px; }
 button.age-label.is-selected {
-  background:
-    var(--accent);
-
-  color:
-    #fff;
-
-  box-shadow:
-    0 2px 8px
-    rgba(49, 91, 102, .18);
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(49, 91, 102, .18);
 }
 
+/* 長條軌道與堆疊長條 */
+.age-track { position: relative; height: 22px; overflow: hidden; border-radius: 999px; background: #edf1f3; }
+.age-stack { height: 100%; display: flex; overflow: hidden; border-radius: 999px; transition: width .3s ease; }
 
-/* =========================================
-   長條軌道
-========================================= */
-
-.age-track {
-  position: relative;
-
-  height: 22px;
-
-  overflow: hidden;
-
-  border-radius: 999px;
-
-  background: #edf1f3;
-}
-
-
-/* =========================================
-   堆疊長條
-========================================= */
-
-.age-stack {
-  height: 100%;
-
-  display: flex;
-
-  overflow: hidden;
-
-  border-radius: 999px;
-
-  transition:
-    width .3s ease;
-}
-
-
-/* =========================================
-   大區色塊
-   現在可以點擊
-========================================= */
-
+/* 大區色塊（可點擊） */
 .age-district-segment {
   appearance: none;
-
   height: 100%;
-
   display: flex;
-
   align-items: center;
-
   justify-content: center;
-
   overflow: hidden;
-
   border: 0;
-
   padding: 0;
-
   margin: 0;
-
   cursor: pointer;
-
   font-family: inherit;
-
-  transition:
-    opacity .15s ease,
-    filter .15s ease,
-    box-shadow .15s ease;
+  transition: opacity .15s ease, filter .15s ease, box-shadow .15s ease;
 }
-
-
-.age-district-segment:hover {
-  filter: brightness(.92);
-}
-
-
-.age-district-segment:focus-visible {
-  outline:
-    2px solid
-    rgba(31, 41, 51, .55);
-
-  outline-offset: -2px;
-
-  z-index: 2;
-}
-
-
-/*
- * 被點選的大區色塊
- */
-
+.age-district-segment:hover { filter: brightness(.92); }
+.age-district-segment:focus-visible { outline: 2px solid rgba(31, 41, 51, .55); outline-offset: -2px; z-index: 2; }
 .age-district-segment.is-selected {
   filter: brightness(.88);
-
-  box-shadow:
-    inset 0 0 0 3px
-    rgba(31, 41, 51, .55);
-
+  box-shadow: inset 0 0 0 3px rgba(31, 41, 51, .55);
   z-index: 2;
 }
-
-
 .age-district-segment span {
   color: #263238;
-
   font-size: 11px;
-
   font-weight: 850;
-
   line-height: 1;
-
   white-space: nowrap;
-
   pointer-events: none;
 }
 
+/* 大區馬卡龍配色 */
+.district-color-1 { background: #f3b6c3; }
+.district-color-2 { background: #abd8d2; }
+.district-color-3 { background: #efd69a; }
+.district-color-4 { background: #c8bee3; }
+.district-color-5 { background: #bdd8b7; }
+.district-color-6 { background: #e6c1aa; }
 
-/* =========================================
-   大區馬卡龍配色
-========================================= */
+/* 羣組右側總人數 */
+.age-number { display: flex; align-items: baseline; justify-content: flex-end; gap: 3px; white-space: nowrap; }
+.age-number strong { font-size: 16px; color: var(--text); }
+.age-number span { font-size: 12px; color: var(--muted); }
+.age-number small { margin-left: 5px; font-size: 11px; color: var(--muted); }
 
-.district-color-1 {
-  background: #f3b6c3;
-}
-
-.district-color-2 {
-  background: #abd8d2;
-}
-
-.district-color-3 {
-  background: #efd69a;
-}
-
-.district-color-4 {
-  background: #c8bee3;
-}
-
-.district-color-5 {
-  background: #bdd8b7;
-}
-
-.district-color-6 {
-  background: #e6c1aa;
-}
-
-
-/* =========================================
-   群組右側總人數
-========================================= */
-
-.age-number {
-  display: flex;
-
-  align-items: baseline;
-
-  justify-content: flex-end;
-
-  gap: 3px;
-
-  white-space: nowrap;
-}
-
-
-.age-number strong {
-  font-size: 16px;
-
-  color: var(--text);
-}
-
-
-.age-number span {
-  font-size: 12px;
-
-  color: var(--muted);
-}
-
-
-.age-number small {
-  margin-left: 5px;
-
-  font-size: 11px;
-
-  color: var(--muted);
-}
-
-
-/* =========================================
-   大區圖例
-========================================= */
-
+/* 大區圖例 */
 .district-legend {
   display: flex;
-
   flex-wrap: wrap;
-
   gap: 12px 26px;
-
   margin-top: 20px;
-
   padding-top: 16px;
-
-  border-top:
-    1px solid
-    var(--line);
+  border-top: 1px solid var(--line);
 }
+.district-legend-item { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; color: var(--text); }
+.district-dot { display: inline-block; width: 11px; height: 11px; border-radius: 999px; flex: 0 0 auto; }
+.district-name { font-size: 14px; font-weight: 700; color: #52616a; }
+.district-legend-item strong { margin-left: 3px; font-size: 17px; font-weight: 850; color: var(--text); }
+.district-unit { font-size: 13px; color: var(--muted); }
+.district-legend-item small { margin-left: 2px; font-size: 13px; font-weight: 700; color: var(--muted); }
 
-
-.district-legend-item {
-  display: flex;
-
-  align-items: baseline;
-
-  gap: 6px;
-
-  white-space: nowrap;
-
-  color: var(--text);
-}
-
-
-.district-dot {
-  display: inline-block;
-
-  width: 11px;
-
-  height: 11px;
-
-  border-radius: 999px;
-
-  flex: 0 0 auto;
-}
-
-
-.district-name {
-  font-size: 14px;
-
-  font-weight: 700;
-
-  color: #52616a;
-}
-
-
-.district-legend-item strong {
-  margin-left: 3px;
-
-  font-size: 17px;
-
-  font-weight: 850;
-
-  color: var(--text);
-}
-
-
-.district-unit {
-  font-size: 13px;
-
-  color: var(--muted);
-}
-
-
-.district-legend-item small {
-  margin-left: 2px;
-
-  font-size: 13px;
-
-  font-weight: 700;
-
-  color: var(--muted);
-}
-
-
-/* =========================================
-   學生占比
-========================================= */
-
+/* 學生占比 */
 .student-share {
   display: flex;
-
   justify-content: space-between;
-
   gap: 20px;
-
   margin-top: 18px;
-
   padding-top: 16px;
-
-  border-top:
-    1px solid
-    var(--line);
-
+  border-top: 1px solid var(--line);
   color: var(--muted);
-
   font-size: 13px;
 }
+.student-share strong { color: var(--text); font-size: 16px; }
 
-
-.student-share strong {
-  color: var(--text);
-
-  font-size: 16px;
-}
-
-
-/* =========================================
-   未知群組
-========================================= */
-
+/* 未知羣組、無資料 */
 .age-warning {
   margin-top: 16px;
-
   padding: 10px 12px;
-
   border-radius: 9px;
-
   background: #fff5d9;
-
   color: #765f28;
-
   font-size: 12px;
-
   line-height: 1.6;
 }
-
-
-.age-warning.hidden {
-  display: none;
-}
+.age-warning.hidden { display: none; }
+.age-empty { padding: 30px 10px; text-align: center; color: var(--muted); font-size: 13px; }
 
 
 /* =========================================
-   無資料
+   人員明細標題列
+   v1.2.1：合併原本三段覆寫（v1、v2、v1.1.26）的最終設定。
+   由上而下：標題 → 篩選按鈕 → 清除篩選。
 ========================================= */
-
-.age-empty {
-  padding: 30px 10px;
-
-  text-align: center;
-
-  color: var(--muted);
-
-  font-size: 13px;
-}
-
-
-/* =========================================
-   人員明細：
-   圖表連動篩選提示
-========================================= */
-
-.chart-filter-indicator {
-  display: flex;
-
-  align-items: center;
-
-  gap: 10px;
-
-  padding:
-    7px
-    8px
-    7px
-    12px;
-
-  border-radius: 999px;
-
-  background:
-    var(--accent-soft);
-
-  color:
-    var(--accent);
-
-  font-size: 13px;
-
-  font-weight: 750;
-
-  white-space: nowrap;
-}
-
-
-.chart-filter-indicator.hidden {
-  display: none;
-}
-
-
-.chart-filter-clear {
-  appearance: none;
-
-  border: 1px solid
-    rgba(49, 91, 102, .15);
-
-  border-radius: 999px;
-
-  padding: 5px 10px;
-
-  background: #fff;
-
-  color:
-    var(--accent);
-
-  font-family: inherit;
-
-  font-size: 12px;
-
-  font-weight: 750;
-
-  cursor: pointer;
-
-  transition:
-    background .15s ease,
-    border-color .15s ease;
-}
-
-
-.chart-filter-clear:hover {
-  background: #f7fafb;
-
-  border-color:
-    rgba(49, 91, 102, .3);
-}
-
-
-.chart-filter-clear:focus-visible {
-  outline:
-    3px solid
-    rgba(49, 91, 102, .20);
-
-  outline-offset: 2px;
-}
-
-
-/* =========================================
-   平板
-========================================= */
-
-@media (max-width: 1050px) {
-
-  .age-analysis-grid {
-    grid-template-columns: 1fr;
-  }
-
-}
-
-
-/* =========================================
-   手機
-========================================= */
-
-@media (max-width: 680px) {
-
-  .age-row {
-
-    grid-template-columns:
-      48px
-      minmax(90px, 1fr)
-      78px;
-
-    gap: 7px;
-  }
-
-
-  .age-label {
-    font-size: 13px;
-  }
-
-
-  button.age-label {
-    font-size: 13px;
-
-    padding: 5px 4px;
-
-    margin: -5px -4px;
-  }
-
-
-  .age-number strong {
-    font-size: 14px;
-  }
-
-
-  .age-number small {
-    display: none;
-  }
-
-
-  .age-district-segment span {
-    font-size: 10px;
-  }
-
-
-  .district-legend {
-    gap: 10px 16px;
-  }
-
-
-  .district-name {
-    font-size: 13px;
-  }
-
-
-  .district-legend-item strong {
-    font-size: 15px;
-  }
-
-
-  .district-legend-item small {
-    font-size: 12px;
-  }
-
-
-  .student-share {
-    display: grid;
-
-    gap: 8px;
-  }
-
-
-  /*
-   * 手機人員明細標題：
-   * 篩選提示換到下一行。
-   */
-
-  #peoplePanel > .section-head {
-    align-items: flex-start;
-
-    flex-wrap: wrap;
-  }
-
-
-  .chart-filter-indicator {
-    width: 100%;
-
-    justify-content:
-      space-between;
-
-    border-radius: 10px;
-
-    white-space: normal;
-  }
-
-}
-
-/* =========================================
-   人員明細：大區 / 小區 / 羣組 / 聚會情況按鈕
-   桌機：標題 → 篩選按鈕 → 清除篩選
-   手機：改為上下排列
-========================================= */
-
 #peoplePanel > .section-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-start;
   justify-content: flex-start;
   gap: 18px;
 }
 
-
-/* =========================================
-   篩選按鈕群組
-========================================= */
-
+/* 篩選按鈕群組：每一列（大區、小區、羣組…）各佔一整行 */
 .people-area-filters {
   display: flex;
   align-items: flex-start;
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 8px;
-
-  /*
-   * 不再吃掉中間所有剩餘空間，
-   * 避免「大區：全部」漂到畫面中央。
-   */
-  flex: 0 1 auto;
-
   min-width: 0;
-  margin-top: 1px;
 }
-
-
-/* 沒有可選大區 / 小區時的提示文字 */
-.people-filter-empty {
-  padding: 12px 4px;
-
-  color: var(--muted);
-
-  font-size: 12px;
-
-  text-align: center;
-}
-
-
-/* =========================================
-   清除篩選提示固定靠右
-========================================= */
-
-#peoplePanel .chart-filter-indicator {
-  margin-left: auto;
-  flex: 0 0 auto;
-}
-
-
-/* =========================================
-   平板
-========================================= */
-
-@media (max-width: 1050px) {
-
-  #peoplePanel > .section-head {
-    flex-wrap: wrap;
-  }
-
-
-  /*
-   * 平板空間不足時，
-   * 篩選按鈕改到標題下方。
-   */
-  .people-area-filters {
-    order: 3;
-
-    flex-basis: 100%;
-
-    width: 100%;
-
-    justify-content: flex-start;
-  }
-
-
-  /*
-   * 清除篩選仍維持右上方。
-   */
-  #peoplePanel .chart-filter-indicator {
-    margin-left: auto;
-  }
-
-}
-
-
-/* =========================================
-   手機
-========================================= */
-
-@media (max-width: 680px) {
-
-  #peoplePanel > .section-head {
-    display: flex;
-
-    flex-direction: column;
-
-    align-items: stretch;
-
-    gap: 12px;
-  }
-
-
-  /*
-   * 手機：
-   * 篩選按鈕群組一行一個。
-   */
-  .people-area-filters {
-    order: 2;
-
-    display: grid;
-
-    grid-template-columns: 1fr;
-
-    width: 100%;
-
-    gap: 8px;
-  }
-
-
-  /*
-   * 清除篩選放在篩選按鈕下面。
-   */
-  #peoplePanel .chart-filter-indicator {
-    order: 3;
-
-    width: 100%;
-
-    margin-left: 0;
-
-    justify-content: space-between;
-
-    border-radius: 10px;
-
-    white-space: normal;
-  }
-
-}
-/* =========================================
-   v2：人員明細改為 iOS 風格直接按鈕
-========================================= */
-
-#peoplePanel > .section-head {
-  flex-wrap: wrap;
-}
-
 #peoplePanel .people-area-button-panel {
   order: 3;
   flex: 1 1 100%;
   width: 100%;
   margin-top: 4px;
 }
-
-#peoplePanel .people-button-group {
-  width: 100%;
-}
-
+#peoplePanel .people-button-group { width: 100%; }
 #peoplePanel .people-area-button-list {
   display: flex;
   flex-wrap: wrap;
@@ -846,36 +180,49 @@ button.age-label.is-selected {
   padding: 0;
 }
 
-@media (max-width: 680px) {
-  #peoplePanel .people-area-button-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
+/* 沒有可選大區 / 小區時的提示文字 */
+.people-filter-empty { padding: 12px 4px; color: var(--muted); font-size: 12px; text-align: center; }
 
-/* v1.1.12：單一清除按鈕，無圖表篩選時不顯示空白提示膠囊 */
-#peoplePanel .chart-filter-indicator:has(#chartFilterText.hidden) {
-  background: transparent;
-  padding: 0;
+/* 圖表連動提示＋清除篩選 */
+.chart-filter-indicator {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px 7px 12px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
 }
-#peoplePanel .chart-filter-clear:disabled {
-  opacity: .42;
-  cursor: not-allowed;
-}
-#peoplePanel .chart-filter-clear:disabled:hover {
+.chart-filter-indicator.hidden { display: none; }
+/* 無圖表篩選時，不顯示空白提示膠囊，只留清除按鈕 */
+#peoplePanel .chart-filter-indicator:has(#chartFilterText.hidden) { background: transparent; padding: 0; }
+
+.chart-filter-clear {
+  appearance: none;
+  border: 1px solid rgba(49, 91, 102, .15);
+  border-radius: 999px;
+  padding: 5px 10px;
   background: #fff;
-  border-color: rgba(49, 91, 102, .15);
+  color: var(--accent);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 750;
+  cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
 }
+.chart-filter-clear:hover { background: #f7fafb; border-color: rgba(49, 91, 102, .3); }
+.chart-filter-clear:focus-visible { outline: 3px solid rgba(49, 91, 102, .20); outline-offset: 2px; }
+#peoplePanel .chart-filter-clear:disabled { opacity: .42; cursor: not-allowed; }
+#peoplePanel .chart-filter-clear:disabled:hover { background: #fff; border-color: rgba(49, 91, 102, .15); }
 
-/* =========================================
-   v1.1.26｜桌機版：清除篩選移到篩選按鈕下方並放大
-   手機版（680px 以下）不受影響
-========================================= */
+/* 桌機：清除篩選在篩選按鈕下方並放大 */
 @media (min-width: 681px) {
   #peoplePanel .chart-filter-indicator {
-    order: 4;              /* 排在篩選按鈕群組之後 */
+    order: 4;
     flex: 0 0 auto;
-    margin-left: 0;        /* 取消推到最右邊 */
     margin-top: 2px;
   }
 
@@ -896,5 +243,68 @@ button.age-label.is-selected {
   #peoplePanel .chart-filter-clear:not(:disabled):hover {
     background: var(--accent-soft);
     border-color: var(--accent);
+  }
+}
+
+
+/* =========================================
+   平板
+========================================= */
+@media (max-width: 1050px) {
+  .age-analysis-grid { grid-template-columns: 1fr; }
+}
+
+
+/* =========================================
+   手機
+========================================= */
+@media (max-width: 680px) {
+  .age-row {
+    grid-template-columns: 48px minmax(90px, 1fr) 78px;
+    gap: 7px;
+  }
+
+  .age-label { font-size: 13px; }
+
+  button.age-label {
+    font-size: 13px;
+    padding: 5px 4px;
+    margin: -5px -4px;
+  }
+
+  .age-number strong { font-size: 14px; }
+  .age-number small { display: none; }
+  .age-district-segment span { font-size: 10px; }
+
+  .district-legend { gap: 10px 16px; }
+  .district-name { font-size: 13px; }
+  .district-legend-item strong { font-size: 15px; }
+  .district-legend-item small { font-size: 12px; }
+
+  .student-share { display: grid; gap: 8px; }
+
+  /* 人員明細：上下排列，篩選按鈕兩欄，清除篩選佔滿寬度 */
+  #peoplePanel > .section-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .people-area-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  #peoplePanel .people-area-button-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  #peoplePanel .chart-filter-indicator {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    border-radius: 10px;
+    white-space: normal;
   }
 }

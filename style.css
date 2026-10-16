@@ -24,22 +24,10 @@ body {
   color: var(--text);
 }
 
-.topbar {
-  padding: 34px clamp(20px, 5vw, 72px) 26px;
-  display: flex;
-  justify-content: space-between;
-  gap: 20px;
-  align-items: flex-end;
-  background: #20373d;
-  color: #fff;
-}
-
 h1 { margin: 4px 0 8px; font-size: clamp(28px, 4vw, 44px); letter-spacing: -.03em; }
 h2 { margin: 4px 0 8px; font-size: 20px; }
 p { line-height: 1.65; }
-.subtitle { margin: 0; color: #c9d6da; }
 .eyebrow { margin: 0; font-size: 11px; font-weight: 800; letter-spacing: .16em; color: #7e9298; }
-.topbar .eyebrow { color: #9eb4ba; }
 
 main {
   width: min(1480px, calc(100% - 40px));
@@ -391,8 +379,7 @@ select:focus-visible {
 }
 
 @media (max-width: 680px) {
-  .topbar { display: block; }
-  .topbar .btn { margin-top: 16px; }
+
   main { width: min(100% - 22px, 1480px); }
   .panel { padding: 16px; border-radius: 12px; }
 
@@ -714,10 +701,9 @@ select:focus-visible {
 
 
 /* =========================================
-   羣組成長趨勢
-   iPhone App 式等尺寸複選按鈕 + 每月平均平滑曲線
+   羣組季度比較：區塊標題與說明
+   （沿用原「羣組成長趨勢」的樣式名稱）
 ========================================= */
-
 .group-trend-section {
   margin-top: 26px;
   padding-top: 24px;
@@ -744,95 +730,6 @@ select:focus-visible {
   line-height: 1.65;
 }
 
-.group-trend-scope {
-  flex: 0 0 auto;
-  padding: 8px 12px;
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  background: #f8fafb;
-  color: var(--accent);
-  font-size: 12px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.group-trend-buttons {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.group-trend-btn {
-  appearance: none;
-  min-width: 0;
-  min-height: 54px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid #d8e0e4;
-  border-radius: 15px;
-  padding: 10px 12px;
-  background: linear-gradient(180deg, #ffffff 0%, #f7f9fa 100%);
-  color: #52616a;
-  box-shadow:
-    0 1px 1px rgba(31, 41, 51, .03),
-    0 5px 14px rgba(31, 41, 51, .05);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-  cursor: pointer;
-  transition:
-    transform .15s ease,
-    border-color .15s ease,
-    background .15s ease,
-    box-shadow .15s ease,
-    color .15s ease;
-}
-
-.group-trend-btn:hover {
-  transform: translateY(-1px);
-  border-color: #bdcbd1;
-}
-
-.group-trend-btn:focus-visible {
-  outline: 3px solid rgba(49, 91, 102, .18);
-  outline-offset: 2px;
-}
-
-.group-trend-btn.is-selected {
-  border-color: color-mix(in srgb, var(--group-trend-color) 42%, #ffffff);
-  background: color-mix(in srgb, var(--group-trend-color) 12%, #ffffff);
-  color: #25343a;
-  box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--group-trend-color) 18%, transparent),
-    0 7px 18px rgba(31, 41, 51, .07);
-}
-
-.group-trend-btn-dot {
-  width: 10px;
-  height: 10px;
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: #cbd4d8;
-}
-
-.group-trend-btn.is-selected .group-trend-btn-dot {
-  background: var(--group-trend-color);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--group-trend-color) 13%, transparent);
-}
-
-.group-trend-no-groups {
-  grid-column: 1 / -1;
-  padding: 18px;
-  border: 1px dashed var(--line);
-  border-radius: 12px;
-  color: var(--muted);
-  text-align: center;
-  font-size: 13px;
-}
-
 .group-trend-meta {
   display: flex;
   flex-wrap: wrap;
@@ -852,61 +749,14 @@ select:focus-visible {
   font-weight: 700;
 }
 
-.group-trend-scroller {
-  margin-top: 8px;
-}
-
-.group-trend-chart {
-  min-height: 350px;
-}
-
-.group-trend-line {
-  fill: none;
-  stroke-width: 3.2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.group-trend-hit {
-  fill: transparent;
-  stroke: transparent;
-  cursor: help;
-}
-
-.group-trend-point {
-  stroke: #ffffff;
-  stroke-width: 2;
-  pointer-events: none;
-}
-
-.group-trend-point-group:hover .group-trend-point,
-.group-trend-point-group:focus-within .group-trend-point {
-  r: 5.5;
-}
-
 @media (max-width: 800px) {
   .group-trend-head {
     flex-direction: column;
     gap: 10px;
   }
-
-  .group-trend-scope {
-    align-self: flex-start;
-  }
 }
 
 @media (max-width: 560px) {
-  .group-trend-buttons {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .group-trend-btn {
-    min-height: 52px;
-    border-radius: 14px;
-    padding: 9px 10px;
-  }
-
   .group-trend-meta {
     display: grid;
     grid-template-columns: 1fr;
@@ -1158,21 +1008,17 @@ select:focus-visible {
 ========================================= */
 .analysis-filter-panel { overflow: hidden; }
 .analysis-filter-head { display:flex; align-items:flex-end; justify-content:space-between; gap:24px; margin-bottom:18px; }
-.analysis-search-field { width:min(360px, 42vw); }
 .analysis-filter-native { display:none !important; }
 .analysis-button-filters { display:grid; gap:12px; }
 .analysis-button-row { display:grid; grid-template-columns:88px minmax(0,1fr); gap:14px; align-items:center; }
 .analysis-button-label { color:var(--muted); font-size:12px; font-weight:800; }
+.analysis-button-row.hidden { display:none; }
 .analysis-ios-buttons { display:grid; grid-template-columns:repeat(auto-fit,minmax(108px,1fr)); gap:9px; }
 .analysis-ios-buttons .ios-filter-btn { width:100%; min-width:0; min-height:48px; padding:8px 12px; }
-.analysis-group-buttons .ios-filter-btn { min-height:48px; line-height:1.2; }
+/* 分析篩選、人員明細共用的按鈕內文排列 */
 .analysis-group-main { display:flex; align-items:center; justify-content:center; gap:7px; }
-.analysis-group-detail { font-size:10px; font-weight:650; color:#7a8791; white-space:nowrap; }
-.analysis-group-buttons .ios-filter-btn.is-selected .analysis-group-detail { color:#53666e; }
-.analysis-filter-panel .result-count { margin:16px 0 0; padding-top:12px; border-top:1px solid #edf1f3; }
 @media (max-width:760px) {
   .analysis-filter-head { display:grid; grid-template-columns:1fr; gap:12px; }
-  .analysis-search-field { width:100%; }
   .analysis-button-row { grid-template-columns:1fr; gap:7px; }
   .analysis-ios-buttons { grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
@@ -1180,8 +1026,7 @@ select:focus-visible {
 
 /* 2026-09-07：趨勢圖完整適應容器，不使用橫向滑動 */
 @media (max-width: 680px) {
-  .trend-chart,
-  .group-trend-chart {
+  .trend-chart {
     min-height: 280px;
   }
 
@@ -1385,138 +1230,39 @@ select:focus-visible {
   .age-structure-card { padding: 13px 12px; }
 }
 
-/* =========================================
-   羣組成長趨勢：按鈕列在上、趨勢圖在下
-   v1.1.21：移除為已刪除「季度結構變化」卡片保留的左側欄位，
-   趨勢圖改為佔滿整個寬度。
-========================================= */
-.group-trend-layout {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas:
-    "group-controls"
-    "group-chart";
-}
-
-.group-trend-controls {
-  grid-area: group-controls;
-  min-width: 0;
-}
-
-.group-trend-layout > .group-trend-scroller {
-  grid-area: group-chart;
-}
-
-/* 因控制列位於 layout 內，保留原本視覺間距 */
-.group-trend-controls .group-trend-buttons {
-  margin-top: 0;
-}
-
-@media (max-width: 680px) {
-  .group-trend-controls .group-trend-meta {
-    margin-top: 10px;
-  }
-}
 
 /* =========================================
-   2026-09-11：季度比較選擇
-   季別依實際匯入資料產生，顯示為 YYYYQ1 / YYYYQ2 / YYYYQ3。
-========================================= */
-.quarter-compare-controls {
-  display: inline-flex;
-  align-items: end;
-  gap: 8px;
-  margin-top: 14px;
-  padding: 9px 10px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #f8fafb;
-}
-
-.quarter-compare-controls label {
-  display: grid;
-  gap: 4px;
-}
-
-.quarter-compare-controls label > span {
-  color: var(--muted);
-  font-size: 10px;
-  font-weight: 800;
-}
-
-.quarter-compare-controls select {
-  min-width: 112px;
-  min-height: 36px;
-  padding: 6px 30px 6px 10px;
-  border: 1px solid #ccd5da;
-  border-radius: 9px;
-  background: #fff;
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.quarter-compare-controls select:focus-visible {
-  outline: 3px solid rgba(49, 91, 102, .16);
-  outline-offset: 2px;
-  border-color: var(--accent);
-}
-
-.quarter-compare-arrow {
-  padding-bottom: 8px;
-  color: #7a8791;
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.trend-summary b {
-  color: #52616a;
-  font-size: 12px;
-  font-weight: 850;
-}
-
-@media (max-width: 560px) {
-  .quarter-compare-controls {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    width: 100%;
-    align-items: end;
-  }
-
-  .quarter-compare-controls select {
-    width: 100%;
-    min-width: 0;
-  }
-}
-
-
-/* =========================================
-   2026-09-11｜頁首禾捆 Hero
-   以現有禾捆 icon 視覺延伸成桌機／手機共用橫幅。
+   頁首禾捆 Hero
+   v1.2.1：合併 2026-09-11、v1.0.0、v1.0.1、v1.1.1 四段覆寫後的最終設定。
+   桌機：左側標題＋局部柔光；平板：禾捆偏右；手機：文字在上、禾場在下。
 ========================================= */
 .topbar {
   position: relative;
   isolation: isolate;
-  min-height: 250px;
-  padding: 42px clamp(24px, 5vw, 76px);
+  display: flex;
+  justify-content: flex-start;
   align-items: center;
+  gap: 20px;
+  min-height: 252px;
+  padding: 40px clamp(24px, 4.6vw, 72px);
   overflow: hidden;
   background:
-    linear-gradient(
-      90deg,
-      rgba(255, 253, 246, .94) 0%,
-      rgba(255, 253, 246, .82) 30%,
-      rgba(255, 253, 246, .28) 52%,
-      rgba(255, 253, 246, .00) 72%
+    radial-gradient(
+      ellipse 560px 220px at 18% 47%,
+      rgba(255, 253, 246, .82) 0%,
+      rgba(255, 253, 246, .62) 42%,
+      rgba(255, 253, 246, .24) 70%,
+      rgba(255, 253, 246, 0) 100%
     ),
-    url("header-wheat.png") center center / cover no-repeat;
+    url("header-wheat.png") center 52% / cover no-repeat;
   color: #173744;
 }
 
 .topbar > div {
   position: relative;
   z-index: 1;
-  max-width: min(720px, 58vw);
+  display: block;
+  max-width: min(700px, 49vw);
   padding: 4px 0;
   text-shadow: 0 1px 0 rgba(255,255,255,.30);
 }
@@ -1541,8 +1287,11 @@ select:focus-visible {
 .topbar .btn.ghost {
   position: relative;
   z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
-  margin-left: auto;
+  margin: 14px 0 0;
   border: 1px solid rgba(255,255,255,.46);
   background: rgba(30, 64, 73, .88);
   color: #fff;
@@ -1555,215 +1304,7 @@ select:focus-visible {
   transform: translateY(-1px);
 }
 
-/* 平板：保留禾捆在右側，文字不要壓到主禾捆 */
-@media (max-width: 900px) {
-  .topbar {
-    min-height: 235px;
-    padding: 34px 26px;
-    background-position: 61% center;
-  }
-
-  .topbar > div {
-    max-width: 68%;
-  }
-
-  .topbar h1 {
-    font-size: clamp(32px, 6vw, 46px);
-  }
-
-  .topbar .subtitle {
-    font-size: 14px;
-  }
-}
-
-/* 手機：改成上方天空＋下方禾場的短 Hero。
-   文字集中左上；背景右側仍看得到禾捆，不與文字重疊。 */
-@media (max-width: 680px) {
-  .topbar {
-    display: grid;
-    grid-template-columns: 1fr;
-    align-content: center;
-    min-height: 250px;
-    padding: 30px 20px 24px;
-    background:
-      linear-gradient(
-        180deg,
-        rgba(255, 253, 246, .88) 0%,
-        rgba(255, 253, 246, .72) 48%,
-        rgba(255, 253, 246, .20) 100%
-      ),
-      linear-gradient(
-        90deg,
-        rgba(255, 253, 246, .72) 0%,
-        rgba(255, 253, 246, .34) 58%,
-        rgba(255, 253, 246, .00) 100%
-      ),
-      url("header-wheat.png") 64% center / cover no-repeat;
-  }
-
-  .topbar > div {
-    max-width: 100%;
-    padding-right: 18%;
-  }
-
-  .topbar h1 {
-    margin-bottom: 9px;
-    font-size: clamp(30px, 10vw, 40px);
-    line-height: 1.1;
-  }
-
-  .topbar .subtitle {
-    max-width: 92%;
-    font-size: 13px;
-    line-height: 1.65;
-  }
-
-  .topbar .btn.ghost {
-    justify-self: start;
-    margin: 17px 0 0;
-    padding: 9px 14px;
-    background: rgba(30, 64, 73, .90);
-  }
-}
-
-@media (max-width: 420px) {
-  .topbar {
-    min-height: 265px;
-    background-position: 67% center;
-  }
-
-  .topbar > div {
-    padding-right: 8%;
-  }
-
-  .topbar .subtitle {
-    max-width: 100%;
-  }
-}
-
-
-/* =========================================
-   v1.0.0｜正式公開版 Hero 微調
-   - 移除明顯的左右漸層斷點
-   - 文字只保留局部柔光，不讓模糊區延伸過長
-   - 桌機／手機使用同一張連續禾場背景
-========================================= */
-
-.topbar {
-  min-height: 252px;
-  padding: 40px clamp(24px, 4.6vw, 72px);
-  background:
-    radial-gradient(
-      ellipse 560px 220px at 18% 47%,
-      rgba(255, 253, 246, .82) 0%,
-      rgba(255, 253, 246, .62) 42%,
-      rgba(255, 253, 246, .24) 70%,
-      rgba(255, 253, 246, 0) 100%
-    ),
-    url("header-wheat.png") center 52% / cover no-repeat;
-}
-
-.topbar > div {
-  max-width: min(700px, 49vw);
-}
-
-@media (max-width: 900px) {
-  .topbar {
-    min-height: 238px;
-    background:
-      radial-gradient(
-        ellipse 520px 210px at 20% 44%,
-        rgba(255, 253, 246, .82) 0%,
-        rgba(255, 253, 246, .58) 45%,
-        rgba(255, 253, 246, .18) 74%,
-        rgba(255, 253, 246, 0) 100%
-      ),
-      url("header-wheat.png") 58% 52% / cover no-repeat;
-  }
-
-  .topbar > div {
-    max-width: 62%;
-  }
-}
-
-@media (max-width: 680px) {
-  .topbar {
-    min-height: 270px;
-    padding: 28px 20px 22px;
-    background:
-      radial-gradient(
-        ellipse 430px 230px at 18% 31%,
-        rgba(255, 253, 246, .88) 0%,
-        rgba(255, 253, 246, .64) 48%,
-        rgba(255, 253, 246, .20) 76%,
-        rgba(255, 253, 246, 0) 100%
-      ),
-      url("header-wheat.png") 60% center / cover no-repeat;
-  }
-
-  .topbar > div {
-    max-width: 100%;
-    padding-right: 0;
-  }
-
-  .topbar h1 {
-    font-size: clamp(29px, 9.4vw, 39px);
-  }
-
-  .topbar .subtitle {
-    max-width: 92%;
-    font-size: 13px;
-  }
-
-  .topbar .btn.ghost {
-    margin-top: 15px;
-  }
-}
-
-@media (max-width: 420px) {
-  .topbar {
-    min-height: 278px;
-    background:
-      radial-gradient(
-        ellipse 390px 220px at 18% 29%,
-        rgba(255, 253, 246, .90) 0%,
-        rgba(255, 253, 246, .66) 48%,
-        rgba(255, 253, 246, .18) 77%,
-        rgba(255, 253, 246, 0) 100%
-      ),
-      url("header-wheat.png") 62% center / cover no-repeat;
-  }
-
-  .topbar .subtitle {
-    max-width: 100%;
-  }
-}
-
-/* =========================================
-   v1.0.1｜公開版版面微調
-   - 清除按鈕移到副標正下方
-   - 版本資訊移至頁尾並以獨立標籤呈現
-   - iPhone Hero 減少頂部留白、增加垂直畫面高度
-========================================= */
-
-/* 清除按鈕改為標題區內的下一列，不再漂到 Hero 最右側 */
-.topbar {
-  justify-content: flex-start;
-  align-items: center;
-}
-
-.topbar > div {
-  display: block;
-}
-
-.topbar .btn.ghost {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin: 14px 0 0;
-  margin-left: 0;
-}
-
+/* 頁尾版本標籤 */
 .footer-copy {
   margin: 0;
   line-height: 1.8;
@@ -1786,12 +1327,52 @@ select:focus-visible {
   vertical-align: middle;
 }
 
-/* iPhone / 窄螢幕：減少 Hero 上方空白，同時讓禾場多露一些垂直畫面 */
+/* 平板：禾捆在右側，文字不壓到主禾捆 */
+@media (max-width: 900px) {
+  .topbar {
+    min-height: 238px;
+    padding: 34px 26px;
+    background:
+      radial-gradient(
+        ellipse 520px 210px at 20% 44%,
+        rgba(255, 253, 246, .82) 0%,
+        rgba(255, 253, 246, .58) 45%,
+        rgba(255, 253, 246, .18) 74%,
+        rgba(255, 253, 246, 0) 100%
+      ),
+      url("header-wheat.png") 58% 52% / cover no-repeat;
+  }
+
+  .topbar > div {
+    max-width: 62%;
+  }
+
+  .topbar h1 {
+    font-size: clamp(32px, 6vw, 46px);
+  }
+
+  .topbar .subtitle {
+    font-size: 14px;
+  }
+}
+
+/* 手機：上方留白縮小、禾場垂直多露一些；標題固定單行 */
 @media (max-width: 680px) {
   .topbar {
+    display: grid;
+    grid-template-columns: 1fr;
     align-content: start;
     min-height: 305px;
-    padding: 16px 20px 20px;
+    padding: 14px 20px 20px;
+    background:
+      radial-gradient(
+        ellipse 430px 230px at 18% 31%,
+        rgba(255, 253, 246, .88) 0%,
+        rgba(255, 253, 246, .64) 48%,
+        rgba(255, 253, 246, .20) 76%,
+        rgba(255, 253, 246, 0) 100%
+      ),
+      url("header-wheat.png") 60% center / cover no-repeat;
   }
 
   .topbar > div {
@@ -1800,19 +1381,24 @@ select:focus-visible {
   }
 
   .topbar h1 {
-    margin-top: 0;
-    margin-bottom: 8px;
+    margin: 0 0 9px;
+    font-size: clamp(25px, 7.35vw, 31px);
+    line-height: 1.14;
+    letter-spacing: -0.045em;
+    white-space: nowrap;
   }
 
   .topbar .subtitle {
     max-width: 100%;
-    margin-bottom: 0;
+    font-size: 13px;
+    line-height: 1.65;
   }
 
   .topbar .btn.ghost {
     justify-self: auto;
     margin: 13px 0 0;
     padding: 9px 14px;
+    background: rgba(30, 64, 73, .90);
   }
 
   footer {
@@ -1828,34 +1414,16 @@ select:focus-visible {
 @media (max-width: 420px) {
   .topbar {
     min-height: 312px;
-    padding-top: 14px;
-  }
-}
-
-
-/* =========================================
-   v1.1.1｜手機版頁首標題排版修正
-   - 配合「召會生活人數成長統計」較長的新站名
-   - 手機版固定單行顯示，避免最後一字掉到第二行
-   - 略縮字級與上方留白，維持禾場 Hero 的視覺比例
-========================================= */
-@media (max-width: 680px) {
-  .topbar {
-    padding: 14px 20px 20px;
-  }
-
-  .topbar h1 {
-    margin: 0 0 9px;
-    font-size: clamp(25px, 7.35vw, 31px);
-    line-height: 1.14;
-    letter-spacing: -0.045em;
-    white-space: nowrap;
-  }
-}
-
-@media (max-width: 420px) {
-  .topbar {
     padding-top: 12px;
+    background:
+      radial-gradient(
+        ellipse 390px 220px at 18% 29%,
+        rgba(255, 253, 246, .90) 0%,
+        rgba(255, 253, 246, .66) 48%,
+        rgba(255, 253, 246, .18) 77%,
+        rgba(255, 253, 246, 0) 100%
+      ),
+      url("header-wheat.png") 62% center / cover no-repeat;
   }
 
   .topbar h1 {
@@ -1876,21 +1444,19 @@ select:focus-visible {
 .group-trend-mode-btn { appearance:none; border:0; background:transparent; padding:7px 11px; border-radius:9px; color:var(--muted); font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
 .group-trend-mode-btn.is-selected { background:#fff; color:var(--accent); box-shadow:0 1px 5px rgba(31,41,51,.12); }
 @media (max-width: 680px) { .group-trend-head { flex-direction:column; } .group-trend-head-actions { justify-content:flex-start; width:100%; } }
-.group-trend-district-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; font-size:12px; font-weight:800; color:#52616a; }
-.group-trend-district-legend-item { display:inline-flex; align-items:center; gap:6px; }
-.group-trend-district-legend-item i { width:18px; height:3px; border-radius:999px; background:var(--district-trend-color); display:inline-block; }
 
 /* =========================================
    v1.1.0｜名單模式 / 完整模式 + 分析區塊收合
+   v1.2.1：併入 v1.1.1 收合高度修正與 v1.1.27 淺色頁首的深色字設定
 ========================================= */
 .view-mode-switch {
   display: inline-flex;
   gap: 4px;
   margin-top: 14px;
   padding: 4px;
-  border: 1px solid rgba(255,255,255,.42);
+  border: 1px solid rgba(30, 64, 73, .20);
   border-radius: 12px;
-  background: rgba(255,255,255,.16);
+  background: rgba(30, 64, 73, .08);
   backdrop-filter: blur(4px);
 }
 .view-mode-btn {
@@ -1899,7 +1465,7 @@ select:focus-visible {
   border-radius: 9px;
   padding: 8px 14px;
   background: transparent;
-  color: #fff;
+  color: #24434b;
   font: inherit;
   font-size: 13px;
   font-weight: 800;
@@ -1911,7 +1477,6 @@ select:focus-visible {
   box-shadow: 0 1px 5px rgba(31,41,51,.15);
 }
 body.list-mode .full-mode-only { display: none !important; }
-body.list-mode .analysis-filter-panel { margin-top: 0; }
 
 .collapsible-analysis { position: relative; }
 .analysis-collapse-toggle {
@@ -1933,18 +1498,7 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
 .collapsible-analysis:not(.analysis-collapsed) .analysis-collapse-icon { transform: rotate(180deg); }
 .collapsible-analysis .section-head h2 { display: none; }
 .collapsible-analysis.analysis-collapsed > :not(.analysis-collapse-toggle) { display: none !important; }
-
-
-@media (max-width: 680px) {
-  .view-mode-switch { margin-top: 10px; }
-  .view-mode-btn { padding: 7px 11px; font-size: 12px; }
-  .analysis-collapse-title { font-size: 16px; }
-}
-
-/* =========================================
-   v1.1.1｜修正分析卡片收合高度
-   收合時取消 age-panel 原有 min-height，只保留標題列。
-========================================= */
+/* 收合時取消 age-panel 原有 min-height，只保留標題列 */
 .collapsible-analysis.analysis-collapsed {
   min-height: 0 !important;
   height: auto !important;
@@ -1952,10 +1506,11 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
   padding-bottom: 18px;
 }
 
-/* =========================================
-   v1.1.2｜桌機版牧養分析左右成對展開
-   實際連動由 script.js 控制；手機版維持各卡獨立。
-========================================= */
+@media (max-width: 680px) {
+  .view-mode-switch { margin-top: 10px; }
+  .view-mode-btn { padding: 7px 11px; font-size: 12px; }
+  .analysis-collapse-title { font-size: 16px; }
+}
 
 /* v1.1.3 人員明細欄位設定 */
 .people-columns-toolbar {position:relative;display:flex;justify-content:flex-end;margin:0 0 12px;}
@@ -2286,18 +1841,7 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
     gap: 4px 12px;
   }
 }
-/* v1.1.27：淺色頁首上的模式切換按鈕改用深色字 */
-.topbar .view-mode-switch {
-  background: rgba(30, 64, 73, .08);
-  border-color: rgba(30, 64, 73, .20);
-}
-.topbar .view-mode-btn {
-  color: #24434b;
-}
-.topbar .view-mode-btn.is-selected {
-  background: #fff;
-  color: var(--accent);
-}
+
 
 /* =========================================
    v1.2.0｜人員明細：搜尋姓名、初信、顯示人數移入
@@ -2331,3 +1875,15 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
     width: 100%;
   }
 }
+
+/* 電腦版：姓名欄固定較窄寬度，名字過長（含註解）時自動換行 */
+@media (min-width: 681px) {
+  #peopleTable th.col-name,
+  #peopleTable td.col-name {
+    width: 8em;
+    min-width: 6em;
+    white-space: normal;
+    line-height: 1.45;
+  }
+}
+

@@ -598,55 +598,13 @@
       <!-- =========================
            分析篩選
       ========================== -->
-
       <section class="panel analysis-filter-panel full-mode-only">
-        <div class="analysis-filter-head">
-          <div>
-            <p class="eyebrow">FILTER</p>
-            <h2>分析篩選</h2>
-          </div>
-        </div>
-
-        <!-- 保留原 select 作為程式狀態，不顯示；畫面改由 iPhone App 式按鈕操作 -->
-        <div class="analysis-filter-native" aria-hidden="true">
-          <select id="districtFilter"><option value="">全部</option></select>
-          <select id="smallDistrictFilter"><option value="">全部</option></select>
-          <select id="newBelieverFilter">
-            <option value="">全部</option><option value="yes">初信</option>
-            <option value="no">非初信</option><option value="unknown">日期不明</option>
-          </select>
-          <details id="groupMultiSelect"><summary id="groupFilterSummary">全部</summary><div id="groupFilterOptions"></div></details>
-          <button id="clearGroupFilter" type="button"></button><button id="closeGroupFilter" type="button"></button>
-          <details id="statusMultiSelect"><summary id="statusFilterSummary">全部</summary><div id="statusFilterOptions"></div></details>
-          <button id="clearStatusFilter" type="button"></button><button id="closeStatusFilter" type="button"></button>
-        </div>
-
-        <!-- 舊版程式仍會更新這兩個節點；不再顯示於分析篩選。 -->
-        <div class="hidden" aria-hidden="true" style="display:none">
-          <div id="analysisGroupButtons"></div>
-          <div id="analysisStatusButtons"></div>
-        </div>
-
-        <div class="analysis-button-filters">
-          <div class="analysis-button-row">
-            <span class="analysis-button-label">大區</span>
-            <div id="analysisDistrictButtons" class="ios-filter-buttons analysis-ios-buttons"></div>
-          </div>
-          <div id="analysisSmallDistrictRow" class="analysis-button-row hidden">
-            <span class="analysis-button-label">小區</span>
-            <div id="analysisSmallDistrictButtons" class="ios-filter-buttons analysis-ios-buttons"></div>
-          </div>
-        </div>
-      </section>
           <div class="analysis-filter-head">
           <div>
             <p class="eyebrow">FILTER</p>
             <h2>分析篩選</h2>
           </div>
-          <label class="field analysis-search-field">
-            <span>搜尋姓名</span>
-            <input id="searchInput" type="search" placeholder="輸入姓名" />
-          </label>
+
         </div>
 
         <!-- 保留原 select 作為程式狀態，不顯示；畫面改由 iPhone App 式按鈕操作 -->
@@ -663,11 +621,7 @@
           <button id="clearStatusFilter" type="button"></button><button id="closeStatusFilter" type="button"></button>
         </div>
 
-        <!-- 舊版程式仍會更新這兩個節點；不再顯示於分析篩選。 -->
-        <div class="hidden" aria-hidden="true" style="display:none">
-          <div id="analysisGroupButtons"></div>
-          <div id="analysisStatusButtons"></div>
-        </div>
+
 
         <div class="analysis-button-filters">
           <div class="analysis-button-row">
@@ -678,13 +632,10 @@
             <span class="analysis-button-label">小區</span>
             <div id="analysisSmallDistrictButtons" class="ios-filter-buttons analysis-ios-buttons"></div>
           </div>
-          <div id="analysisBelieverRow" class="analysis-button-row hidden">
-            <span class="analysis-button-label">初信</span>
-            <div id="analysisBelieverButtons" class="ios-filter-buttons analysis-ios-buttons"></div>
-          </div>
+
         </div>
 
-        <div class="result-count" id="resultCount"></div>
+
       </section>
 
 
