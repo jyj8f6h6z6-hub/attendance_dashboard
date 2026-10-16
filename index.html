@@ -25,6 +25,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icon-32.png" />
   <link rel="shortcut icon" href="favicon.ico" />
   <link rel="manifest" href="site.webmanifest" />
+  <meta name="apple-mobile-web-app-title" content="主日人數統計" />
   <meta name="theme-color" content="#5EB8F2" />
 
   <link
@@ -598,8 +599,46 @@
            分析篩選
       ========================== -->
 
-      <section class="panel analysis-filter-panel">
+      <section class="panel analysis-filter-panel full-mode-only">
         <div class="analysis-filter-head">
+          <div>
+            <p class="eyebrow">FILTER</p>
+            <h2>分析篩選</h2>
+          </div>
+        </div>
+
+        <!-- 保留原 select 作為程式狀態，不顯示；畫面改由 iPhone App 式按鈕操作 -->
+        <div class="analysis-filter-native" aria-hidden="true">
+          <select id="districtFilter"><option value="">全部</option></select>
+          <select id="smallDistrictFilter"><option value="">全部</option></select>
+          <select id="newBelieverFilter">
+            <option value="">全部</option><option value="yes">初信</option>
+            <option value="no">非初信</option><option value="unknown">日期不明</option>
+          </select>
+          <details id="groupMultiSelect"><summary id="groupFilterSummary">全部</summary><div id="groupFilterOptions"></div></details>
+          <button id="clearGroupFilter" type="button"></button><button id="closeGroupFilter" type="button"></button>
+          <details id="statusMultiSelect"><summary id="statusFilterSummary">全部</summary><div id="statusFilterOptions"></div></details>
+          <button id="clearStatusFilter" type="button"></button><button id="closeStatusFilter" type="button"></button>
+        </div>
+
+        <!-- 舊版程式仍會更新這兩個節點；不再顯示於分析篩選。 -->
+        <div class="hidden" aria-hidden="true" style="display:none">
+          <div id="analysisGroupButtons"></div>
+          <div id="analysisStatusButtons"></div>
+        </div>
+
+        <div class="analysis-button-filters">
+          <div class="analysis-button-row">
+            <span class="analysis-button-label">大區</span>
+            <div id="analysisDistrictButtons" class="ios-filter-buttons analysis-ios-buttons"></div>
+          </div>
+          <div id="analysisSmallDistrictRow" class="analysis-button-row hidden">
+            <span class="analysis-button-label">小區</span>
+            <div id="analysisSmallDistrictButtons" class="ios-filter-buttons analysis-ios-buttons"></div>
+          </div>
+        </div>
+      </section>
+          <div class="analysis-filter-head">
           <div>
             <p class="eyebrow">FILTER</p>
             <h2>分析篩選</h2>
@@ -653,7 +692,7 @@
            穩定聚會分析
       ========================== -->
 
-      <section class="age-analysis-grid">
+      <section class="age-analysis-grid full-mode-only">
 
 
         <!-- 左 -->
@@ -758,7 +797,7 @@
            需加強牧養分析
       ========================== -->
 
-      <section class="age-analysis-grid">
+      <section class="age-analysis-grid full-mode-only">
 
 
         <!-- 左 -->
@@ -849,7 +888,7 @@
            待關心聖徒分析
       ========================== -->
 
-      <section class="age-analysis-grid">
+      <section class="age-analysis-grid full-mode-only">
         <article class="panel age-panel">
           <div class="section-head">
             <div>
@@ -909,6 +948,10 @@
             class="people-area-filters people-area-button-panel"
             id="peopleAreaFilters"
           >
+            <div class="people-button-group people-search-group">
+              <span class="area-button-label">搜尋姓名</span>
+              <input id="searchInput" class="people-search-input" type="search" placeholder="輸入姓名" autocomplete="off" />
+            </div>
 
             <div class="people-button-group">
               <span class="area-button-label">大區</span>
@@ -943,6 +986,11 @@
               <div id="peopleStatusOptions" class="ios-filter-buttons people-area-button-list" aria-label="人員明細專用聚會情況複選"></div>
             </div>
 
+            <div class="people-button-group hidden" id="analysisBelieverRow">
+              <span class="area-button-label">初信</span>
+              <div id="analysisBelieverButtons" class="ios-filter-buttons people-area-button-list"></div>
+            </div>
+
 
           </div>
 
@@ -970,7 +1018,7 @@
 
         </div>
 
-
+        <div class="result-count" id="resultCount"></div>
 
         <div class="people-columns-toolbar">
           <button type="button" id="visitationExportButton" class="visitation-export-btn" disabled>⬇ 匯出 Excel 看望報表</button>

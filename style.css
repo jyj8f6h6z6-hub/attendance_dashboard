@@ -2286,3 +2286,48 @@ body.list-mode .analysis-filter-panel { margin-top: 0; }
     gap: 4px 12px;
   }
 }
+/* v1.1.27：淺色頁首上的模式切換按鈕改用深色字 */
+.topbar .view-mode-switch {
+  background: rgba(30, 64, 73, .08);
+  border-color: rgba(30, 64, 73, .20);
+}
+.topbar .view-mode-btn {
+  color: #24434b;
+}
+.topbar .view-mode-btn.is-selected {
+  background: #fff;
+  color: var(--accent);
+}
+
+/* =========================================
+   v1.2.0｜人員明細：搜尋姓名、初信、顯示人數移入
+========================================= */
+#peoplePanel .people-button-group.hidden {
+  display: none !important;
+}
+
+.people-search-group {
+  align-items: center;
+}
+
+.people-search-input {
+  width: min(320px, 100%);
+  min-height: 42px;
+  border: 1px solid #ccd5da;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 16px; /* 16px 以上，iPhone 點選時才不會自動放大 */
+}
+
+#peoplePanel .result-count {
+  margin: 0 0 10px;
+}
+
+@media (max-width: 680px) {
+  .people-search-input {
+    width: 100%;
+  }
+}

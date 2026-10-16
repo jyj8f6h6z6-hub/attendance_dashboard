@@ -37,6 +37,10 @@
   let restoringLocalData = false;
   let settingsSaveTimer = null;
 
+  // v1.2.0：只有分析範圍（資料、統計名單、分析篩選大區／小區）改變時，才重算牧養分析圖與羣組季度比較。
+  let analysisDataVersion = 0;
+  let lastAnalysisBaseKey = '';
+
   function openLocalDb() { return new Promise((resolve,reject)=>{ const r=indexedDB.open(LOCAL_DB_NAME,1); r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(LOCAL_DB_STORE))db.createObjectStore(LOCAL_DB_STORE);}; r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error); }); }
   async function putLocalFile(key,value){const db=await openLocalDb();await new Promise((resolve,reject)=>{const tx=db.transaction(LOCAL_DB_STORE,'readwrite');tx.objectStore(LOCAL_DB_STORE).put(value,key);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();}
   async function getLocalFile(key){const db=await openLocalDb();const value=await new Promise((resolve,reject)=>{const tx=db.transaction(LOCAL_DB_STORE,'readonly');const r=tx.objectStore(LOCAL_DB_STORE).get(key);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});db.close();return value;}
@@ -973,6 +977,8 @@
 
 
   function recalculate() {
+
+    analysisDataVersion++;
 
     if (
       !state.rows.length
@@ -4207,6 +4213,20 @@
     }
   });
 
+  function notifyAnalysisBaseChanged() {
+    const key = [
+      analysisDataVersion,
+      els.districtFilter.value,
+      [...state.selectedAnalysisSmallDistricts].sort().join(','),
+      els.totalAttendanceFilter.value,
+      els.absenceWeeksFilter.value
+    ].join('|');
+
+    if (key === lastAnalysisBaseKey) return;
+    lastAnalysisBaseKey = key;
+    document.dispatchEvent(new CustomEvent('analysisBaseChanged'));
+  }
+
   function renderPeople() {
     renderPeopleGroupButtons();
     renderPeopleStatusButtons();
@@ -4292,9 +4312,7 @@
     renderPeopleTable(visible);
     updateChartFilterUI();
 
-    document.dispatchEvent(
-      new CustomEvent('analysisBaseChanged')
-    );
+    notifyAnalysisBaseChanged();
   }
 
 
@@ -4568,7 +4586,7 @@
   function saveAnalysisSettings(){if(restoringLocalData||!state.rows.length)return;try{localStorage.setItem(LOCAL_SETTINGS_KEY,JSON.stringify(collectAnalysisSettings()));}catch(err){console.warn('無法保存分析選項',err);}}
   function scheduleSaveAnalysisSettings(){clearTimeout(settingsSaveTimer);settingsSaveTimer=setTimeout(saveAnalysisSettings,80);}
   function readAnalysisSettings(){try{return JSON.parse(localStorage.getItem(LOCAL_SETTINGS_KEY)||'null');}catch(_){return null;}}
-  function applyAnalysisSettings(saved){if(!saved||!state.rows.length)return;if(els.totalAttendanceFilter)els.totalAttendanceFilter.value=saved.totalAttendance||'';if(els.absenceWeeksFilter)els.absenceWeeksFilter.value=saved.absenceWeeks||'';if(els.districtFilter)els.districtFilter.value=saved.district||'';updateSmallDistrictOptions();state.selectedAnalysisSmallDistricts=new Set(saved.smallDistricts||[]);state.selectedGroups=new Set(saved.groups||[]);state.selectedStatuses=new Set(saved.statuses||[]);if(els.newBelieverFilter)els.newBelieverFilter.value=saved.newBeliever||'';if(els.searchInput)els.searchInput.value=saved.search||'';if(els.trendDistrictFilter)els.trendDistrictFilter.value=saved.trendDistrict||'';if(els.trendSmallDistrictFilter)els.trendSmallDistrictFilter.value=saved.trendSmallDistrict||'';state.selectedTrendGroups=new Set(saved.trendGroups||[]);state.trendGroupsInitialized=state.selectedTrendGroups.size>0;state.groupTrendMode=saved.groupTrendMode==='districts'?'districts':'groups';state.quarterFromKey=saved.quarterFromKey||'';state.quarterToKey=saved.quarterToKey||'';state.selectedPeopleDistricts=new Set(saved.peopleDistricts||[]);state.selectedPeopleSmallDistricts=new Set(saved.peopleSmallDistricts||[]);document.querySelectorAll('[data-group-trend-mode]').forEach(button=>{const selected=button.dataset.groupTrendMode===state.groupTrendMode;button.classList.toggle('is-selected',selected);button.setAttribute('aria-pressed',selected?'true':'false');});renderAll();}
+  function applyAnalysisSettings(saved){if(!saved||!state.rows.length)return;if(els.totalAttendanceFilter)els.totalAttendanceFilter.value=saved.totalAttendance||'';if(els.absenceWeeksFilter)els.absenceWeeksFilter.value=saved.absenceWeeks||'';if(els.districtFilter)els.districtFilter.value=document.body.classList.contains('list-mode')?'':(saved.district||'');updateSmallDistrictOptions();state.selectedAnalysisSmallDistricts=new Set(document.body.classList.contains('list-mode')?[]:(saved.smallDistricts||[]));state.selectedGroups=new Set(saved.groups||[]);state.selectedStatuses=new Set(saved.statuses||[]);if(els.newBelieverFilter)els.newBelieverFilter.value=saved.newBeliever||'';if(els.searchInput)els.searchInput.value=saved.search||'';if(els.trendDistrictFilter)els.trendDistrictFilter.value=saved.trendDistrict||'';if(els.trendSmallDistrictFilter)els.trendSmallDistrictFilter.value=saved.trendSmallDistrict||'';state.selectedTrendGroups=new Set(saved.trendGroups||[]);state.trendGroupsInitialized=state.selectedTrendGroups.size>0;state.groupTrendMode=saved.groupTrendMode==='districts'?'districts':'groups';state.quarterFromKey=saved.quarterFromKey||'';state.quarterToKey=saved.quarterToKey||'';state.selectedPeopleDistricts=new Set(saved.peopleDistricts||[]);state.selectedPeopleSmallDistricts=new Set(saved.peopleSmallDistricts||[]);document.querySelectorAll('[data-group-trend-mode]').forEach(button=>{const selected=button.dataset.groupTrendMode===state.groupTrendMode;button.classList.toggle('is-selected',selected);button.setAttribute('aria-pressed',selected?'true':'false');});renderAll();}
   async function restoreLocalData(){if(!globalThis.indexedDB||!globalThis.XLSX)return;restoringLocalData=true;try{const attendance=await getLocalFile('attendance');const baptism=await getLocalFile('baptism');if(!attendance?.buffer)return;analyzeWorkbook(attendance.buffer,attendance.name||'本機點名資料');els.fileName.textContent=`${attendance.name||'本機點名資料'}｜已從本機載入`;if(baptism?.buffer)analyzeBaptismWorkbook(baptism.buffer,baptism.name||'本機受浸資料');applyAnalysisSettings(readAnalysisSettings());}catch(err){console.warn('本機資料載入失敗',err);els.error.textContent='本機保存資料無法載入，請重新匯入報表。';}finally{restoringLocalData=false;}}
 
   async function onAttendanceFile(file) {
@@ -5546,7 +5564,18 @@
   }
 
 
-  /* v1.1.0：名單模式 / 完整模式 */
+  /* v1.1.0：名單模式 / 完整模式
+     v1.2.0：名單模式隱藏分析篩選與六張牧養分析圖。
+     分析篩選看不到，所以大區、小區一律改回「全部」，
+     避免名單被看不到的條件篩掉；切回完整模式後維持「全部」。 */
+  function resetAnalysisAreaToAll() {
+    if (!els.districtFilter.value && !state.selectedAnalysisSmallDistricts.size) return false;
+    els.districtFilter.value = '';
+    els.smallDistrictFilter.value = '';
+    state.selectedAnalysisSmallDistricts = new Set();
+    return true;
+  }
+
   function setViewMode(mode, persist = true) {
     const next = mode === 'list' ? 'list' : 'full';
     document.body.classList.toggle('list-mode', next === 'list');
@@ -5557,6 +5586,12 @@
     });
     if (persist) {
       try { localStorage.setItem(LOCAL_VIEW_MODE_KEY, next); } catch (_) {}
+    }
+    if (next === 'list' && resetAnalysisAreaToAll() && state.rows.length) {
+      updateSmallDistrictOptions();
+      renderAnalysisFilterButtons();
+      renderPeople();
+      saveAnalysisSettings();
     }
   }
 
